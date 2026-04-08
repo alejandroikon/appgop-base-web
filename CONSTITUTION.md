@@ -140,6 +140,8 @@ formData = signal<Partial<WellForm>>({});
 
 Todo el manejo de errores de red es responsabilidad exclusiva de `core/http/`. Los servicios de dominio **nunca** manejan errores HTTP directamente — solo transforman la respuesta exitosa.
 
+> Para desarrollo sin backend disponible, ver **Sección 13 — Mocks HTTP mediante Interceptor**.
+
 ### Patrón del Interceptor
 
 ```typescript
@@ -624,6 +626,8 @@ export const environment = {
 
 Esta arquitectura se basa en un enfoque de Diseño Atómico simplificado, optimizando PrimeNG para funcionalidad y Tailwind CSS para diseño visual.
 
+> Los colores, tipografía y tamaños usados en clases Tailwind y componentes PrimeNG deben provenir siempre de los tokens CSS definidos en la **Sección 14 — Sistema de Design Tokens**. Nunca usar valores hardcodeados.
+
 ### 11.1. Estrategia de Composición
 
 **Principio rector: "PrimeNG para la lógica compleja, Tailwind para la estructura y estética".**
@@ -939,3 +943,402 @@ getWell(id: string): Observable<Well> {
 | Servicios externos con URL diferente por ambiente | No soportado | Funciona |
 | Agregar un nuevo host sin tocar servicios existentes | Requiere refactor | Solo agregar clave en `hosts` e interfaz |
 | TypeScript detecta host faltante en un perfil | No | Sí — error en compilación |
+
+---
+
+## 13. Mocks HTTP mediante Interceptor
+
+### 13.1. Propósito y cuándo aplicar
+
+Los mocks HTTP son una herramienta **temporal y transitoria**. Su único propósito es permitir que el desarrollo y maquetado del frontend avance de forma desacoplada mientras el API real no está disponible o un endpoint específico aún no está implementado. El interceptor simula la respuesta del backend de forma transparente — el servicio de dominio, el store y el componente no distinguen si la respuesta proviene de un mock o de la red real.
+
+Este enfoque garantiza que la integración con el API real sea inmediata y sin fricción desde el primer día: como el servicio ya consume la interfaz correcta (DTO → Model → Mapper), reemplazar el mock por el endpoint real no requiere cambios en ninguna capa del frontend.
+
+**Cuándo usar:**
+- Desarrollo paralelo frontend/backend — el equipo de frontend no debe bloquearse esperando que el backend entregue un endpoint
+- Maquetado y validación de UI con datos representativos y controlados
+- Demos o revisiones de producto sin infraestructura de backend activa
+
+**Cuándo NO usar:**
+- En QA o PROD — los mocks están estrictamente limitados al perfil DEV
+- Como solución definitiva — un mock que sobrevive a la entrega del endpoint real es deuda técnica inmediata
+- Para cubrir errores de integración — si el API real está disponible, usarlo directamente
+
+### 13.2. Control por ambiente
+
+El mock se habilita exclusivamente mediante un flag en el archivo de ambiente. Nunca se activa por lógica condicional en el código de la app.
+
+```typescript
+// environment.interface.ts — agregar el flag al contrato
+export interface AppEnvironment {
+  // ...hosts, production, name...
+  featureFlags: {
+    enableBetaFeatures: boolean;
+    useMocks: boolean; // true solo en DEV cuando el backend no está disponible
+  };
+}
+
+// environment.ts (DEV) — activar según necesidad
+featureFlags: { enableBetaFeatures: true, useMocks: true }
+
+// environment.qa.ts / environment.prod.ts — siempre false
+featureFlags: { enableBetaFeatures: true, useMocks: false }
+```
+
+### 13.3. Estructura de archivos
+
+Los datos mock viven **junto al dominio** al que pertenecen, no en una carpeta global. Al eliminar una feature, sus mocks se eliminan con ella.
+
+```
+domains/wells/
+├── features/
+├── models/
+├── services/
+└── mocks/                          ← carpeta de mocks del dominio
+    ├── wells.mock.ts               ← datos y handlers de pozos
+    └── index.ts                    ← barrel export de todos los handlers del dominio
+```
+
+### 13.4. Anatomía de un mock handler
+
+Cada handler es una función pura que recibe la petición y retorna un `HttpResponse` tipado:
+
+```typescript
+// domains/wells/mocks/wells.mock.ts
+// REFERENCIA: los datos y endpoints mockeados se definen según la especificación funcional de cada feature
+
+import { HttpRequest, HttpResponse } from '@angular/common/http';
+
+export interface MockHandler {
+  // Patrón de URL que este handler intercepta (string exacto o RegExp)
+  urlPattern: string | RegExp;
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  // Retorna la respuesta simulada o null si no aplica a esta petición
+  handle: (req: HttpRequest<unknown>) => HttpResponse<unknown> | null;
+}
+
+export const wellsMockHandlers: MockHandler[] = [
+  {
+    urlPattern: /\/api\/v1\/wells$/,
+    method: 'GET',
+    handle: () =>
+      new HttpResponse({
+        status: 200,
+        body: [
+          { well_id: 'MOCK-001', well_name: 'Pozo Alpha', status_code: 'ACTIVE' },
+          { well_id: 'MOCK-002', well_name: 'Pozo Beta',  status_code: 'INACTIVE' },
+        ],
+      }),
+  },
+];
+```
+
+### 13.5. Registro central de handlers
+
+Un archivo central agrega todos los handlers de todos los dominios que tengan mocks activos:
+
+```typescript
+// core/http/mock.registry.ts
+// REFERENCIA: se agregan handlers conforme se desarrollan las features que los requieren
+
+import { MockHandler } from './mock.interceptor';
+import { wellsMockHandlers } from '@wells/mocks';
+
+export const MOCK_HANDLERS: MockHandler[] = [
+  ...wellsMockHandlers,
+  // ...operationsMockHandlers,  ← se agrega cuando operations lo necesite
+];
+```
+
+### 13.6. El interceptor mock
+
+Se registra **antes** que `authInterceptor` y `errorInterceptor` en la cadena, de modo que las peticiones mockeadas nunca llegan a la red:
+
+```typescript
+// core/http/mock.interceptor.ts
+import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
+import { environment } from '@env/environment';
+import { MOCK_HANDLERS } from './mock.registry';
+
+export const mockInterceptor: HttpInterceptorFn = (req, next) => {
+  // Si los mocks están desactivados, pasar la petición sin tocarla
+  if (!environment.featureFlags.useMocks) return next(req);
+
+  const handler = MOCK_HANDLERS.find(h => {
+    const urlMatch =
+      typeof h.urlPattern === 'string'
+        ? req.url.includes(h.urlPattern)
+        : h.urlPattern.test(req.url);
+    return urlMatch && h.method === req.method;
+  });
+
+  if (handler) {
+    const response = handler.handle(req);
+    if (response) return of(response); // Retorna el mock como Observable
+  }
+
+  // Si no hay handler para esta petición, continúa hacia la red
+  return next(req);
+};
+```
+
+```typescript
+// app.config.ts — orden de interceptores (mock siempre primero)
+provideHttpClient(
+  withInterceptors([mockInterceptor, authInterceptor, errorInterceptor])
+)
+```
+
+### 13.7. Ciclo de vida de un mock
+
+Un mock nace con una feature y muere con la entrega de su endpoint real. Nunca debe cruzar ese umbral.
+
+```
+[INICIO DE FEATURE]
+  1. Endpoint no disponible → activar useMocks: true en environment.ts
+  2. Definir contrato de datos (DTO) según especificación funcional
+  3. Crear handler en domains/[dominio]/mocks/[dominio].mock.ts
+  4. Registrar handler en core/http/mock.registry.ts
+  5. Desarrollar, maquetar y validar la feature con datos controlados
+
+[ENTREGA DEL ENDPOINT REAL]
+  6. Conectar el servicio al API real — sin cambios en componentes ni store
+  7. Eliminar handler del registry (mock.registry.ts)
+  8. Eliminar archivo de mock si el dominio no tiene más handlers activos
+  9. Desactivar useMocks: false en environment.ts si no quedan mocks activos
+```
+
+**Señal de alerta:** si un mock permanece activo después del merge de su feature, es deuda técnica — debe eliminarse en el mismo sprint.
+
+> **Referencia:** Los handlers, estructuras de datos mock y endpoints mostrados son ilustrativos. Los datos reales de cada mock se definen según el contrato de API establecido en la especificación funcional de cada feature.
+
+---
+
+## 14. Sistema de Design Tokens (Variables CSS)
+
+### 14.1. Principio y por qué
+
+**Está estrictamente prohibido hardcodear colores, familias tipográficas, tamaños de fuente o cualquier valor visual directamente** en templates HTML, archivos TypeScript o estilos de componente.
+
+Todo valor visual del sistema proviene de **CSS custom properties (variables CSS)** definidas globalmente. Este enfoque garantiza:
+
+- **Un solo punto de cambio:** modificar el color primario del sistema implica cambiar una variable, no buscar en 300 archivos.
+- **Consistencia garantizada:** Tailwind y PrimeNG apuntan a los mismos tokens — es imposible que diverjan.
+- **Preparación para theming:** dark mode, white-labeling o ajustes de marca se implementan cambiando el bloque `:root`, no el código de los componentes.
+- **Colaboración UI/UX ágil:** el equipo de diseño trabaja sobre los tokens; el equipo de desarrollo aplica clases semánticas sin negociar valores.
+
+### 14.2. Estructura de archivos
+
+Los tokens viven en la carpeta `src/styles/`, separados del CSS global de la app:
+
+```
+src/
+├── styles/
+│   ├── _tokens.css       ← Design tokens: paleta primitiva + tokens semánticos
+│   ├── _typography.css   ← Escala tipográfica y familias de fuente
+│   └── _overrides.css    ← Override de variables CSS de PrimeNG y otras librerías
+└── styles.css            ← Punto de entrada: importa Tailwind + archivos de styles/
+```
+
+```css
+/* src/styles.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import './styles/tokens';
+@import './styles/typography';
+@import './styles/overrides';
+```
+
+### 14.3. Tokens: dos niveles
+
+Los tokens se organizan en **dos capas** para separar los valores brutos de su significado semántico:
+
+**Capa 1 — Primitivos:** los colores, tamaños y valores concretos. Nunca se usan directamente en componentes.
+
+```css
+/* src/styles/_tokens.css — REFERENCIA: valores reales según identidad visual del proyecto */
+:root {
+  /* Paleta de color — valores primitivos */
+  --primitive-blue-50:   #eff6ff;
+  --primitive-blue-100:  #dbeafe;
+  --primitive-blue-500:  #3b82f6;
+  --primitive-blue-600:  #2563eb;
+  --primitive-blue-700:  #1d4ed8;
+  --primitive-gray-50:   #f9fafb;
+  --primitive-gray-100:  #f3f4f6;
+  --primitive-gray-300:  #d1d5db;
+  --primitive-gray-500:  #6b7280;
+  --primitive-gray-700:  #374151;
+  --primitive-gray-900:  #111827;
+  --primitive-red-500:   #ef4444;
+  --primitive-green-500: #22c55e;
+  --primitive-yellow-500:#eab308;
+  --primitive-white:     #ffffff;
+}
+```
+
+**Capa 2 — Semánticos:** asignan significado a los primitivos. Estos son los que usan los componentes.
+
+```css
+:root {
+  /* Colores semánticos de marca */
+  --color-primary:         var(--primitive-blue-600);
+  --color-primary-hover:   var(--primitive-blue-700);
+  --color-primary-light:   var(--primitive-blue-50);
+  --color-primary-contrast:var(--primitive-white);
+
+  /* Superficies y fondos */
+  --color-surface:         var(--primitive-white);
+  --color-surface-alt:     var(--primitive-gray-50);
+  --color-border:          var(--primitive-gray-300);
+
+  /* Texto */
+  --color-text-primary:    var(--primitive-gray-900);
+  --color-text-secondary:  var(--primitive-gray-500);
+  --color-text-disabled:   var(--primitive-gray-300);
+
+  /* Estados de feedback */
+  --color-error:           var(--primitive-red-500);
+  --color-success:         var(--primitive-green-500);
+  --color-warning:         var(--primitive-yellow-500);
+
+  /* Espaciado base (referencia para escala) */
+  --space-unit: 0.25rem; /* 4px — base de la escala de Tailwind */
+}
+```
+
+### 14.4. Tokens tipográficos
+
+```css
+/* src/styles/_typography.css — REFERENCIA: fuentes según identidad visual del proyecto */
+:root {
+  /* Familias */
+  --font-family-sans:  'Inter', system-ui, sans-serif;
+  --font-family-mono:  'JetBrains Mono', monospace;
+
+  /* Escala de tamaños */
+  --font-size-xs:   0.75rem;   /* 12px */
+  --font-size-sm:   0.875rem;  /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg:   1.125rem;  /* 18px */
+  --font-size-xl:   1.25rem;   /* 20px */
+  --font-size-2xl:  1.5rem;    /* 24px */
+  --font-size-3xl:  1.875rem;  /* 30px */
+
+  /* Pesos */
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  /* Interlineado */
+  --line-height-tight:  1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed:1.75;
+}
+```
+
+### 14.5. Override de librerías (`_overrides.css`)
+
+PrimeNG expone sus propias variables CSS con prefijo `--p-`. Este archivo las remapea a nuestros tokens semánticos. Así, si cambia el color primario del sistema, PrimeNG lo refleja automáticamente.
+
+```css
+/* src/styles/_overrides.css */
+
+/* PrimeNG — remap de variables internas a tokens del sistema */
+:root {
+  --p-primary-color:           var(--color-primary);
+  --p-primary-hover-color:     var(--color-primary-hover);
+  --p-primary-contrast-color:  var(--color-primary-contrast);
+  --p-surface-0:               var(--color-surface);
+  --p-surface-ground:          var(--color-surface-alt);
+  --p-text-color:              var(--color-text-primary);
+  --p-text-muted-color:        var(--color-text-secondary);
+  --p-content-border-color:    var(--color-border);
+
+  /* Al integrar nuevas librerías, agregar sus overrides aquí siguiendo el mismo patrón */
+}
+```
+
+### 14.6. Integración con Tailwind
+
+`tailwind.config.js` extiende la paleta para que las clases de Tailwind (`bg-primary`, `text-error`, etc.) apunten a los mismos tokens semánticos:
+
+```javascript
+// tailwind.config.js
+module.exports = {
+  content: ['./src/**/*.{html,ts}'],
+  theme: {
+    extend: {
+      colors: {
+        primary:   'var(--color-primary)',
+        'primary-hover':  'var(--color-primary-hover)',
+        'primary-light':  'var(--color-primary-light)',
+        surface:   'var(--color-surface)',
+        'surface-alt':    'var(--color-surface-alt)',
+        border:    'var(--color-border)',
+        error:     'var(--color-error)',
+        success:   'var(--color-success)',
+        warning:   'var(--color-warning)',
+        'text-primary':   'var(--color-text-primary)',
+        'text-secondary': 'var(--color-text-secondary)',
+      },
+      fontFamily: {
+        sans: 'var(--font-family-sans)',
+        mono: 'var(--font-family-mono)',
+      },
+      fontSize: {
+        xs:   'var(--font-size-xs)',
+        sm:   'var(--font-size-sm)',
+        base: 'var(--font-size-base)',
+        lg:   'var(--font-size-lg)',
+        xl:   'var(--font-size-xl)',
+        '2xl':'var(--font-size-2xl)',
+        '3xl':'var(--font-size-3xl)',
+      },
+    },
+  },
+  plugins: [require('tailwindcss-primeui')],
+};
+```
+
+**Resultado:** en templates, solo se usan clases semánticas:
+```html
+<!-- ✅ Correcto: clases semánticas que apuntan a tokens -->
+<button class="bg-primary text-white hover:bg-primary-hover font-semibold text-sm">
+  Guardar
+</button>
+
+<!-- ❌ Prohibido: valores hardcodeados o clases arbitrarias de Tailwind -->
+<button class="bg-[#2563eb] text-white text-[14px]">
+  Guardar
+</button>
+```
+
+### 14.7. Reglas de uso en componentes
+
+| Regla | Correcto | Prohibido |
+|---|---|---|
+| Colores de fondo | `bg-primary`, `bg-surface` | `bg-blue-600`, `bg-[#fff]` |
+| Colores de texto | `text-text-primary`, `text-error` | `text-gray-900`, `text-[#111]` |
+| Colores de borde | `border-border` | `border-gray-300` |
+| Tipografía | `font-sans`, `text-sm`, `font-semibold` | `font-['Inter']`, `text-[14px]` |
+| Variables en TS/CSS | `var(--color-primary)` | `#2563eb` |
+| Colores en estilos inline | Nunca inline, siempre clase | `[style]="'color:#111'"` |
+
+### 14.8. Flujo para cambiar el tema visual
+
+Cambiar toda la estética del sistema — colores, tipografía — se reduce a editar `_tokens.css` y `_typography.css`:
+
+```
+1. Identificar el token semántico a cambiar (ej: --color-primary)
+2. Cambiar el primitivo al que apunta (ej: --primitive-green-600)
+   o agregar un nuevo primitivo y apuntar el semántico a él
+3. Tailwind y PrimeNG reflejan el cambio automáticamente
+4. Ningún componente ni template requiere modificación
+```
+
+> **Referencia:** Los valores de color, tipografía y escala mostrados son ilustrativos. Los tokens reales — primitivos y semánticos — se definen según la identidad visual y el sistema de diseño establecido para el proyecto.

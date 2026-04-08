@@ -1,0 +1,86 @@
+/* ============================================================
+   DESIGN TOKENS — Paleta y tokens semánticos del sistema
+   REFERENCIA: valores reales según identidad visual del proyecto
+   ============================================================ */
+
+:root {
+  /* ----------------------------------------------------------
+     Capa 1: Primitivos — valores brutos
+     No usar directamente en componentes ni templates
+  ---------------------------------------------------------- */
+
+  /* Azules */
+  --primitive-blue-50:  #eff6ff;
+  --primitive-blue-100: #dbeafe;
+  --primitive-blue-500: #3b82f6;
+  --primitive-blue-600: #2563eb;
+  --primitive-blue-700: #1d4ed8;
+
+  /* Grises */
+  --primitive-gray-50:  #f9fafb;
+  --primitive-gray-100: #f3f4f6;
+  --primitive-gray-200: #e5e7eb;
+  --primitive-gray-300: #d1d5db;
+  --primitive-gray-400: #9ca3af;
+  --primitive-gray-500: #6b7280;
+  --primitive-gray-700: #374151;
+  --primitive-gray-900: #111827;
+
+  /* Feedback */
+  --primitive-red-50:    #fef2f2;
+  --primitive-red-500:   #ef4444;
+  --primitive-green-50:  #f0fdf4;
+  --primitive-green-500: #22c55e;
+  --primitive-yellow-50: #fefce8;
+  --primitive-yellow-500:#eab308;
+
+  /* Neutros */
+  --primitive-white: #ffffff;
+  --primitive-black: #000000;
+
+  /* ----------------------------------------------------------
+     Capa 2: Semánticos — significado de negocio
+     Estos son los que usan componentes, templates y overrides
+  ---------------------------------------------------------- */
+
+  /* Marca / Primario */
+  --color-primary:          var(--primitive-blue-600);
+  --color-primary-hover:    var(--primitive-blue-700);
+  --color-primary-light:    var(--primitive-blue-50);
+  --color-primary-contrast: var(--primitive-white);
+
+  /* Superficies */
+  --color-surface:           var(--primitive-white);
+  --color-surface-alt:       var(--primitive-gray-50);
+  --color-surface-raised:    var(--primitive-white);
+
+  /* Bordes */
+  --color-border:            var(--primitive-gray-200);
+  --color-border-strong:     var(--primitive-gray-300);
+
+  /* Texto */
+  --color-text-primary:      var(--primitive-gray-900);
+  --color-text-secondary:    var(--primitive-gray-500);
+  --color-text-disabled:     var(--primitive-gray-300);
+  --color-text-inverse:      var(--primitive-white);
+
+  /* Feedback */
+  --color-error:             var(--primitive-red-500);
+  --color-error-light:       var(--primitive-red-50);
+  --color-success:           var(--primitive-green-500);
+  --color-success-light:     var(--primitive-green-50);
+  --color-warning:           var(--primitive-yellow-500);
+  --color-warning-light:     var(--primitive-yellow-50);
+
+  /* Sombras */
+  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.1);
+
+  /* Border radius */
+  --radius-sm:  0.25rem;  /* 4px  */
+  --radius-md:  0.5rem;   /* 8px  */
+  --radius-lg:  0.75rem;  /* 12px */
+  --radius-xl:  1rem;     /* 16px */
+  --radius-full:9999px;
+}

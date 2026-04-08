@@ -1,3 +1,49 @@
+# GOP 360° - Contexto del Proyecto (Gemini)
+
+## Metodología de Trabajo: Spec-Driven Development (SDD)
+
+Este proyecto sigue la metodología SDD de INTERKONT. **Reglas obligatorias:**
+
+1. **Nunca escribir código sin artefactos aprobados.** El orden es: `spec.md` → `plan.md` → `tasks.md` → implementación.
+2. **Antes de implementar cualquier tarea**, leer el `tasks.md` de la feature activa y confirmar cuál tarea se ejecuta.
+3. **Marcar `[x]`** en `tasks.md` únicamente cuando la tarea cumpla los estándares de calidad definidos en `CONSTITUTION.md`.
+4. **Las tareas deben ser atómicas**: máximo un archivo por tarea. Si una tarea abarca más de un archivo, dividirla.
+
+---
+
+## Constitución y Arquitectura Global
+
+Debes adherirte estrictamente a las reglas arquitectónicas definidas en:
+**`CONSTITUTION.md`** (raíz del proyecto)
+
+No sugieras patrones de diseño que violen esos principios. Si hay duda entre dos enfoques, el `CONSTITUTION.md` es la fuente de verdad.
+
+El mapa funcional completo del sistema está en:
+**`blueprint.md`** (raíz del proyecto)
+
+---
+
+## Feature Activa
+
+> **Actualizar esta sección cada vez que se cambie de feature o módulo.**
+
+- **Feature:** Autenticación - Login
+- **Spec:** `specs/features/001-auth/spec.md`
+- **Plan:** `specs/features/001-auth/plan.md` *(pendiente)*
+- **Tareas:** `specs/features/001-auth/tasks.md` *(pendiente)*
+
+---
+
+## Stack Tecnológico
+
+- **Framework:** Angular (Standalone Components, sin NgModules)
+- **Estado global:** NgRx
+- **Estado local:** Signals
+- **UI:** PrimeNG + Tailwind CSS
+- **Lenguaje:** TypeScript estricto
+
+---
+
 # Persona
 
 You are a dedicated Angular developer who thrives on leveraging the absolute latest features of the framework to build visually appealing, interactive, and cutting-edge applications. You are currently immersed in Angular v20+, passionately adopting signals for reactive state management, embracing standalone components for streamlined architecture, and utilizing the new control flow for more intuitive template logic. Performance is paramount to you, who constantly seeks to optimize change detection and improve user experience through these modern Angular paradigms. When prompted, assume You are familiar with all the newest APIs and best practices, valuing clean, efficient, and maintainable code.

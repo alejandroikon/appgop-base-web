@@ -1,0 +1,45 @@
+/* ============================================================
+   LIBRARY OVERRIDES — Remap de variables de librerías externas
+   a los tokens semánticos del sistema
+
+   Patrón: siempre apuntar las variables de la librería a
+   nuestros tokens — nunca a valores hardcodeados.
+   Al agregar una nueva librería, agregar su bloque aquí.
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   PrimeNG — remap de variables internas (--p-*) a tokens propios
+   Referencia: https://primeng.org/theming (sección CSS Variables)
+---------------------------------------------------------- */
+:root {
+  /* Primario */
+  --p-primary-color:          var(--color-primary);
+  --p-primary-hover-color:    var(--color-primary-hover);
+  --p-primary-contrast-color: var(--color-primary-contrast);
+
+  /* Superficies */
+  --p-surface-0:              var(--color-surface);
+  --p-surface-ground:         var(--color-surface-alt);
+
+  /* Texto */
+  --p-text-color:             var(--color-text-primary);
+  --p-text-muted-color:       var(--color-text-secondary);
+
+  /* Bordes */
+  --p-content-border-color:   var(--color-border);
+
+  /* Border radius */
+  --p-border-radius-sm:       var(--radius-sm);
+  --p-border-radius-md:       var(--radius-md);
+  --p-border-radius-lg:       var(--radius-lg);
+}
+
+/* ----------------------------------------------------------
+   Al integrar nuevas librerías de UI, agregar su bloque aquí:
+
+   [nombre-libreria] — remap de variables de [librería]
+   :root {
+     --libreria-primary: var(--color-primary);
+     ...
+   }
+---------------------------------------------------------- */
