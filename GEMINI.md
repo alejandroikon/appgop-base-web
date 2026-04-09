@@ -9,6 +9,32 @@ Este proyecto sigue la metodología SDD de INTERKONT. **Reglas obligatorias:**
 3. **Marcar `[x]`** en `tasks.md` únicamente cuando la tarea cumpla los estándares de calidad definidos en `CONSTITUTION.md`.
 4. **Las tareas deben ser atómicas**: máximo un archivo por tarea. Si una tarea abarca más de un archivo, dividirla.
 
+### Ejecución por Bloques Compilables
+
+Las tareas en `tasks.md` se agrupan en **bloques de implementación**. Cada bloque es una secuencia de tareas que, al completarse, produce una aplicación que:
+
+1. **Compila** sin errores (`ng build` ✅)
+2. **Tiene un resultado validable** en la UI o en herramientas de desarrollo (ej. NgRx DevTools)
+
+**Reglas de ordenamiento dentro de cada bloque:**
+
+- Las tareas marcadas `[P]` pueden ejecutarse en paralelo (archivos distintos, sin dependencias).
+- Los **componentes se crean ANTES que las rutas** que los referencian, porque Angular resuelve los `loadComponent: () => import(...)` en compilación (AOT).
+- Los **modelos y tipos** se crean antes que los servicios/stores que los consumen.
+- Las **rutas** (`*.routes.ts`) solo se crean/modifican cuando todos los componentes que importan ya existen.
+- No avanzar al siguiente bloque hasta que `ng build` pase en el bloque actual.
+
+**Estructura de fases típica:**
+
+```
+Phase 1 (Setup)       → Modelos, tipos, configuración de entorno
+Phase 2 (Foundational)→ Store, servicios, guards — BLOQUEA fases siguientes
+Phase 3+ (US*)        → Una fase por historia de usuario, en orden de prioridad
+Phase N (Polish)      → Validación cruzada, imports, textos
+```
+
+Cada fase puede contener uno o más bloques. Consultar la sección **"Implementation Blocks"** del `tasks.md` activo para la secuencia exacta de ejecución con `/speckit-implement`.
+
 ---
 
 ## Constitución y Arquitectura Global
@@ -29,8 +55,8 @@ El mapa funcional completo del sistema está en:
 
 - **Feature:** Autenticación - Login
 - **Spec:** `specs/features/001-auth/spec.md`
-- **Plan:** `specs/features/001-auth/plan.md` *(pendiente)*
-- **Tareas:** `specs/features/001-auth/tasks.md` *(pendiente)*
+- **Plan:** `specs/features/001-auth/plan.md`
+- **Tareas:** `specs/features/001-auth/tasks.md`
 
 ---
 
