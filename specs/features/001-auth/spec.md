@@ -144,6 +144,8 @@ El `AuthService` mock debe contener al menos los siguientes perfiles para valida
 
 ## 5. Requisitos de UI / UX
 
+> **Imagen de referencia:** [`specs/features/001-auth/ref-login.png`](ref-login.png) — Prototipo visual aprobado del login. Todos los componentes de UI deben respetar la estructura, proporciones y disposición de elementos mostrados en esta imagen.
+
 ### 5.1. Estructura General del Layout de Auth
 
 El layout de autenticación es exclusivo para las rutas `/login` y `/forgot-password`. No muestra Sidebar ni TopHeader bajo ninguna circunstancia.

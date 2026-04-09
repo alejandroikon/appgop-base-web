@@ -2,7 +2,8 @@
 
 **Feature ID:** 001-auth
 **Spec de referencia:** `specs/features/001-auth/spec.md`
-**Estado:** Listo para generar `tasks.md`
+**Referencia visual:** `specs/features/001-auth/ref-login.png`
+**Estado:** Listo para implementación
 
 ---
 
@@ -199,6 +200,8 @@ isConfirmed  = signal(false);   // true → reemplaza el formulario por el mensa
 ---
 
 ## 6. Diseño del Auth Layout (Split-Screen)
+
+> **Referencia visual obligatoria:** Ver `specs/features/001-auth/ref-login.png` para estructura, proporciones y disposición exacta de elementos.
 
 El `AuthLayoutComponent` es un contenedor estructural sin lógica de negocio. Implementa la proporción 1/3 — 2/3 usando clases de utilidad CSS.
 

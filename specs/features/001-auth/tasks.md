@@ -1,6 +1,7 @@
 # Tasks: Módulo de Autenticación (001-auth)
 
 **Input**: `specs/features/001-auth/spec.md` + `specs/features/001-auth/plan.md`
+**Referencia visual**: `specs/features/001-auth/ref-login.png`
 **Referencia arquitectónica**: `CONSTITUTION.md`
 
 **Formato**: `[ID] [P?] [Story?] Descripción — ruta/del/archivo`
@@ -60,6 +61,8 @@
 - Navegar a `/login` con sesión activa → redirige a `/`.
 - Despachar `sessionExpired()` desde NgRx DevTools → redirige a `/login?reason=session_expired` con notificación.
 
+> **Referencia visual obligatoria:** Antes de implementar cualquier tarea de esta fase, leer la imagen `specs/features/001-auth/ref-login.png` para respetar la estructura, proporciones y disposición de elementos del layout y formulario.
+>
 > **Orden de creación**: Los componentes se crean ANTES que las rutas, porque `auth.routes.ts` importa dinámicamente los componentes y Angular resuelve los imports en compilación (AOT).
 
 - [ ] T020 [P] [US1] Crear `AuthLayoutComponent` (shell split-screen, lee `environment.loginBgUrl`) — `src/app/core/layout/auth-layout/auth-layout.component.ts`
@@ -80,6 +83,8 @@
 **Goal**: Usuario puede solicitar recuperación de contraseña y recibe pantalla de confirmación neutral independientemente de si el correo existe.
 
 **Independent Test**: Navegar a `/forgot-password`, ingresar cualquier correo válido → muestra pantalla de confirmación. Ingresar correo inválido → error inline. Presionar "Volver" → navega a `/login`.
+
+> **Referencia visual:** Misma estructura split-screen de `specs/features/001-auth/ref-login.png`. Solo cambia el contenido del panel derecho (ver spec §5.5).
 
 - [ ] T028 [P] [US3] Crear locale de recuperación de contraseña (título, subtítulo, labels, acciones, confirmación) — `src/app/core/auth/features/forgot-password/locale.ts`
 - [ ] T029 [US3] Agregar método `forgotPassword(email: string): Observable<void>` al `AuthService` (mock con delay simulado) — `src/app/core/auth/auth.service.ts`
