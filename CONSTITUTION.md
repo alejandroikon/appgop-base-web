@@ -12,82 +12,101 @@
 ## 2. Ejemplo de Scaffolding (Estructura de Carpetas)
 
 ```text
-src/
-├── app/
-│   ├── core/                       # 1. CORE: Singleton, configuraciones y seguridad
-│   │   ├── auth/                   # Lógica de autenticación, interceptores de token
-│   │   ├── guards/                 # Protecciones de rutas (RBAC)
-│   │   ├── http/                   # Interceptores de errores globales, manejo de API
-│   │   └── layout/                 # Componentes estructurales (Sidebar, TopHeader)
-│   │
-│   ├── shared/                     # 2. SHARED: UI genérica, modelos y servicios transversales
-│   │   ├── models/                 # Interfaces/tipos usados por 2+ dominios (Well, Operator, UserRole)
-│   │   │   ├── well.model.ts       #   → model + dto + mapper por entidad compartida
-│   │   │   ├── well.dto.ts
-│   │   │   ├── well.mapper.ts
-│   │   │   └── index.ts            #   → barrel export del grupo
-│   │   ├── services/               # Servicios transversales sin lógica de negocio propia
-│   │   │   ├── catalog.service.ts  #   → catálogos read-only (tipos de pozo, operadoras)
-│   │   │   └── index.ts
-│   │   ├── locale/                 # Textos globales (Layout, Sidebar, Errores genéricos) -> locale.ts
-│   │   ├── ui/                     # Componentes "Dumb" (Botones, Modales, Tooltips, Tablas)
-│   │   ├── directives/             # Directivas estructurales o de atributos
-│   │   ├── pipes/                  # Transformadores de datos (Fechas, Monedas, Formatos)
-│   │   └── utils/                  # Funciones puras (ej. generador de UWI genérico)
-│   │
-│   ├── domains/                    # 3. DOMAINS: Lógica de negocio agrupada por contexto
-│   │   │
-│   │   ├── wells/                  # Dominio: Gestión de Pozos
-│   │   │   ├── components/         # Componentes compartidos del dominio (ej. WellStatusBadge)
-│   │   │   ├── features/           # Funcionalidades completas (Smart Components)
-│   │   │   │   ├── well-create/    # Feature: Wizard de creación (F101)
-│   │   │   │   │   ├── components/ # Componentes internos exclusivos de esta feature
-│   │   │   │   │   ├── locale.ts   # Textos/Constantes locales de la feature
-│   │   │   │   │   └── well-create.component.ts
-│   │   │   │   ├── well-manage/    # Feature: Explorador jerárquico
-│   │   │   │   └── well-info/      # Feature: Infografía del pozo
-│   │   │   ├── models/             # Solo modelos PRIVADOS del dominio (WellHistory, Trajectory)
-│   │   │   ├── services/           # Solo servicios PRIVADOS del dominio (wells-api.service.ts)
-│   │   │   ├── store/              # Estado del dominio (NgRx Feature State o Signals)
-│   │   │   └── wells.routes.ts     # Rutas lazy-loaded del dominio
-│   │   │
-│   │   ├── operations/             # Dominio: Operaciones y Formas 100
-│   │   │   ├── features/
-│   │   │   │   ├── idop/           # Informe Diario de Perforación
-│   │   │   │   └── forms-100/      # Bandeja de Formas 100
-│   │   │   ├── models/             # Solo modelos PRIVADOS: IDOP, Forma100
-│   │   │   ├── services/           # Solo servicios PRIVADOS: operations-api.service.ts
-│   │   │   └── operations.routes.ts
-│   │   │
-│   │   ├── production/             # Dominio: Producción y Formas 200
-│   │   │   ├── features/
-│   │   │   │   └── fiscalization/  # Fiscalización Volumétrica
-│   │   │   ├── models/             # Solo modelos PRIVADOS: FiscalizationReport
-│   │   │   ├── services/           # Solo servicios PRIVADOS: production-api.service.ts
-│   │   │   └── production.routes.ts
-│   │   │
-│   │   └── admin/                  # Dominio: Administración y Seguridad
-│   │       ├── features/
-│   │       │   ├── users/          # Gestión de usuarios y roles
-│   │       │   └── audit-logs/     # Trazabilidad
-│   │       ├── models/             # Solo modelos PRIVADOS de admin
-│   │       ├── services/           # Solo servicios PRIVADOS: admin-api.service.ts
-│   │       └── admin.routes.ts
-│   │
-│   ├── app.component.ts            # Componente raíz
-│   ├── app.routes.ts               # Enrutador principal (Carga los dominios por Lazy Loading)
-│   └── app.config.ts               # Proveedores globales (HttpClient, Router, Store)
+/                                        # Raíz del repositorio
+├── CONSTITUTION.md                      # Reglas arquitectónicas globales e inmutables (este archivo)
+├── CLAUDE.md                            # Ancla de contexto SDD para Claude Code
+├── GEMINI.md                            # Ancla de contexto SDD para Gemini
+├── blueprint.md                         # Mapa funcional del sistema (rutas, dominios, flujos)
 │
-├── environments/                   # Variables de entorno (dev, qa, prod)
-├── assets/                         # Imágenes, iconos
-└── styles/                         # Estilos globales, variables CSS, configuración de Tailwind
+├── specs/                               # ── DOCUMENTACIÓN SDD (ver §15) ──────────────────────────
+│   └── features/                        # Un directorio por cada feature a desarrollar
+│       ├── 001-auth/                    # NNN = secuencial │ nombre = slug de la feature
+│       │   ├── spec.md                  #   El "QUÉ": historias de usuario y criterios de aceptación
+│       │   ├── plan.md                  #   El "CÓMO": árbol de archivos, componentes, estado
+│       │   └── tasks.md                 #   El "CUÁNDO": tareas atómicas con checkboxes
+│       └── NNN-nombre-feature/
+│           └── ...
+│
+└── src/                                 # ── CÓDIGO FUENTE ────────────────────────────────────────
+    ├── app/
+    │   ├── core/                        # 1. CORE: Singleton, configuraciones y seguridad
+    │   │   ├── auth/                    # Lógica de autenticación, interceptores de token
+    │   │   ├── guards/                  # Protecciones de rutas (RBAC)
+    │   │   ├── http/                    # Interceptores de errores globales, manejo de API
+    │   │   └── layout/                  # Componentes estructurales (Sidebar, TopHeader)
+    │   │
+    │   ├── shared/                      # 2. SHARED: UI genérica, modelos y servicios transversales
+    │   │   ├── models/                  # Interfaces/tipos usados por 2+ dominios (Well, Operator, UserRole)
+    │   │   │   ├── well.model.ts        #   → model + dto + mapper por entidad compartida
+    │   │   │   ├── well.dto.ts
+    │   │   │   ├── well.mapper.ts
+    │   │   │   └── index.ts             #   → barrel export del grupo
+    │   │   ├── services/                # Servicios transversales sin lógica de negocio propia
+    │   │   │   ├── catalog.service.ts   #   → catálogos read-only (tipos de pozo, operadoras)
+    │   │   │   └── index.ts
+    │   │   ├── locale/                  # Textos globales (Layout, Sidebar, Errores genéricos) -> locale.ts
+    │   │   ├── ui/                      # Componentes "Dumb" (Botones, Modales, Tooltips, Tablas)
+    │   │   ├── directives/              # Directivas estructurales o de atributos
+    │   │   ├── pipes/                   # Transformadores de datos (Fechas, Monedas, Formatos)
+    │   │   └── utils/                   # Funciones puras (ej. generador de UWI genérico)
+    │   │
+    │   ├── domains/                     # 3. DOMAINS: Lógica de negocio agrupada por contexto
+    │   │   │
+    │   │   ├── wells/                   # Dominio: Gestión de Pozos
+    │   │   │   ├── components/          # Componentes compartidos del dominio (ej. WellStatusBadge)
+    │   │   │   ├── features/            # Funcionalidades completas (Smart Components)
+    │   │   │   │   ├── well-create/     # Feature: Wizard de creación (F101)
+    │   │   │   │   │   ├── components/  # Componentes internos exclusivos de esta feature
+    │   │   │   │   │   ├── locale.ts    # Textos/Constantes locales de la feature
+    │   │   │   │   │   └── well-create.component.ts
+    │   │   │   │   ├── well-manage/     # Feature: Explorador jerárquico
+    │   │   │   │   └── well-info/       # Feature: Infografía del pozo
+    │   │   │   ├── models/              # Solo modelos PRIVADOS del dominio (WellHistory, Trajectory)
+    │   │   │   ├── services/            # Solo servicios PRIVADOS del dominio (wells-api.service.ts)
+    │   │   │   ├── store/               # Estado del dominio (NgRx Feature State o Signals)
+    │   │   │   └── wells.routes.ts      # Rutas lazy-loaded del dominio
+    │   │   │
+    │   │   ├── operations/              # Dominio: Operaciones y Formas 100
+    │   │   │   ├── features/
+    │   │   │   │   ├── idop/            # Informe Diario de Perforación
+    │   │   │   │   └── forms-100/       # Bandeja de Formas 100
+    │   │   │   ├── models/              # Solo modelos PRIVADOS: IDOP, Forma100
+    │   │   │   ├── services/            # Solo servicios PRIVADOS: operations-api.service.ts
+    │   │   │   └── operations.routes.ts
+    │   │   │
+    │   │   ├── production/              # Dominio: Producción y Formas 200
+    │   │   │   ├── features/
+    │   │   │   │   └── fiscalization/   # Fiscalización Volumétrica
+    │   │   │   ├── models/              # Solo modelos PRIVADOS: FiscalizationReport
+    │   │   │   ├── services/            # Solo servicios PRIVADOS: production-api.service.ts
+    │   │   │   └── production.routes.ts
+    │   │   │
+    │   │   └── admin/                   # Dominio: Administración y Seguridad
+    │   │       ├── features/
+    │   │       │   ├── users/           # Gestión de usuarios y roles
+    │   │       │   └── audit-logs/      # Trazabilidad
+    │   │       ├── models/              # Solo modelos PRIVADOS de admin
+    │   │       ├── services/            # Solo servicios PRIVADOS: admin-api.service.ts
+    │   │       └── admin.routes.ts
+    │   │
+    │   ├── app.component.ts             # Componente raíz
+    │   ├── app.routes.ts                # Enrutador principal (Carga los dominios por Lazy Loading)
+    │   └── app.config.ts                # Proveedores globales (HttpClient, Router, Store)
+    │
+    ├── environments/                    # Variables de entorno (dev, qa, prod)
+    ├── assets/                          # Imágenes, iconos
+    └── styles/                          # Estilos globales, variables CSS, configuración de Tailwind
 ```
 
 > **Referencia:** Los dominios, features, modelos y servicios mostrados en esta estructura son ilustrativos. La estructura real de cada dominio se define y expande conforme a las especificaciones funcionales de cada elemento a desarrollar. No crear carpetas ni archivos anticipándose a funcionalidades no especificadas.
+>
+> La carpeta `specs/` y su contenido (`spec.md`, `plan.md`, `tasks.md`) siguen la metodología SDD descrita en el **§15 — Spec-Driven Development**.
 
 ---
 
 ## 3. Descripción de las Capas (Por qué esta estructura)
+
+> Esta sección describe las capas del **código fuente** (`src/`). Para la estructura de documentación SDD (`specs/features/`), ver **§15 — Spec-Driven Development**.
 
 ### 1. `core/` (El Motor)
 Aquí reside todo lo que la aplicación necesita instanciar **una sola vez** al arrancar.
@@ -103,6 +122,7 @@ Contiene todo lo que es transversal a más de un dominio pero no pertenece al ci
 ### 3. `domains/` (El Corazón del Negocio)
 Esta es la mejora más grande frente a tu arquitectura actual. En lugar de tener una carpeta `pages/` gigante con archivos de diferentes módulos mezclados, cada dominio es un ecosistema cerrado compuesto por **Features**.
 * **Features (Funcionalidades):** Reemplazan el concepto tradicional de "Páginas". Una *feature* encapsula una funcionalidad completa (ej. `well-create`). Cada feature contiene sus propios componentes internos, su lógica específica y, crucialmente, **su propio archivo de constantes/textos locales**.
+* **Cada feature de código tiene su artefacto SDD correspondiente** en `specs/features/NNN-nombre/` (ver **§15**). El `plan.md` de la feature es el documento de referencia que define exactamente qué archivos viven dentro de ella.
 * **Ejemplo en tu app:** Si un desarrollador necesita arreglar un bug en la creación del UWI o en la validación de la Forma 101, no tiene que buscar en `src/utils`, luego en `src/pages`, y luego en `src/store`. Todo lo relacionado con pozos vive exclusivamente dentro de `src/app/domains/wells/features/well-create/`.
 * **Escalabilidad:** Si el día de mañana el módulo de "Producción" crece demasiado, esta arquitectura permite extraer la carpeta `production/` a un micro-frontend o a una librería separada en un monorepo (usando herramientas como Nx).
 
@@ -1342,3 +1362,53 @@ Cambiar toda la estética del sistema — colores, tipografía — se reduce a e
 ```
 
 > **Referencia:** Los valores de color, tipografía y escala mostrados son ilustrativos. Los tokens reales — primitivos y semánticos — se definen según la identidad visual y el sistema de diseño establecido para el proyecto.
+
+---
+
+## 15. Metodología de Desarrollo: Spec-Driven Development (SDD)
+
+Este proyecto adopta la metodología **SDD (Spec-Driven Development)** de INTERKONT. La especificación precede siempre a la implementación: **ningún archivo de código puede crearse sin que existan los artefactos documentales aprobados.**
+
+### 15.1. Estructura de Documentación
+
+```text
+/                                        # Raíz del repositorio
+├── CONSTITUTION.md                      # GLOBAL: reglas inmutables de todo el proyecto (este archivo)
+├── CLAUDE.md                            # Ancla de contexto para Claude Code
+├── GEMINI.md                            # Ancla de contexto para Gemini
+├── blueprint.md                         # Mapa funcional del sistema (rutas, dominios, flujos)
+└── specs/
+    └── features/                        # Un directorio por cada feature a desarrollar
+        ├── 001-auth/                    # NNN = número secuencial │ nombre = slug de la feature
+        │   ├── spec.md                  #   El "QUÉ": historias de usuario, criterios de aceptación
+        │   ├── plan.md                  #   El "CÓMO": árbol de archivos, componentes, estado
+        │   └── tasks.md                 #   El "CUÁNDO": tareas atómicas con checkboxes
+        └── NNN-nombre-feature/
+            └── ...
+```
+
+**Regla absoluta:** `CONSTITUTION.md` y `blueprint.md` son los únicos artefactos globales. Los archivos `spec.md`, `plan.md` y `tasks.md` son **exclusivos de cada feature** y viven dentro de su carpeta `specs/features/NNN-nombre/`. Nunca se comparten entre features.
+
+### 15.2. Responsabilidad de cada Artefacto
+
+| Artefacto | Alcance | Propósito | Quién lo valida |
+|---|---|---|---|
+| `CONSTITUTION.md` | Global | Reglas arquitectónicas inmutables | Líder técnico — consenso del equipo |
+| `blueprint.md` | Global | Mapa funcional del sistema | Equipo — se actualiza si cambia el sistema |
+| `spec.md` | Por feature | *Qué* construir: historias, criterios Given/When/Then, edge cases | Desarrollador — antes de generar `plan.md` |
+| `plan.md` | Por feature | *Cómo* construirlo: árbol de archivos, estrategia de estado, dependencias | Desarrollador — debe respetar `CONSTITUTION.md` |
+| `tasks.md` | Por feature | Desglose atómico en checkboxes, ordenado por dependencias | Desarrollador — granularidad: 1 tarea = 1 archivo |
+
+### 15.3. Flujo Obligatorio por Feature
+
+```
+1. Abrir rama de trabajo (git)
+2. Crear directorio  specs/features/NNN-nombre/
+3. Redactar spec.md  → Revisar edge cases y criterios medibles. Aprobar antes de continuar.
+4. Redactar plan.md  → Validar que respeta CONSTITUTION.md. Aprobar antes de continuar.
+5. Redactar tasks.md → Asegurar granularidad atómica (1 archivo por tarea). Aprobar antes de continuar.
+6. Implementar       → Tarea por tarea. Marcar [x] solo cuando cumple estándares de calidad.
+7. Actualizar        → Sección "Feature Activa" en CLAUDE.md y GEMINI.md al cambiar de feature.
+```
+
+> **Regla de gobernanza SDD:** La IA genera propuestas; el desarrollador es el responsable final. Nunca avanzar al siguiente artefacto sin revisar e iterar el anterior.

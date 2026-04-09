@@ -2,7 +2,7 @@
 
 **Feature ID:** 001-auth
 **Dominio:** `/auth` → Auth Layout (sin Sidebar, sin TopHeader)
-**Estado:** Borrador — pendiente revisión del desarrollador
+**Estado:** Aprobado — listo para generar `plan.md`
 
 ---
 
@@ -33,7 +33,7 @@ Este módulo cubre el ciclo de autenticación del usuario dentro de GOP 360°. A
 **Escenario 1 — Inicio de sesión exitoso**
 - **Dado** que el usuario se encuentra en `/login` con sesión no activa
 - **Cuando** ingresa un correo y contraseña válidos (presentes en el mock de usuarios) y presiona "Iniciar Sesión"
-- **Entonces** el sistema almacena el token de sesión simulado, registra el rol del usuario y redirige a `/dashboard`
+- **Entonces** el sistema almacena el token de sesión simulado, registra el rol del usuario y redirige a la página principal del sistema (`/`)
 
 **Escenario 2 — Credenciales incorrectas**
 - **Dado** que el usuario se encuentra en `/login`
@@ -52,14 +52,14 @@ Este módulo cubre el ciclo de autenticación del usuario dentro de GOP 360°. A
 
 **Escenario 4 — Error de red / servicio no disponible**
 - **Dado** que el usuario envía credenciales válidas
-- **Cuando** el servicio mock lanza un error simulado (ej. timeout o error 503)
-- **Entonces** se muestra un toast de error global (PrimeNG `MessageService`): *"Sin conexión. Verifica tu red e intenta de nuevo."*
+- **Cuando** el servicio mock lanza un error simulado (ej. timeout o fallo del servidor)
+- **Entonces** se muestra una notificación de error global: *"Sin conexión. Verifica tu red e intenta de nuevo."*
 - **Y** el formulario vuelve a estar habilitado para reintento
 
 **Escenario 5 — Usuario ya autenticado**
-- **Dado** que existe una sesión activa en el store (NgRx)
+- **Dado** que existe una sesión activa
 - **Cuando** el usuario navega a `/login` directamente (ej. URL manual)
-- **Entonces** el Auth Guard redirige automáticamente a `/dashboard` sin mostrar el formulario de login
+- **Entonces** el guard redirige automáticamente a la página principal del sistema (`/`) sin mostrar el formulario de login
 
 ---
 
@@ -73,14 +73,14 @@ Este módulo cubre el ciclo de autenticación del usuario dentro de GOP 360°. A
 
 **Escenario 1 — Logout exitoso**
 - **Dado** que el usuario está autenticado y presiona la acción "Cerrar Sesión" (ubicada en el TopHeader)
-- **Cuando** confirma la acción (si aplica dialog de confirmación)
-- **Entonces** el store de NgRx limpia el estado de sesión, se elimina el token del storage y se redirige a `/login`
+- **Cuando** confirma la acción
+- **Entonces** el sistema limpia el estado de sesión, elimina el token del almacenamiento y redirige a `/login`
 
 **Escenario 2 — Token expirado / sesión inválida**
 - **Dado** que el usuario tiene una sesión simulada expirada
 - **Cuando** intenta navegar a cualquier ruta protegida
-- **Entonces** el Auth Guard detecta la expiración, limpia el estado y redirige a `/login` con el query param `?reason=session_expired`
-- **Y** en `/login` se muestra un toast informativo: *"Tu sesión ha expirado. Por favor, inicia sesión nuevamente."*
+- **Entonces** el guard detecta la expiración, limpia el estado y redirige a `/login` con el parámetro `?reason=session_expired`
+- **Y** en `/login` se muestra una notificación informativa: *"Tu sesión ha expirado. Por favor, inicia sesión nuevamente."*
 
 ---
 
@@ -112,7 +112,7 @@ Este módulo cubre el ciclo de autenticación del usuario dentro de GOP 360°. A
 **Escenario 4 — Navegación de vuelta al Login**
 - **Dado** que el usuario se encuentra en `/forgot-password`
 - **Cuando** presiona el enlace "Volver al inicio de sesión"
-- **Entonces** es redirigido a `/login` sin perder el estado del formulario de login (si había algo escrito)
+- **Entonces** es redirigido a `/login` con el formulario en estado inicial (reposo)
 
 ---
 
@@ -131,25 +131,115 @@ Este módulo cubre el ciclo de autenticación del usuario dentro de GOP 360°. A
 
 ## 4. Usuarios Mock (Datos Simulados)
 
-El `AuthService` mock debe contener al menos los siguientes perfiles para validar el RBAC:
+El `AuthService` mock debe contener al menos los siguientes perfiles para validar el RBAC. Cada usuario pertenece a un operador (tenant) que será utilizado por módulos futuros para filtrar información por empresa:
 
-| Correo | Contraseña | Rol | Descripción |
-|---|---|---|---|
-| `admin@gop360.com` | `Admin123*` | `ADMIN` | Acceso total, gestión de usuarios |
-| `supervisor@gop360.com` | `Super123*` | `SUPERVISOR` | Aprobación de formas operativas |
-| `operador@gop360.com` | `Oper123*` | `OPERADOR` | Carga de formas y reportes diarios |
-| `auditor@gop360.com` | `Audit123*` | `AUDITOR` | Solo lectura, acceso a audit logs |
+| Correo | Contraseña | Rol | Operador (Tenant) | Descripción |
+|---|---|---|---|---|
+| `admin@gop360.com` | `Admin123*` | `ADMIN` | Agencia Nacional de Hidrocarburos | Acceso total, gestión de usuarios |
+| `supervisor@gop360.com` | `Super123*` | `SUPERVISOR` | Ecopetrol S.A. | Aprobación de formas operativas |
+| `operador@gop360.com` | `Oper123*` | `OPERADOR` | Ecopetrol S.A. | Carga de formas y reportes diarios |
+| `auditor@gop360.com` | `Audit123*` | `AUDITOR` | Agencia Nacional de Hidrocarburos | Solo lectura, acceso a audit logs |
 
 ---
 
 ## 5. Requisitos de UI / UX
 
-- El layout de auth es minimalista: centrado en pantalla, sin navegación lateral
-- El formulario de login debe tener el logo de GOP 360° como elemento identitario
-- El botón "Iniciar Sesión" debe mostrar un spinner de carga mientras el servicio procesa
-- Los mensajes de error inline deben aparecer debajo del campo correspondiente, sin desplazar el layout
-- La pantalla debe ser completamente responsive (mobile-first)
-- Accesibilidad: atributos `aria-label` en campos, manejo correcto de foco tras error
+### 5.1. Estructura General del Layout de Auth
+
+El layout de autenticación es exclusivo para las rutas `/login` y `/forgot-password`. No muestra Sidebar ni TopHeader bajo ninguna circunstancia.
+
+El diseño es una **pantalla dividida (Split-Screen)** en proporción fija **1/3 — 2/3**:
+- El panel izquierdo ocupa 1/3 del ancho total de la pantalla.
+- El panel derecho ocupa 2/3 del ancho total de la pantalla.
+- En dispositivos móviles, el panel izquierdo se oculta y el panel derecho ocupa el 100% de la pantalla.
+
+Ambas pantallas (`/login` y `/forgot-password`) comparten exactamente el mismo layout; solo cambia el contenido del panel derecho.
+
+---
+
+### 5.2. Panel Izquierdo — Visual/Marca (1/3)
+
+- **Fondo:** Imagen fotográfica representativa de la industria de hidrocarburos, configurable sin recompilar la aplicación. Sobre la imagen se aplica una capa de superposición (overlay) con color azul navy oscuro y opacidad parcial para garantizar contraste y legibilidad del texto.
+- **Acento visual:** Línea horizontal corta en color amarillo/dorado, ubicada en la zona media-izquierda del panel, por encima del bloque de texto. Sirve como elemento de identidad de marca.
+- **Título principal:** *"Bienvenido a GOP 360°"* — tipografía grande, peso bold, color blanco, en la zona inferior-izquierda del panel.
+- **Subtexto descriptivo:** *"Accede a tu cuenta para gestionar todos los recursos de manera eficiente y segura."* — tipografía regular, color blanco con menor prominencia que el título, inmediatamente debajo del título.
+- El panel no contiene logo ni ningún otro elemento interactivo.
+
+---
+
+### 5.3. Panel Derecho — Formulario (2/3)
+
+Fondo blanco sólido. El contenido está distribuido verticalmente en tres zonas:
+
+**Zona superior — Identidad institucional:**
+- Logo institucional combinado (Ministerio de Energía + ANH) ubicado en la parte superior izquierda del panel.
+- Archivo de imagen: `src/assets/icons/login-logo.png`.
+
+**Zona central — Formulario (centrado verticalmente):**
+- Título de bienvenida y subtítulo descriptivo (varía según la pantalla, ver §5.4 y §5.5).
+- Campos del formulario con labels en mayúsculas pequeñas, marcados con asterisco (*) si son requeridos, e ícono de información (ⓘ) al lado del label.
+- Cada campo tiene un ícono decorativo a la izquierda dentro del input (ícono de sobre para correo, ícono de candado para contraseña).
+- El campo de contraseña tiene además un ícono de toggle (ojo) a la derecha para mostrar/ocultar el texto.
+- Botón de acción principal de ancho completo, fondo azul navy (mismo tono del panel izquierdo), texto blanco en bold.
+
+**Zona inferior — Pie del panel:**
+- Texto de versión del sistema: *"GOP 360° v1.0.0"* en tipografía pequeña, color gris muted, alineado a la izquierda.
+
+---
+
+### 5.4. Contenido de la Pantalla Login (`/login`)
+
+**Zona central:**
+- Título: *"Bienvenido de nuevo"*
+- Subtítulo: *"Ingresa a tu cuenta para continuar"*
+- Campo **CORREO ELECTRÓNICO \*** — placeholder: `usuario@dominio.com`
+- Campo **CONTRASEÑA \*** — con toggle de visibilidad
+- Enlace *"¿Olvidó su contraseña?"* alineado a la derecha, que navega a `/forgot-password`
+- Botón *"Iniciar Sesión"*
+
+**Estados de la pantalla:**
+- **Reposo:** Formulario habilitado, esperando interacción.
+- **Enviando:** Botón deshabilitado con indicador de carga; texto cambia a *"Ingresando..."*. Campos no editables.
+- **Error de validación:** Mensaje inline debajo del campo afectado, sin desplazar el layout.
+- **Error de autenticación/red:** Notificación global de error en pantalla.
+- **Éxito:** Redirección inmediata a la página principal del sistema (`/`); sin estado visual intermedio.
+
+---
+
+### 5.5. Contenido de la Pantalla Recuperación de Contraseña (`/forgot-password`)
+
+Mismo layout que `/login`. Solo cambia la zona central del panel derecho:
+
+- Título: *"Recuperar contraseña"*
+- Subtítulo: *"Ingresa tu correo registrado y te enviaremos las instrucciones."*
+- Campo **CORREO ELECTRÓNICO \***
+- Botón *"Enviar enlace de recuperación"*
+- Enlace *"Volver al inicio de sesión"* alineado debajo del botón
+
+**Estados de la pantalla:**
+- **Reposo:** Formulario habilitado.
+- **Enviando:** Botón deshabilitado con indicador de carga.
+- **Confirmación:** El formulario es reemplazado por un mensaje neutral (aplica tanto si el correo existe como si no): *"Si el correo está registrado, recibirás un enlace de recuperación en los próximos minutos."* y un botón *"Volver al inicio de sesión"*. No se vuelve a mostrar el formulario en esta misma visita.
+
+---
+
+### 5.6. Comportamiento del Toggle de Contraseña (Show/Hide)
+
+- **Dado** que el campo de contraseña contiene texto ingresado
+- **Cuando** el usuario presiona el ícono de ojo a la derecha del campo
+- **Entonces** el texto de la contraseña alterna entre visible y oculto, y el ícono cambia para reflejar el estado actual
+- El botón de toggle tiene una etiqueta accesible para lectores de pantalla que cambia dinámicamente: *"Mostrar contraseña"* / *"Ocultar contraseña"*
+
+---
+
+### 5.7. Accesibilidad
+
+- Todos los campos tienen etiqueta visible asociada.
+- Los íconos decorativos dentro de los campos son puramente visuales (no transmiten información al lector de pantalla por sí solos).
+- El ícono de toggle de contraseña es el único ícono interactivo; tiene etiqueta accesible.
+- El foco se posiciona automáticamente en el primer campo con error tras un intento de envío fallido.
+- El contraste de texto sobre los fondos (blanco y azul navy) cumple nivel AA de accesibilidad.
+- El formulario puede enviarse presionando Enter desde cualquier campo.
 
 ---
 
