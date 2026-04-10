@@ -6,6 +6,7 @@
   # Use https://search.nixos.org/packages to find packages
   packages = [
     pkgs.nodejs_22
+    pkgs.uv        # Gestor de paquetes Python — requerido por specify-cli (GitHub Spec Kit / SDD)
   ];
   # Sets environment variables in the workspace
   env = {};
@@ -15,10 +16,12 @@
       "angular.ng-template"
       "google.gemini-cli-vscode-ide-companion"
     ];
-    workspace = {
+    workspace = { 
       # Runs when a workspace is first created with this `dev.nix` file
       onCreate = {
         npm-install = "npm i --no-audit --no-progress --timing";
+        # Instala specify-cli (GitHub Spec Kit) para la metodología SDD
+        specify-install = "uv tool install specify-cli --from git+https://github.com/github/spec-kit.git";
         # Open editors for the following files by default, if they exist:
         default.openFiles = [ "src/app/app.component.ts" ];
       };

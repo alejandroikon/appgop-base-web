@@ -1,9 +1,10 @@
 import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideStore } from '@ngrx/store';
+import { provideState, provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { provideEffects } from '@ngrx/effects';
+import { authFeature, AuthEffects } from '@core/auth/store';
 import { providePrimeNG } from 'primeng/config';
 import { MessageService } from 'primeng/api';
 import Aura from '@primeuix/themes/aura';
@@ -24,9 +25,10 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([authInterceptor, errorInterceptor])
     ),
 
-    // NgRx Store global (los feature states se registran en cada dominio)
+    // NgRx Store global
     provideStore(),
-    provideEffects(),
+    provideState(authFeature),
+    provideEffects(AuthEffects),
     provideStoreDevtools({
       maxAge: 25,
       logOnly: !isDevMode(),

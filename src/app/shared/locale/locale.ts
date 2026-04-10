@@ -18,4 +18,19 @@ export const APP_LOCALE = {
     noConnection: 'Sin conexión. Verifica tu red.',
     forbidden:  'No tienes permisos para realizar esta acción.',
   },
+  auth: {
+    sessionExpiredTitle:   'Sesión expirada',
+    sessionExpiredMessage: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
+    logoutMessage:         'Has cerrado sesión correctamente.',
+  },
+  brand: {
+    title:    'GOP 360°',
+    welcome:  'Bienvenido a GOP 360°',
+    subtitle: 'Accede a tu cuenta para gestionar todos los recursos de manera eficiente y segura.',
+    version:  'GOP 360° v1.0.0',
+  },
+  home: {
+    title:    'GOP 360°',
+    subtitle: 'Plataforma en construcción',
+  },
 } as const;
