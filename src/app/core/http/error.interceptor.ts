@@ -1,9 +1,10 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Store } from '@ngrx/store';
 import { catchError, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
-import { AuthService } from '@core/auth/auth.service';
+import { AuthActions } from '@core/auth/store';
 
 // Mensajes de fallback cuando el backend no retorna un mensaje legible
 const HTTP_ERROR_MESSAGES: Record<number, string> = {
@@ -28,7 +29,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       switch (error.status) {
         case 401:
-          inject(AuthService).logout();
+          inject(Store).dispatch(AuthActions.sessionExpired());
           break;
 
         case 0:

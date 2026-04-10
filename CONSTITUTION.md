@@ -154,6 +154,30 @@ formData = signal<Partial<WellForm>>({});
 // store/catalogs/catalogs.selectors.ts → selectOperators
 ```
 
+### 4.1. Navegación post-acción: exclusivamente en Effects
+
+**Regla:** Los servicios (`AuthService`, `WellsApiService`, etc.) **nunca** inyectan `Router` ni `Store`. Su responsabilidad se limita a llamadas HTTP/mock y transformación de datos. Toda navegación y orquestación posterior a una acción (redirect tras login, redirect tras logout, navegación tras crear un recurso) es responsabilidad exclusiva de los **NgRx Effects**.
+
+```typescript
+// ❌ Prohibido: el servicio navega directamente
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private router = inject(Router); // ← NUNCA
+  logout(): void { this.router.navigate(['/login']); }
+}
+
+// ✅ Correcto: el Effect orquesta navegación + side effects
+logout$ = createEffect((actions$ = inject(Actions), router = inject(Router)) =>
+  actions$.pipe(
+    ofType(AuthActions.logout),
+    tap(() => router.navigate(['/login'])),
+    map(() => AuthActions.logoutSuccess()),
+  )
+);
+```
+
+**Por qué:** Centralizar la navegación en Effects hace el flujo predecible, testeable y trazable desde NgRx DevTools. Si el servicio navega, el componente pierde control sobre cuándo y hacia dónde ocurre el redirect.
+
 ---
 
 ## 5. Manejo de Errores HTTP (`core/http/`)
@@ -190,7 +214,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       switch (error.status) {
         case 401:
-          inject(AuthService).logout(); // Token expirado → redirige a login
+          // Token expirado → despacha acción NgRx. El Effect maneja limpieza + navegación.
+          inject(Store).dispatch(AuthActions.sessionExpired());
           break;
 
         case 0:
@@ -320,6 +345,18 @@ export * from './well.dto';
 export * from './well.mapper';
 ```
 
+**Regla de `export type` en barrels:** TypeScript con `isolatedModules` (habilitado por defecto en Angular) requiere que las re-exportaciones de tipos usen `export type`. Si un archivo solo exporta interfaces o types, el barrel debe usar `export type` para esas re-exportaciones:
+
+```typescript
+// ✅ Correcto: export type para re-exportar tipos/interfaces
+export type { Well } from './well.model';
+export type { WellDTO } from './well.dto';
+export { mapWellDTOToModel } from './well.mapper'; // funciones usan export normal
+
+// ❌ Error de compilación con isolatedModules
+export { Well } from './well.model'; // ← falla: Well es solo un tipo
+```
+
 **Por qué el mapper:** Si el backend cambia `well_id` por `id`, se actualiza solo el mapper — ningún template, componente ni selector se rompe.
 
 > **Referencia:** El modelo `Well` mostrado es un ejemplo del patrón. Los campos, tipos y estructura real de cada entidad se definen según el contrato de API establecido en la especificación funcional correspondiente.
@@ -395,9 +432,10 @@ import { WellsApiService } from '../../domains/wells/services/wells-api.service'
 
 **Está estrictamente prohibido "quemar" (hardcode) textos, etiquetas o mensajes directamente en los archivos HTML o TS.** En lugar de librerías de i18n con pipes asíncronos y archivos JSON, se usa un enfoque ágil basado en objetos TypeScript constantes (`locale.ts`), sin dependencias externas.
 
-Los textos se dividen en dos niveles:
-- **Global** (`shared/locale/locale.ts`): navegación, errores genéricos, botones comunes.
-- **Por Feature** (`domains/.../features/.../locale.ts`): textos exclusivos de esa funcionalidad. Si la feature se elimina, sus textos desaparecen con ella — sin textos huérfanos.
+Los textos se dividen en tres niveles:
+- **Global** (`shared/locale/locale.ts`): navegación, errores genéricos, botones comunes, branding de la app.
+- **Por Feature de dominio** (`domains/.../features/.../locale.ts`): textos exclusivos de esa funcionalidad. Si la feature se elimina, sus textos desaparecen con ella — sin textos huérfanos.
+- **Por Feature de core** (`core/.../features/.../locale.ts`): textos de funcionalidades del sistema (auth, onboarding). Misma regla: el locale vive junto a la feature que lo consume.
 
 **Por qué este enfoque sobre i18n tradicional:**
 - Sin pipes asíncronos ni archivos JSON que sincronizar
@@ -535,8 +573,8 @@ Esta regla es la más crítica para evitar el acoplamiento que hace colapsar la 
                     │
         ┌───────────┴────────────┐
         │         core/          │  ← No importa de shared/ui/ ni domains/
-        │  (auth, guards, http,  │  ← Solo puede importar de shared/utils/
-        │       layout)          │
+        │  (auth, guards, http,  │  ← Puede importar de shared/models/,
+        │       layout)          │    shared/locale/, shared/utils/
         └────────────────────────┘
 ```
 
@@ -544,7 +582,7 @@ Esta regla es la más crítica para evitar el acoplamiento que hace colapsar la 
 
 1. `domains/wells/` **NO puede** importar de `domains/operations/`. Si dos dominios comparten lógica, esa lógica sube a `shared/`.
 2. `shared/` **NO puede** importar de ningún dominio — si lo hace, ya no es "shared", es parte del dominio.
-3. `core/` **NO puede** importar componentes de `shared/ui/` — puede importar utilidades puras de `shared/utils/`.
+3. `core/` **NO puede** importar componentes de `shared/ui/` — puede importar de `shared/models/`, `shared/locale/` y `shared/utils/`.
 4. Toda comunicación entre dominios pasa por el **Store (NgRx)** o por un **servicio en `core/`**, nunca por importación directa.
 
 ---
@@ -559,16 +597,24 @@ La seguridad no es opcional. Estas reglas son de cumplimiento obligatorio desde 
 - **Nunca** ocultar rutas solo en el sidebar — el guard en el router es la única defensa real.
 
 ```typescript
-// core/guards/auth.guard.ts
+// core/guards/auth.guard.ts — lee el estado NgRx, no el servicio directamente
 export const authGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  return auth.isAuthenticated() ? true : inject(Router).createUrlTree(['/login']);
+  const store = inject(Store);
+  const router = inject(Router);
+  return store.select(selectIsAuthenticated).pipe(
+    take(1),
+    map(isAuth => isAuth ? true : router.createUrlTree(['/login'])),
+  );
 };
 
 // core/guards/role.guard.ts
-export const roleGuard = (roles: string[]): CanActivateFn => () => {
-  const auth = inject(AuthService);
-  return roles.includes(auth.getUserRole()) ? true : inject(Router).createUrlTree(['/forbidden']);
+export const roleGuard = (roles: UserRole[]): CanActivateFn => () => {
+  const store = inject(Store);
+  const router = inject(Router);
+  return store.select(selectCurrentUser).pipe(
+    take(1),
+    map(user => user && roles.includes(user.role) ? true : router.createUrlTree(['/forbidden'])),
+  );
 };
 ```
 
@@ -604,15 +650,26 @@ localStorage.setItem('token', token);
 ### A07 — Fallos de Autenticación
 - El `AuthService` es el **único** punto de acceso al token — ningún componente ni servicio de dominio lo lee directamente.
 - Implementar refresh automático del token antes de su expiración.
-- El logout debe limpiar el store de NgRx, `sessionStorage`, y redirigir.
+- El `AuthService` **NO inyecta** `Router` ni `Store`. La navegación y el despacho de acciones son responsabilidad exclusiva de los **NgRx Effects**.
+- El logout se inicia despachando una acción (`logout()` o `sessionExpired()`); el Effect correspondiente llama a `authService.clearSession()`, navega y despacha `logoutSuccess()`.
 
 ```typescript
-// core/auth/auth.service.ts
-logout(): void {
-  this.store.dispatch(clearSession());    // Limpia NgRx store
-  sessionStorage.clear();                 // Limpia storage
-  this.router.navigate(['/login']);
+// core/auth/auth.service.ts — solo gestiona storage, nunca navega
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  saveSession(user: AuthUser): void { sessionStorage.setItem('token', `mock-token-${user.id}`); }
+  clearSession(): void { sessionStorage.clear(); }
+  getToken(): string | null { return sessionStorage.getItem('token'); }
 }
+
+// core/auth/store/auth.effects.ts — Effect maneja la orquestación completa
+logout$ = createEffect((actions$ = inject(Actions), authService = inject(AuthService), router = inject(Router)) =>
+  actions$.pipe(
+    ofType(AuthActions.logout),
+    tap(() => { authService.clearSession(); router.navigate(['/login']); }),
+    map(() => AuthActions.logoutSuccess()),
+  )
+);
 ```
 
 ### A05 — Configuración Insegura
@@ -767,6 +824,7 @@ domains/wells/features/well-create/components/
 - **Signals & Standalone:** Usar Angular Signals para estado de UI de componentes (abrir/cerrar modales, loading) para detección de cambios ultra rápida.
 - **Configuración Global:** Definir un preset de Tailwind alineado con los colores de PrimeNG para evitar inconsistencias visuales.
 - **Pass Through Global:** Configurar estilos por defecto en `providePrimeNG({ pt: {...} })` para que todos los componentes compartan la misma estética sin necesidad de repetir clases.
+- **PrimeNG + Tailwind: override en formularios nativos.** El plugin `tailwindcss-primeui` y el tema Aura de PrimeNG inyectan estilos oscuros (`background`, `color`) en elementos nativos de formulario (`input`, `select`, `textarea`). Cuando se usen inputs nativos (no componentes `p-inputtext` de PrimeNG), agregar clases explícitas de Tailwind para garantizar el fondo y texto esperados: `bg-white text-gray-900 placeholder-gray-400`. Sin esto, los inputs heredan fondos oscuros del tema.
 
 ---
 

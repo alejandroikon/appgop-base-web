@@ -35,6 +35,24 @@ Phase N (Polish)      → Validación cruzada, imports, textos
 
 Cada fase puede contener uno o más bloques. Consultar la sección **"Implementation Blocks"** del `tasks.md` activo para la secuencia exacta de ejecución con `/speckit-implement`.
 
+### Tareas Emergentes
+
+Durante la implementación pueden surgir tareas no previstas en el `plan.md` original (ej. un archivo existente que requiere migración, un componente placeholder necesario para evitar loops de navegación). Protocolo:
+
+1. **Nombrar** con sufijo alfabético sobre la tarea más cercana: `T019b`, `T026c`.
+2. **Agregar** la tarea emergente en `tasks.md` inmediatamente después de la tarea que la originó, marcándola como `[EMERGENTE]`.
+3. **Si la tarea implica un archivo nuevo** no previsto en el `plan.md`, actualizar el árbol de archivos del plan (§2) para mantener coherencia.
+4. **Si la tarea implica un cambio arquitectónico** (nueva dependencia entre capas, nuevo patrón), evaluar si debe actualizarse el `CONSTITUTION.md`.
+
+### Checklist Pre-Implementación de Bloque
+
+Antes de ejecutar un bloque de tareas, validar:
+
+- [ ] Toda ruta de navegación (redirects, login success, logout) tiene un destino que **existe o se crea en este bloque**.
+- [ ] Los archivos que se **modifican** en este bloque no tienen dependencias rotas con código existente (ej. un interceptor que referencia un método eliminado).
+- [ ] Los componentes referenciados por rutas lazy (`loadComponent`) se crean **antes** que la ruta que los importa.
+- [ ] Si el bloque introduce NgRx state/effects, `app.config.ts` incluye `provideState()` y `provideEffects()`.
+
 ---
 
 ## Constitución y Arquitectura Global

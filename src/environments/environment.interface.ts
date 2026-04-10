@@ -8,4 +8,5 @@ export interface AppEnvironment {
   featureFlags: {
     enableBetaFeatures: boolean;
   };
+  loginBgUrl: string;
 }

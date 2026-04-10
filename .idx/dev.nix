@@ -16,7 +16,7 @@
       "angular.ng-template"
       "google.gemini-cli-vscode-ide-companion"
     ];
-    workspace = {
+    workspace = { 
       # Runs when a workspace is first created with this `dev.nix` file
       onCreate = {
         npm-install = "npm i --no-audit --no-progress --timing";

@@ -45,9 +45,11 @@ src/
 │   │   │   ├── auth.guard.ts                                  # Protege rutas autenticadas: redirige a /login si no hay sesión activa
 │   │   │   └── no-auth.guard.ts                               # Protege rutas públicas: redirige a / si ya hay sesión activa
 │   │   └── layout/
-│   │       └── auth-layout/
-│   │           ├── auth-layout.component.ts                   # Contenedor split-screen (layout shell sin Sidebar ni TopHeader)
-│   │           └── auth-layout.component.html                 # Template: panel izquierdo (marca) + panel derecho (<router-outlet>)
+│   │       ├── auth-layout/
+│   │       │   ├── auth-layout.component.ts                   # Contenedor split-screen (layout shell sin Sidebar ni TopHeader)
+│   │       │   └── auth-layout.component.html                 # Template: panel izquierdo (marca) + panel derecho (<router-outlet>)
+│   │       └── home/
+│   │           └── home.component.ts                          # Página principal temporal (placeholder post-login, protegida por authGuard)
 │   └── shared/
 │       └── models/
 │           ├── user-role.model.ts                             # Type UserRole: 'ADMIN' | 'SUPERVISOR' | 'OPERADOR' | 'AUDITOR'
@@ -62,11 +64,15 @@ src/
 ```
 src/
 ├── app/
-│   ├── app.routes.ts                                          # + rutas auth, + authGuard en rutas existentes, + redirectTo /login
-│   ├── app.config.ts                                          # + provideState(authFeature) para registrar el feature state NgRx
+│   ├── app.ts                                                 # + import RouterOutlet, template reducido a <router-outlet />
+│   ├── app.html                                               # Reemplazar contenido estático por <router-outlet />
+│   ├── app.routes.ts                                          # + rutas auth con noAuthGuard, + HomeComponent en /, + authGuard en dominios
+│   ├── app.config.ts                                          # + provideState(authFeature) + provideEffects(AuthEffects)
 │   └── core/
-│       └── auth/
-│           └── auth.service.ts                                # + mock login/forgotPassword, + dispatch NgRx, + lógica de sesión completa
+│       ├── auth/
+│       │   └── auth.service.ts                                # + mock login/forgotPassword, + saveSession/clearSession, sin navegación directa
+│       └── http/
+│           └── error.interceptor.ts                           # Cambiar AuthService.logout() → dispatch(AuthActions.sessionExpired())
 └── environments/
     ├── environment.interface.ts                               # + campo loginBgUrl: string
     ├── environment.ts                                         # + loginBgUrl: 'assets/images/login-bg.jpg' (placeholder local)
@@ -303,7 +309,13 @@ La función `mockLogin(credentials)` aplica:
 
 ## 9. Modificaciones a Archivos Existentes
 
-### 9.1. `app.routes.ts`
+### 9.1. `app.ts` y `app.html`
+
+El `AppComponent` raíz debe:
+- Importar `RouterOutlet` en el array `imports`
+- Reducir su template (`app.html`) a solo `<router-outlet />`, eliminando cualquier contenido estático previo
+
+### 9.2. `app.routes.ts`
 
 ```typescript
 // ANTES: redirectTo 'wells' por defecto, sin auth ni guards
@@ -314,31 +326,41 @@ La función `mockLogin(credentials)` aplica:
   component: AuthLayoutComponent,
   children: [{ path: '', loadComponent: () => LoginComponent }]
 },
+// forgot-password se agrega en Phase 4 cuando el componente exista
 {
-  path: 'forgot-password',
-  canActivate: [noAuthGuard],
-  component: AuthLayoutComponent,
-  children: [{ path: '', loadComponent: () => ForgotPasswordComponent }]
+  path: '',
+  pathMatch: 'full',
+  canActivate: [authGuard],
+  loadComponent: () => HomeComponent,               // Página principal temporal (post-login)
 },
 { path: 'wells',       canActivate: [authGuard], loadChildren: () => wellsRoutes },
 { path: 'operations',  canActivate: [authGuard], loadChildren: () => operationsRoutes },
 { path: 'production',  canActivate: [authGuard], loadChildren: () => productionRoutes },
 { path: 'admin',       canActivate: [authGuard], loadChildren: () => adminRoutes },
-{ path: '',            redirectTo: 'login', pathMatch: 'full' },
-{ path: '**',          redirectTo: 'login' },
+{ path: '**',          redirectTo: '' },
 ```
 
-### 9.2. `app.config.ts`
+> **Nota:** La ruta `/` carga un `HomeComponent` placeholder protegido por `authGuard`. Esto evita el loop de redirección: login exitoso → `/` → authGuard OK → HomeComponent. Sin sesión → `/` → authGuard redirige a `/login`. En features futuras, esta ruta se reemplazará por un dashboard real.
 
-Agregar `provideState(authFeature)` al array de providers para registrar el feature state NgRx del módulo de autenticación.
+### 9.3. `app.config.ts`
 
-### 9.3. `auth.service.ts`
+Agregar `provideState(authFeature)` y `provideEffects(AuthEffects)` al array de providers para registrar el feature state y los effects NgRx del módulo de autenticación.
+
+### 9.4. `auth.service.ts`
 
 Ampliar con:
 - `login(credentials: LoginCredentials): Observable<AuthUser>` → delega a `mockLogin()`, sin manejo de errores (los errores los captura el Effect y los despacha como `loginFailure`)
-- `forgotPassword(email: string): Observable<void>` → mock que retorna `of(void)` tras 800ms simulados
-- `clearSession(): void` → limpia `sessionStorage` y despacha `logoutSuccess()` al store
-- Eliminar el `this.router.navigate` del `logout()` actual — la navegación es responsabilidad del Effect, no del servicio
+- `forgotPassword(email: string): Observable<void>` → mock que retorna éxito tras 800ms simulados
+- `saveSession(user: AuthUser): void` → guarda token y rol en `sessionStorage`
+- `clearSession(): void` → limpia `sessionStorage`
+- `getToken(): string | null` → lee el token de sesión
+- Eliminar el `this.router.navigate` y `this.store` del servicio original — la navegación es responsabilidad del Effect, no del servicio
+
+### 9.5. `error.interceptor.ts`
+
+Cambiar la lógica del caso 401:
+- **Antes:** `inject(AuthService).logout()` — llamaba directamente al servicio
+- **Después:** `inject(Store).dispatch(AuthActions.sessionExpired())` — despacha la acción al store, dejando que el effect `sessionExpired$` maneje la limpieza de sesión y la navegación a `/login?reason=session_expired`
 
 ### 9.4. `environment.interface.ts`
 
@@ -431,11 +453,15 @@ Fase 3 — Guards (dependen del store)
   core/guards/auth.guard.ts          ← depende de auth.selectors
   core/guards/no-auth.guard.ts       ← depende de auth.selectors
 
-Fase 4 — Layout y configuración (dependen de guards y store)
+Fase 4 — Layout, configuración y correcciones base (dependen de guards y store)
+  app.ts (MODIFY)                    ← + RouterOutlet import
+  app.html (MODIFY)                  ← reemplazar contenido estático por <router-outlet />
   core/layout/auth-layout/auth-layout.component.ts   ← depende de environment
   core/layout/auth-layout/auth-layout.component.html
-  app.config.ts (MODIFY)             ← provideState(authFeature)
-  app.routes.ts (MODIFY)             ← depende de guards + AuthLayoutComponent + features
+  core/layout/home/home.component.ts ← placeholder post-login
+  app.config.ts (MODIFY)             ← provideState(authFeature) + provideEffects(AuthEffects)
+  error.interceptor.ts (MODIFY)      ← dispatch(sessionExpired()) en vez de AuthService.logout()
+  app.routes.ts (MODIFY)             ← depende de guards + AuthLayoutComponent + HomeComponent
 
 Fase 5 — Pantallas (dependen de todo lo anterior)
   core/auth/features/login/locale.ts

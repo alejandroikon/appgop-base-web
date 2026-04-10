@@ -15,15 +15,15 @@
 
 **Propósito**: Definir los tipos base (`AuthUser`, `UserRole`, `LoginCredentials`) y extender la configuración de entornos. Sin dependencias entre sí — todas paralelas.
 
-- [ ] T001 [P] Crear type `UserRole` — `src/app/shared/models/user-role.model.ts`
-- [ ] T002 [P] Crear interface `AuthUser` (incluye `tenantId`, `tenantName`) — `src/app/shared/models/auth-user.model.ts`
-- [ ] T003 [P] Crear interfaces `AuthUserDTO` y `LoginCredentials` — `src/app/shared/models/auth-user.dto.ts`
-- [ ] T004 Crear función pura `mapAuthUserDTOToModel` — `src/app/shared/models/auth-user.mapper.ts`
-- [ ] T005 Crear barrel export del grupo de modelos — `src/app/shared/models/index.ts`
-- [ ] T006 [P] Agregar campo `loginBgUrl: string` a la interfaz de entorno — `src/environments/environment.interface.ts`
-- [ ] T007 [P] Agregar valor `loginBgUrl` al entorno de desarrollo — `src/environments/environment.ts`
-- [ ] T008 [P] Agregar valor `loginBgUrl` al entorno QA — `src/environments/environment.qa.ts`
-- [ ] T009 [P] Agregar valor `loginBgUrl` al entorno producción — `src/environments/environment.prod.ts`
+- [x] T001 [P] Crear type `UserRole` — `src/app/shared/models/user-role.model.ts`
+- [x] T002 [P] Crear interface `AuthUser` (incluye `tenantId`, `tenantName`) — `src/app/shared/models/auth-user.model.ts`
+- [x] T003 [P] Crear interfaces `AuthUserDTO` y `LoginCredentials` — `src/app/shared/models/auth-user.dto.ts`
+- [x] T004 Crear función pura `mapAuthUserDTOToModel` — `src/app/shared/models/auth-user.mapper.ts`
+- [x] T005 Crear barrel export del grupo de modelos — `src/app/shared/models/index.ts`
+- [x] T006 [P] Agregar campo `loginBgUrl: string` a la interfaz de entorno — `src/environments/environment.interface.ts`
+- [x] T007 [P] Agregar valor `loginBgUrl` al entorno de desarrollo — `src/environments/environment.ts`
+- [x] T008 [P] Agregar valor `loginBgUrl` al entorno QA — `src/environments/environment.qa.ts`
+- [x] T009 [P] Agregar valor `loginBgUrl` al entorno producción — `src/environments/environment.prod.ts`
 
 **Checkpoint**: Modelos tipados disponibles y configuración de entornos completa. Verificar que `ng build` no arroja errores.
 
@@ -35,16 +35,17 @@
 
 **⚠️ BLOQUEANTE**: No iniciar Phase 3 ni 4 hasta completar esta fase íntegramente.
 
-- [ ] T010 [P] Crear datos mock `MOCK_USERS` y función `mockLogin()` — `src/app/core/auth/auth.mock.ts`
-- [ ] T011 [BLOQUEANTE] Crear acciones NgRx: `login`, `loginSuccess`, `loginFailure`, `logout`, `logoutSuccess`, `sessionExpired`, `clearAuthError` — `src/app/core/auth/store/auth.actions.ts`
-- [ ] T012 [BLOQUEANTE] Crear reducer `authReducer` con `AuthState` (user, isAuthenticated, isLoading, error) — `src/app/core/auth/store/auth.reducer.ts`
-- [ ] T013 [BLOQUEANTE] Crear selectores: `selectCurrentUser`, `selectIsAuthenticated`, `selectCurrentTenant`, `selectAuthIsLoading`, `selectAuthError` — `src/app/core/auth/store/auth.selectors.ts`
-- [ ] T014 [BLOQUEANTE] [US2] Crear effects: `login$`, `loginSuccess$`, `logout$`, `sessionExpired$` (navegación y sessionStorage exclusivamente en effects) — `src/app/core/auth/store/auth.effects.ts`
-- [ ] T015 Crear barrel export del store (exporta `authFeature` + acciones + selectores) — `src/app/core/auth/store/index.ts`
-- [ ] T016 [BLOQUEANTE] Expandir `AuthService`: agregar `login()`, `clearSession()`, `saveSession()`, eliminar navegación directa del `logout()` actual — `src/app/core/auth/auth.service.ts`
-- [ ] T017 [P] [BLOQUEANTE] [US2] Crear `authGuard`: protege rutas autenticadas, redirige a `/login?returnUrl=...` leyendo `selectIsAuthenticated` del store — `src/app/core/guards/auth.guard.ts`
-- [ ] T018 [P] [BLOQUEANTE] Crear `noAuthGuard`: redirige a `/` si ya hay sesión activa, leyendo `selectIsAuthenticated` del store — `src/app/core/guards/no-auth.guard.ts`
-- [ ] T019 [BLOQUEANTE] Registrar `authFeature` en providers globales con `provideState(authFeature)` y `provideEffects(AuthEffects)` — `src/app/app.config.ts`
+- [x] T010 [P] Crear datos mock `MOCK_USERS` y función `mockLogin()` — `src/app/core/auth/auth.mock.ts`
+- [x] T011 [BLOQUEANTE] Crear acciones NgRx: `login`, `loginSuccess`, `loginFailure`, `logout`, `logoutSuccess`, `sessionExpired`, `clearAuthError` — `src/app/core/auth/store/auth.actions.ts`
+- [x] T012 [BLOQUEANTE] Crear reducer `authReducer` con `AuthState` (user, isAuthenticated, isLoading, error) — `src/app/core/auth/store/auth.reducer.ts`
+- [x] T013 [BLOQUEANTE] Crear selectores: `selectCurrentUser`, `selectIsAuthenticated`, `selectCurrentTenant`, `selectAuthIsLoading`, `selectAuthError` — `src/app/core/auth/store/auth.selectors.ts`
+- [x] T014 [BLOQUEANTE] [US2] Crear effects: `login$`, `loginSuccess$`, `logout$`, `sessionExpired$` (navegación y sessionStorage exclusivamente en effects) — `src/app/core/auth/store/auth.effects.ts`
+- [x] T015 Crear barrel export del store (exporta `authFeature` + acciones + selectores) — `src/app/core/auth/store/index.ts`
+- [x] T016 [BLOQUEANTE] Expandir `AuthService`: agregar `login()`, `clearSession()`, `saveSession()`, eliminar navegación directa del `logout()` actual — `src/app/core/auth/auth.service.ts`
+- [x] T017 [P] [BLOQUEANTE] [US2] Crear `authGuard`: protege rutas autenticadas, redirige a `/login?returnUrl=...` leyendo `selectIsAuthenticated` del store — `src/app/core/guards/auth.guard.ts`
+- [x] T018 [P] [BLOQUEANTE] Crear `noAuthGuard`: redirige a `/` si ya hay sesión activa, leyendo `selectIsAuthenticated` del store — `src/app/core/guards/no-auth.guard.ts`
+- [x] T019 [BLOQUEANTE] Registrar `authFeature` en providers globales con `provideState(authFeature)` y `provideEffects(AuthEffects)` — `src/app/app.config.ts`
+- [x] T019b [EMERGENTE] Migrar `error.interceptor.ts`: reemplazar `AuthService.logout()` → `dispatch(AuthActions.sessionExpired())` — `src/app/core/http/error.interceptor.ts`
 
 **Checkpoint**: Store NgRx funcional, guards operativos, `AuthService` con mock. Verificar que `ng build` compila sin errores y la app sigue funcionando como antes (sin cambio visual).
 
@@ -65,14 +66,16 @@
 >
 > **Orden de creación**: Los componentes se crean ANTES que las rutas, porque `auth.routes.ts` importa dinámicamente los componentes y Angular resuelve los imports en compilación (AOT).
 
-- [ ] T020 [P] [US1] Crear `AuthLayoutComponent` (shell split-screen, lee `environment.loginBgUrl`) — `src/app/core/layout/auth-layout/auth-layout.component.ts`
-- [ ] T021 [P] [US1] Crear locale de la pantalla login con todos los textos (títulos, labels, placeholders, errores, acciones) — `src/app/core/auth/features/login/locale.ts`
-- [ ] T022 [US1] Crear template del layout: panel izquierdo (1/3 overlay+texto) + panel derecho (2/3 logo+outlet+versión) — `src/app/core/layout/auth-layout/auth-layout.component.html`
-- [ ] T023 [US1] Crear `LoginComponent`: formulario reactivo, Signals (`showPassword`), despacho de acciones NgRx, lectura de `?reason` query param para HU-002 — `src/app/core/auth/features/login/login.component.ts`
-- [ ] T024 [US1] Crear template del login: campos con íconos, toggle contraseña, enlace ¿Olvidó?, botón con estado de carga — `src/app/core/auth/features/login/login.component.html`
-- [ ] T025 [US1] [BLOQUEANTE] Crear rutas del módulo auth con `AuthLayoutComponent` como shell y lazy loading de `LoginComponent` (solo ruta `/login`) — `src/app/core/auth/auth.routes.ts`
-- [ ] T026 [US1] [US2] [BLOQUEANTE] Modificar rutas raíz: agregar auth routes, `authGuard` en dominios existentes, `redirectTo: 'login'` como default — `src/app/app.routes.ts`
-- [ ] T027 [US2] Agregar textos de sesión expirada y notificaciones de auth al locale global — `src/app/shared/locale/locale.ts`
+- [x] T020 [P] [US1] Crear `AuthLayoutComponent` (shell split-screen, lee `environment.loginBgUrl`) — `src/app/core/layout/auth-layout/auth-layout.component.ts`
+- [x] T021 [P] [US1] Crear locale de la pantalla login con todos los textos (títulos, labels, placeholders, errores, acciones) — `src/app/core/auth/features/login/locale.ts`
+- [x] T022 [US1] Crear template del layout: panel izquierdo (1/3 overlay+texto) + panel derecho (2/3 logo+outlet+versión) — `src/app/core/layout/auth-layout/auth-layout.component.html`
+- [x] T023 [US1] Crear `LoginComponent`: formulario reactivo, Signals (`showPassword`), despacho de acciones NgRx, lectura de `?reason` query param para HU-002 — `src/app/core/auth/features/login/login.component.ts`
+- [x] T024 [US1] Crear template del login: campos con íconos, toggle contraseña, enlace ¿Olvidó?, botón con estado de carga — `src/app/core/auth/features/login/login.component.html`
+- [x] T025 [US1] [BLOQUEANTE] Crear rutas del módulo auth con `AuthLayoutComponent` como shell y lazy loading de `LoginComponent` (solo ruta `/login`) — `src/app/core/auth/auth.routes.ts`
+- [x] T026 [US1] [US2] [BLOQUEANTE] Modificar rutas raíz: agregar auth routes con `noAuthGuard`, dominios con `authGuard`, `HomeComponent` en `/` como página principal — `src/app/app.routes.ts`
+- [x] T026b [EMERGENTE] Corregir `AppComponent`: importar `RouterOutlet` y reducir template a `<router-outlet />` — `src/app/app.ts` + `src/app/app.html`
+- [x] T026c [EMERGENTE] Crear `HomeComponent` placeholder post-login (protegido por `authGuard`) — `src/app/core/layout/home/home.component.ts`
+- [x] T027 [US2] Agregar textos de sesión expirada y notificaciones de auth al locale global — `src/app/shared/locale/locale.ts`
 
 **Checkpoint**: Flujo completo de login funcional. Verificar los 5 escenarios de HU-001 y los 2 escenarios de HU-002 (logout + sesión expirada → notificación en `/login`).
 
@@ -86,11 +89,11 @@
 
 > **Referencia visual:** Misma estructura split-screen de `specs/features/001-auth/ref-login.png`. Solo cambia el contenido del panel derecho (ver spec §5.5).
 
-- [ ] T028 [P] [US3] Crear locale de recuperación de contraseña (título, subtítulo, labels, acciones, confirmación) — `src/app/core/auth/features/forgot-password/locale.ts`
-- [ ] T029 [US3] Agregar método `forgotPassword(email: string): Observable<void>` al `AuthService` (mock con delay simulado) — `src/app/core/auth/auth.service.ts`
-- [ ] T030 [US3] Crear `ForgotPasswordComponent`: formulario reactivo, Signals (`isLoading`, `isConfirmed`), llamada a `AuthService.forgotPassword()` — `src/app/core/auth/features/forgot-password/forgot-password.component.ts`
-- [ ] T031 [US3] Crear template: formulario con campo email ↔ pantalla de confirmación (renderizado condicional con `@if`) — `src/app/core/auth/features/forgot-password/forgot-password.component.html`
-- [ ] T032 [US3] Agregar ruta `/forgot-password` con lazy loading de `ForgotPasswordComponent` a las rutas auth existentes — `src/app/core/auth/auth.routes.ts`
+- [x] T028 [P] [US3] Crear locale de recuperación de contraseña (título, subtítulo, labels, acciones, confirmación) — `src/app/core/auth/features/forgot-password/locale.ts`
+- [x] T029 [US3] Agregar método `forgotPassword(email: string): Observable<void>` al `AuthService` (mock con delay simulado) — `src/app/core/auth/auth.service.ts`
+- [x] T030 [US3] Crear `ForgotPasswordComponent`: formulario reactivo, Signals (`isLoading`, `isConfirmed`), llamada a `AuthService.forgotPassword()` — `src/app/core/auth/features/forgot-password/forgot-password.component.ts`
+- [x] T031 [US3] Crear template: formulario con campo email ↔ pantalla de confirmación (renderizado condicional con `@if`) — `src/app/core/auth/features/forgot-password/forgot-password.component.html`
+- [x] T032 [US3] Agregar ruta `/forgot-password` con lazy loading de `ForgotPasswordComponent` a las rutas auth existentes — `src/app/core/auth/auth.routes.ts`
 
 **Checkpoint**: Flujo completo de forgot-password funcional. Verificar los 4 escenarios de HU-003, incluyendo la pantalla de confirmación neutral (RN-005).
 
@@ -100,9 +103,9 @@
 
 **Propósito**: Verificación transversal, calidad y compilación limpia antes de marcar la feature como completada.
 
-- [ ] T033 [P] Verificar que todos los imports entre capas usan path aliases (`@core/*`, `@shared/*`, `@env/*`) y no rutas relativas — revisar todos los archivos creados
-- [ ] T034 Ejecutar `ng build` y corregir todos los errores de compilación TypeScript — `angular.json` / todos los archivos modificados
-- [ ] T035 [P] Verificar que ningún texto está hardcodeado en templates o componentes (todo debe venir de `locale.ts`) — archivos `*.html` y `*.ts` de la feature
+- [x] T033 [P] Verificar que todos los imports entre capas usan path aliases (`@core/*`, `@shared/*`, `@env/*`) y no rutas relativas — revisar todos los archivos creados
+- [x] T034 Ejecutar `ng build` y corregir todos los errores de compilación TypeScript — `angular.json` / todos los archivos modificados
+- [x] T035 [P] Verificar que ningún texto está hardcodeado en templates o componentes (todo debe venir de `locale.ts`) — archivos `*.html` y `*.ts` de la feature
 
 **Checkpoint final**: `ng build` exitoso sin warnings. Los 4 usuarios mock pueden autenticarse. Los 3 flujos (login, logout por sesión expirada, forgot-password) funcionan end-to-end.
 
@@ -248,11 +251,11 @@ Cada bloque produce una aplicación compilable (`ng build` ✅) con resultado va
 
 ## Resumen
 
-| Fase | Historia | Tareas | Paralelas | Archivos |
-|---|---|---|---|---|
-| Phase 1 — Setup | — | T001–T009 | 8/9 | 5 nuevos + 4 modif. |
-| Phase 2 — Foundational | US1+US2 base | T010–T019 | 4/10 | 8 nuevos + 2 modif. |
-| Phase 3 — Login+Logout | US1+US2 | T020–T027 | 2/8 | 6 nuevos + 2 modif. |
-| Phase 4 — ForgotPw | US3 | T028–T032 | 1/5 | 3 nuevos + 2 modif. |
-| Phase 5 — Polish | — | T033–T035 | 2/3 | — |
-| **Total** | | **35 tareas** | **17 paralelas** | **22 nuevos + 10 modif.** |
+| Fase | Historia | Tareas | Archivos |
+|---|---|---|---|
+| Phase 1 — Setup | — | T001–T009 (9) | 5 nuevos + 4 modif. |
+| Phase 2 — Foundational | US1+US2 base | T010–T019 + T019b (11) | 8 nuevos + 3 modif. |
+| Phase 3 — Login+Logout | US1+US2 | T020–T027 + T026b,c (10) | 8 nuevos + 3 modif. |
+| Phase 4 — ForgotPw | US3 | T028–T032 (5) | 3 nuevos + 2 modif. |
+| Phase 5 — Polish | — | T033–T035 (3) | — |
+| **Total** | | **38 tareas** | **24 nuevos + 12 modif.** |
