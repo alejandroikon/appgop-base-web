@@ -1,0 +1,34 @@
+<p-toolbar class="border-none shadow-sm bg-surface px-4 py-2">
+  <ng-template #start>
+    <!-- Hamburguesa mobile -->
+    <button class="lg:hidden flex items-center justify-center w-10 h-10 rounded-md
+                   text-text-secondary hover:bg-surface-alt transition-colors mr-2"
+            [attr.aria-label]="locale.openMenu"
+            (click)="toggleSidebar.emit()">
+      <i class="pi pi-bars text-lg"></i>
+    </button>
+
+    <!-- Bienvenida -->
+    @if (user(); as u) {
+      <span class="hidden sm:inline text-text-primary text-sm font-medium">
+        {{ locale.welcome }}, {{ u.name }}
+      </span>
+    }
+  </ng-template>
+
+  <ng-template #end>
+    @if (user(); as u) {
+      <!-- Badge de rol -->
+      <p-badge [value]="u.role" severity="info" class="mr-3 hidden sm:inline-flex" />
+
+      <!-- Avatar -->
+      <p-avatar [label]="initials()" shape="circle" size="normal"
+                class="bg-primary text-text-inverse font-semibold mr-3" />
+
+      <!-- Tenant -->
+      <span class="hidden md:inline text-text-secondary text-sm font-medium mr-3">
+        {{ u.tenantName }}
+      </span>
+    }
+  </ng-template>
+</p-toolbar>

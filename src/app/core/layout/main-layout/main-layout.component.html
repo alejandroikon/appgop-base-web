@@ -1,0 +1,51 @@
+<div class="flex h-screen overflow-hidden bg-surface-alt">
+
+  <!-- Sidebar estático — solo desktop -->
+  <aside class="hidden lg:flex flex-col transition-all duration-300 relative bg-sidebar-bg shrink-0"
+         [style.width]="sidebarCollapsed() ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)'">
+    <app-sidebar
+      [navItems]="filteredNavItems()"
+      [collapsed]="sidebarCollapsed()"
+      [user]="currentUser()"
+      (logout)="onLogout()"
+      (navigated)="onMobileNavigated()" />
+
+    <!-- Toggle button — borde derecho -->
+    <button class="absolute top-14 -right-3.5 z-10 w-7 h-7 rounded-full
+                   bg-sidebar-accent text-sidebar-bg flex items-center justify-center
+                   shadow-lg border-2 border-surface-alt
+                   transition-transform hover:scale-110 cursor-pointer"
+            (click)="onToggleSidebar()"
+            [attr.aria-label]="sidebarCollapsed() ? locale.expandMenu : locale.collapseMenu">
+      @if (sidebarCollapsed()) {
+        <i class="pi pi-chevron-right text-[0.6rem] font-bold"></i>
+      } @else {
+        <i class="pi pi-chevron-left text-[0.6rem] font-bold"></i>
+      }
+    </button>
+  </aside>
+
+  <!-- Área principal -->
+  <div class="flex flex-col flex-1 overflow-hidden">
+    <app-top-header
+      [user]="currentUser()"
+      (toggleSidebar)="onToggleMobile()" />
+
+    <main class="flex-1 overflow-y-auto p-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<!-- Drawer mobile — fuera del flex para no afectar el layout -->
+<p-drawer [(visible)]="mobileDrawerOpen" position="left" [modal]="true"
+          [dismissible]="true" [closeOnEscape]="true" [blockScroll]="true"
+          [showCloseIcon]="false" class="w-72"
+          [style]="{ background: 'var(--sidebar-bg)' }">
+  <app-sidebar
+    [navItems]="filteredNavItems()"
+    [collapsed]="false"
+    [user]="currentUser()"
+    (logout)="onLogout()"
+    (navigated)="onMobileNavigated()" />
+</p-drawer>

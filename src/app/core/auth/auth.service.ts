@@ -22,7 +22,7 @@ export class AuthService {
 
   saveSession(user: AuthUser): void {
     sessionStorage.setItem('token', `mock-token-${user.id}`);
-    sessionStorage.setItem('role', user.role);
+    sessionStorage.setItem('user', JSON.stringify(user));
   }
 
   clearSession(): void {
@@ -31,5 +31,15 @@ export class AuthService {
 
   getToken(): string | null {
     return sessionStorage.getItem('token');
+  }
+
+  getStoredUser(): AuthUser | null {
+    const raw = sessionStorage.getItem('user');
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as AuthUser;
+    } catch {
+      return null;
+    }
   }
 }

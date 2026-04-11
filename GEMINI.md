@@ -71,10 +71,10 @@ El mapa funcional completo del sistema está en:
 
 > **Actualizar esta sección cada vez que se cambie de feature o módulo.**
 
-- **Feature:** Autenticación - Login
-- **Spec:** `specs/features/001-auth/spec.md`
-- **Plan:** `specs/features/001-auth/plan.md`
-- **Tareas:** `specs/features/001-auth/tasks.md`
+- **Feature:** Layout Base — Sidebar + TopHeader (completada)
+- **Spec:** `specs/features/002-layout/spec.md`
+- **Plan:** `specs/features/002-layout/plan.md`
+- **Tareas:** `specs/features/002-layout/tasks.md`
 
 ---
 

@@ -1,5 +1,7 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { AuthActions } from '@core/auth/store';
 
 @Component({
   selector: 'app-root',
@@ -7,4 +9,10 @@ import { RouterOutlet } from '@angular/router';
   imports: [RouterOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {}
+export class App implements OnInit {
+  private readonly store = inject(Store);
+
+  ngOnInit(): void {
+    this.store.dispatch(AuthActions.restoreSession());
+  }
+}

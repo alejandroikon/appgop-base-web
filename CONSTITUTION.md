@@ -1470,3 +1470,217 @@ Este proyecto adopta la metodología **SDD (Spec-Driven Development)** de INTERK
 ```
 
 > **Regla de gobernanza SDD:** La IA genera propuestas; el desarrollador es el responsable final. Nunca avanzar al siguiente artefacto sin revisar e iterar el anterior.
+
+---
+
+## 16. Patrón App Shell: Main Layout
+
+### 16.1. Dos layouts, dos contextos
+
+La aplicación tiene exactamente **dos layouts raíz** que nunca coexisten:
+
+| Layout | Rutas | Sidebar | TopHeader | Guard |
+|---|---|---|---|---|
+| `AuthLayoutComponent` | `/login`, `/forgot-password` | No | No | `noAuthGuard` |
+| `MainLayoutComponent` | Todas las rutas autenticadas | Sí | Sí | `authGuard` |
+
+### 16.2. Composición del Main Layout
+
+```
+MainLayoutComponent  [core/layout/main-layout/]
+├── SidebarComponent         [core/layout/sidebar/]         ← Dumb: recibe navItems, collapsed, userRole
+├── TopHeaderComponent       [core/layout/top-header/]      ← Dumb: recibe user, emite logout/toggle
+└── <router-outlet />        ← Contenido del dominio activo (lazy loaded)
+```
+
+**Estructura HTML conceptual:**
+
+```html
+<div class="flex h-screen">
+  <!-- Sidebar fijo a la izquierda -->
+  <app-sidebar [navItems]="navItems" [collapsed]="sidebarCollapsed()" [userRole]="userRole()" />
+
+  <!-- Área principal: topheader + contenido -->
+  <div class="flex flex-col flex-1 overflow-hidden">
+    <app-top-header [user]="currentUser()" (logout)="onLogout()" (toggleSidebar)="onToggleSidebar()" />
+    <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+```
+
+### 16.3. Registro en rutas
+
+El `MainLayoutComponent` actúa como **shell padre** de todas las rutas autenticadas. Los dominios se cargan como `children`. Los guards específicos por rol se definen en la especificación funcional de cada feature:
+
+```typescript
+// app.routes.ts — patrón estructural
+{
+  path: '',
+  component: MainLayoutComponent,
+  canActivate: [authGuard],
+  children: [
+    { path: '', pathMatch: 'full', loadComponent: () => DashboardComponent },
+    { path: 'wells',       loadChildren: () => wellsRoutes },
+    { path: 'operations',  loadChildren: () => operationsRoutes },
+    { path: 'production',  loadChildren: () => productionRoutes },
+    { path: 'admin',       loadChildren: () => adminRoutes },
+  ],
+},
+```
+
+> **Regla:** El `MainLayoutComponent` se renderiza una sola vez y persiste durante toda la navegación entre dominios. El `<router-outlet>` interno cambia solo el contenido — Sidebar y TopHeader nunca se destruyen ni re-renderizan al cambiar de ruta.
+
+### 16.4. Estado del sidebar
+
+El estado collapsed/expanded es **UI local** del `MainLayoutComponent` → se gestiona con **Signals**, no con NgRx.
+
+```typescript
+// main-layout.component.ts
+sidebarCollapsed = signal(false);
+
+onToggleSidebar(): void {
+  this.sidebarCollapsed.update(v => !v);
+}
+```
+
+En **mobile** (< `lg`), el sidebar inicia colapsado por defecto y se abre como overlay.
+
+---
+
+## 17. Navegación y RBAC en Sidebar
+
+### 17.1. Interface NavItem
+
+Toda la navegación del sidebar se define mediante un array tipado de `NavItem`. Este array es la **única fuente de verdad** para los items del menú lateral.
+
+```typescript
+// core/layout/sidebar/nav-items.ts
+
+import { UserRole } from '@shared/models';
+
+export interface NavItem {
+  key:    string;           // Clave para locale (APP_LOCALE.nav[key]) y test IDs
+  icon:   string;           // Clase de ícono (PrimeNG icon class o similar)
+  route:  string;           // Ruta absoluta de navegación
+  roles:  UserRole[];       // Roles que pueden VER este item (filtrado visual en UI)
+}
+```
+
+> **Referencia:** Los iconos, rutas y roles asignados a cada `NavItem` se definen en la especificación funcional de la feature de layout, no en este documento. La CONSTITUTION solo define la interface y el patrón de consumo.
+
+**Labels:** Los textos de cada item se obtienen de `APP_LOCALE.nav[item.key]`, nunca se hardcodean en el array ni en los templates.
+
+### 17.2. Defensa en profundidad: Sidebar + Guard
+
+El sidebar oculta items por rol (**primera capa** — UX). El `roleGuard` en la ruta bloquea el acceso por URL directa (**segunda capa** — seguridad). Ambas capas deben estar sincronizadas con la misma fuente de roles.
+
+**Nunca confiar solo en ocultar el link en el sidebar** — el guard es la defensa real (§10.A01).
+
+> **Regla:** Los roles específicos de cada dominio y sus permisos (lectura, escritura, aprobación) se definen en la especificación funcional (`spec.md`) de cada feature, no en la CONSTITUTION. Este documento solo establece el patrón.
+
+### 17.3. Componente reutilizable: `AppNavLink`
+
+El sidebar no renderiza `<a>` directamente. Cada item se renderiza mediante un **componente reutilizable** que encapsula la lógica RBAC y el estilo activo:
+
+```typescript
+// shared/ui/app-nav-link/app-nav-link.component.ts
+
+@Component({
+  selector: 'app-nav-link',
+  template: `
+    @if (isVisible()) {
+      <a [routerLink]="navItem().route" routerLinkActive="active-link-class"
+         class="flex items-center gap-3 px-4 py-2.5 rounded-md text-sm transition ..."
+         [attr.data-testid]="'nav-' + navItem().key">
+        <i [class]="navItem().icon"></i>
+        @if (!collapsed()) {
+          <span>{{ label() }}</span>
+        }
+      </a>
+    }
+  `,
+  imports: [RouterLink, RouterLinkActive],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AppNavLinkComponent {
+  navItem   = input.required<NavItem>();
+  collapsed = input(false);
+  userRole  = input.required<UserRole>();
+
+  readonly isVisible = computed(() => this.navItem().roles.includes(this.userRole()));
+  readonly label     = computed(() => APP_LOCALE.nav[this.navItem().key as keyof typeof APP_LOCALE.nav]);
+}
+```
+
+**Por qué un componente y no una directiva:**
+- Encapsula template + lógica RBAC + estilo activo en una unidad testeable
+- Cumple el Criterio 1 de §11.3: misma lógica repetida en cada item del sidebar
+- Vive en `shared/ui/` porque no conoce conceptos de negocio — solo sabe de rutas y roles
+
+**Cómo se consume en el Sidebar:**
+
+```html
+<!-- core/layout/sidebar/sidebar.component.html -->
+@for (item of navItems(); track item.key) {
+  <app-nav-link [navItem]="item" [collapsed]="collapsed()" [userRole]="userRole()" />
+}
+```
+
+### 17.4. Responsabilidades Smart vs Dumb
+
+| Componente | Tipo | Responsabilidad |
+|---|---|---|
+| `MainLayoutComponent` | **Smart** | Inyecta Store, lee usuario/rol, pasa datos a hijos, despacha logout |
+| `SidebarComponent` | **Dumb** | Recibe `navItems`, `collapsed`, `userRole` como inputs. Renderiza links |
+| `AppNavLinkComponent` | **Dumb** | Recibe un `NavItem` + rol. Decide si se muestra (`@if`), aplica estilo activo |
+
+> **Regla:** El `SidebarComponent` nunca inyecta Store ni AuthService. Toda la lógica de obtención de datos vive en el Smart parent (`MainLayoutComponent`).
+
+---
+
+## 18. TopHeader
+
+### 18.1. Responsabilidades
+
+El `TopHeaderComponent` es un componente **Dumb** que recibe datos del usuario y emite eventos:
+
+| Input/Output | Tipo | Propósito |
+|---|---|---|
+| `[user]` | `input(AuthUser)` | Nombre, rol y tenant del usuario autenticado |
+| `(logout)` | `output()` | Emite cuando el usuario hace click en "Cerrar Sesión" |
+| `(toggleSidebar)` | `output()` | Emite cuando el usuario hace click en el botón hamburguesa (mobile) |
+
+### 18.2. Contenido
+
+```
+TopHeaderComponent [core/layout/top-header/]
+├── Botón hamburguesa (visible solo en mobile, emite toggleSidebar)
+├── Spacer (flex-1)
+├── Nombre del usuario + rol (texto)
+├── Nombre del operador/tenant (texto secundario)
+└── Botón "Cerrar Sesión" (emite logout)
+```
+
+> **Referencia:** El contenido exacto del TopHeader (breadcrumbs, notificaciones, badges) se define en la especificación funcional de la feature de layout. Esta sección solo establece el patrón estructural y los inputs/outputs del componente.
+
+### 18.3. Locale del TopHeader
+
+Los textos del TopHeader se agregan a `APP_LOCALE`:
+
+```typescript
+// shared/locale/locale.ts — sección a agregar
+topHeader: {
+  logout: 'Cerrar Sesión',
+},
+```
+
+### 18.4. Ubicación de componentes
+
+| Componente | Ruta | Tipo |
+|---|---|---|
+| `MainLayoutComponent` | `core/layout/main-layout/` | Smart |
+| `SidebarComponent` | `core/layout/sidebar/` | Dumb |
+| `TopHeaderComponent` | `core/layout/top-header/` | Dumb |
+| `AppNavLinkComponent` | `shared/ui/app-nav-link/` | Dumb (reutilizable) |

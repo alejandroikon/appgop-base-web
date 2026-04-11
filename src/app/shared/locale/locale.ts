@@ -33,4 +33,21 @@ export const APP_LOCALE = {
     title:    'GOP 360°',
     subtitle: 'Plataforma en construcción',
   },
+  sidebar: {
+    dashboard:      'Panel de Control',
+    admin:          'Seguridad & Administración',
+    adminUsers:     'Gestión de Usuarios',
+    adminAuditLogs: 'Registros de Auditoría',
+  },
+  topHeader: {
+    welcome:      'Bienvenido',
+    logout:       'Cerrar Sesión',
+    expandMenu:   'Expandir menú',
+    collapseMenu: 'Colapsar menú',
+    openMenu:     'Abrir menú de navegación',
+  },
+  placeholders: {
+    title:    'Módulo en construcción',
+    subtitle: 'Esta funcionalidad estará disponible próximamente.',
+  },
 } as const;
