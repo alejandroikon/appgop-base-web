@@ -12,14 +12,31 @@ Este proyecto es un **Prototipo Funcional (Maqueta)**. Su objetivo principal es 
 
 ## 2. Estructura de Layouts (Contenedores Principales)
 
-La aplicación utiliza dos layouts principales para manejar la experiencia del usuario:
+La aplicación utiliza dos layouts principales que nunca coexisten:
 
-1. **Auth Layout (`/auth`)**: 
-   * **Descripción**: Vista minimalista, sin menú lateral ni barra superior de navegación.
-   * **Uso**: Pantalla de inicio de sesión, recuperación de contraseña.
-2. **Main Layout (`/`)**: 
-   * **Descripción**: Contenedor principal de la aplicación. Incluye el **Sidebar** (menú lateral de navegación principal) y el **Top Header** (perfil de usuario, notificaciones, breadcrumbs).
-   * **Uso**: Todas las vistas internas de los dominios de negocio.
+### Auth Layout (`AuthLayoutComponent`)
+* **Rutas:** `/login`, `/forgot-password`
+* **Guard:** `noAuthGuard` — redirige a `/` si ya hay sesión activa
+* **Descripción:** Vista minimalista split-screen (1/3 marca + 2/3 contenido). Sin menú lateral ni barra superior.
+
+### Main Layout (`MainLayoutComponent`)
+* **Rutas:** Todas las rutas autenticadas (`/`, `/wells/**`, `/operations/**`, `/production/**`, `/admin/**`)
+* **Guard:** `authGuard` — redirige a `/login` si no hay sesión
+* **Descripción:** Contenedor principal de la aplicación. Incluye:
+  * **Sidebar** — menú lateral con links de navegación filtrados por RBAC
+  * **Top Header** — información del usuario, tenant, botón de logout
+  * **`<router-outlet>`** — área de contenido donde se cargan los dominios
+* **Composición:** El `MainLayoutComponent` es el shell padre en `app.routes.ts`. Los dominios son `children` cargados con lazy loading. Sidebar y TopHeader persisten durante toda la navegación.
+
+### Patrón RBAC en navegación
+
+Los items del Sidebar se renderizan condicionalmente según el rol del usuario autenticado. Cada item de navegación declara qué roles pueden verlo. Los roles específicos y permisos de cada dominio se definen en la especificación funcional (`spec.md`) de cada feature.
+
+**Defensa en profundidad:**
+1. El Sidebar **oculta** links no autorizados (UX)
+2. El `roleGuard` en la ruta **bloquea** acceso por URL directa (seguridad)
+
+Ver `CONSTITUTION.md` §16-18 para los patrones arquitectónicos detallados.
 
 ---
 

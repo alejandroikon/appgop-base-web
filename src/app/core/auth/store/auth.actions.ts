@@ -9,6 +9,7 @@ export const AuthActions = createActionGroup({
     'Login Failure': props<{ error: string }>(),
     'Logout': emptyProps(),
     'Logout Success': emptyProps(),
+    'Restore Session': emptyProps(),
     'Session Expired': emptyProps(),
     'Clear Auth Error': emptyProps(),
   },

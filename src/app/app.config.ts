@@ -35,8 +35,13 @@ export const appConfig: ApplicationConfig = {
       connectInZone: true,
     }),
 
-    // PrimeNG — tema Aura + MessageService global para toasts
-    providePrimeNG({ theme: { preset: Aura } }),
+    // PrimeNG — tema Aura (modo claro forzado) + MessageService global para toasts
+    providePrimeNG({
+      theme: {
+        preset: Aura,
+        options: { darkModeSelector: false },
+      },
+    }),
     MessageService,
   ],
 };

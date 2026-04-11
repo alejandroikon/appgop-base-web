@@ -5,6 +5,21 @@ import { catchError, exhaustMap, map, of, tap } from 'rxjs';
 import { AuthActions } from './auth.actions';
 import { AuthService } from '../auth.service';
 
+export const restoreSession$ = createEffect(
+  (actions$ = inject(Actions), authService = inject(AuthService)) =>
+    actions$.pipe(
+      ofType(AuthActions.restoreSession),
+      map(() => {
+        const user = authService.getStoredUser();
+        if (user) {
+          return AuthActions.loginSuccess({ user });
+        }
+        return AuthActions.logoutSuccess();
+      })
+    ),
+  { functional: true }
+);
+
 export const login$ = createEffect(
   (actions$ = inject(Actions), authService = inject(AuthService)) =>
     actions$.pipe(

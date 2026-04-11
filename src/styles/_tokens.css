@@ -16,6 +16,14 @@
   --primitive-blue-600: #2563eb;
   --primitive-blue-700: #1d4ed8;
 
+  /* Navy (Sidebar) */
+  --primitive-navy-900: #083075;
+  --primitive-navy-800: #0a3d8f;
+  --primitive-navy-700: #0D66EA;
+
+  /* Amber (Acento) */
+  --primitive-amber-400: #FFCB05;
+
   /* Grises */
   --primitive-gray-50:  #f9fafb;
   --primitive-gray-100: #f3f4f6;
@@ -71,6 +79,16 @@
   --color-success-light:     var(--primitive-green-50);
   --color-warning:           var(--primitive-yellow-500);
   --color-warning-light:     var(--primitive-yellow-50);
+
+  /* Sidebar */
+  --sidebar-bg:              var(--primitive-navy-900);
+  --sidebar-text:            rgba(255, 255, 255, 0.75);
+  --sidebar-text-active:     var(--primitive-amber-400);
+  --sidebar-item-hover:      var(--primitive-navy-800);
+  --sidebar-item-active-bg:  var(--primitive-navy-700);
+  --sidebar-accent:          var(--primitive-amber-400);
+  --sidebar-width-expanded:  18rem;
+  --sidebar-width-collapsed: 5rem;
 
   /* Sombras */
   --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);

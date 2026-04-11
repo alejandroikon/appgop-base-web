@@ -1,0 +1,75 @@
+<div class="flex flex-col h-full">
+  <!-- Branding -->
+  <div class="flex items-center gap-3 px-4 py-5 shrink-0">
+    <img src="assets/icons/logo-top-header.png"
+         alt="Logo institucional"
+         class="h-8 object-contain" />
+    @if (!collapsed()) {
+      <span class="text-text-inverse font-bold text-lg tracking-tight">{{ brandLocale.title }}</span>
+    }
+  </div>
+
+  <!-- Menú de navegación -->
+  <nav class="flex-1 overflow-y-auto px-2 py-2">
+    @if (!collapsed()) {
+      <!-- Modo expandido: PanelMenu -->
+      <p-panelMenu [model]="menuModel()" [multiple]="false" class="sidebar-menu" />
+    } @else {
+      <!-- Modo colapsado: solo iconos + tooltip -->
+      <div class="flex flex-col items-center gap-1">
+        @for (item of navItems(); track item.key) {
+          <a [routerLink]="item.route ?? item.children?.[0]?.route"
+             routerLinkActive="sidebar-icon-active"
+             [routerLinkActiveOptions]="{ exact: !item.children }"
+             [pTooltip]="getLabel(item.key)"
+             tooltipPosition="right"
+             class="flex items-center justify-center w-12 h-12 rounded-lg
+                    text-sidebar-text hover:bg-[rgba(255,255,255,0.06)]
+                    transition-colors duration-200"
+             (click)="onNavigated()">
+            <i [class]="item.icon + ' text-lg'"></i>
+          </a>
+        }
+      </div>
+    }
+  </nav>
+
+  <!-- Perfil de usuario — anclado al bottom -->
+  @if (user(); as u) {
+    <div class="mt-auto shrink-0 border-t border-white/10 px-3 py-3">
+      @if (!collapsed()) {
+        <div class="flex items-center gap-3">
+          <p-avatar [label]="initials()" shape="circle"
+                    class="bg-sidebar-item-active text-sidebar-accent font-semibold shrink-0" />
+          <div class="min-w-0 flex-1">
+            <p class="text-text-inverse text-sm font-medium truncate">{{ u.name }}</p>
+            <p class="text-sidebar-text text-xs truncate">{{ u.role }}</p>
+          </div>
+          <button class="flex items-center justify-center w-9 h-9 rounded-md shrink-0
+                         text-sidebar-text hover:bg-[rgba(255,255,255,0.06)] hover:text-text-inverse
+                         transition-colors duration-200"
+                  [attr.aria-label]="topHeaderLocale.logout"
+                  [pTooltip]="topHeaderLocale.logout"
+                  tooltipPosition="top"
+                  (click)="logout.emit()">
+            <i class="pi pi-sign-out text-sm"></i>
+          </button>
+        </div>
+      } @else {
+        <div class="flex flex-col items-center gap-2">
+          <p-avatar [label]="initials()" shape="circle" size="normal"
+                    class="bg-sidebar-item-active text-sidebar-accent font-semibold" />
+          <button class="flex items-center justify-center w-10 h-10 rounded-md
+                         text-sidebar-text hover:bg-[rgba(255,255,255,0.06)] hover:text-text-inverse
+                         transition-colors duration-200"
+                  [attr.aria-label]="topHeaderLocale.logout"
+                  [pTooltip]="topHeaderLocale.logout"
+                  tooltipPosition="right"
+                  (click)="logout.emit()">
+            <i class="pi pi-sign-out"></i>
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>
