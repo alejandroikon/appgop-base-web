@@ -1,0 +1,139 @@
+<div class="flex flex-col gap-6" data-testid="step-summary">
+
+  <!-- Banner nombre del pozo -->
+  @if (nombrePozo()) {
+    <div class="rounded-lg border border-border bg-primary-light p-4 flex items-center justify-between flex-wrap gap-3">
+      <div class="flex flex-col gap-1">
+        <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+          {{ locale.preview.title }}
+        </span>
+        <span class="text-xl font-bold text-primary" data-testid="summary-nombre-pozo">
+          {{ nombrePozo() }}
+        </span>
+      </div>
+      <p-tag [value]="locale.summary.statusDraft" severity="secondary" />
+    </div>
+  }
+
+  <!-- Sección: Contrato y Campo -->
+  <div class="flex flex-col gap-3">
+    <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wide border-b border-border pb-2">
+      {{ locale.summary.sectionContract }}
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.contrato }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-contrato">
+          {{ contratoNombre() || '—' }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.cuenca }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-cuenca">
+          {{ cuenca() || '—' }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.tipoContrato }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-tipo-contrato">
+          {{ tipoContrato() || '—' }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.campo }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-campo">
+          {{ campoNombre() || '—' }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.clasificacion }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-clasificacion">
+          {{ formData().clasificacion || '—' }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.cluster }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-cluster">
+          {{ clusterNombre() || '—' }}
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Sección: Datos Técnicos -->
+  <div class="flex flex-col gap-3">
+    <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wide border-b border-border pb-2">
+      {{ locale.summary.sectionTechnical }}
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.tipoTrayectoria }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-tipo-trayectoria">
+          {{ formData().tipoTrayectoria || '—' }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.tipoUbicacion }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-tipo-ubicacion">
+          {{ formData().tipoUbicacion || '—' }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.tipoAngulo }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-tipo-angulo">
+          {{ formData().tipoAngulo || '—' }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.tipoObjetivo }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-tipo-objetivo">
+          {{ formData().tipoObjetivo || '—' }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.tipoTerminacion }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-tipo-terminacion">
+          {{ formData().tipoTerminacion || '—' }}
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Sección: Ubicación -->
+  <div class="flex flex-col gap-3">
+    <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wide border-b border-border pb-2">
+      {{ locale.summary.sectionLocation }}
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.departamento }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-departamento">
+          {{ departamentoNombre() || '—' }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-xs text-text-secondary">{{ locale.fields.municipio }}</span>
+        <span class="text-sm font-medium text-text-primary" data-testid="summary-municipio">
+          {{ municipioNombre() || '—' }}
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+</div>

@@ -43,5 +43,8 @@ export type {
 export type { WellListItem, WellLocation, Well, WellsQueryParams } from './well.model';
 export type { Contrato, Campo, Departamento, Municipio, Cluster } from './catalog.model';
 
+// DTO de preview de nombre (feature 006)
+export type { WellNamePreviewDTO } from './well-name-preview.dto';
+
 // Mappers
 export { mapWellListItemDTOToModel, mapWellDetailDTOToModel } from './well.mapper';

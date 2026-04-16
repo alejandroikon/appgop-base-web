@@ -6,6 +6,12 @@ export const WELL_FORM_LOCALE = {
     technical: 'Datos Técnicos',
     location:  'Ubicación',
   },
+  steps: {
+    contractInfo:  'Información del Contrato',
+    technicalData: 'Datos Técnicos',
+    location:      'Ubicación Geográfica',
+    summary:       'Resumen y Confirmación',
+  },
   fields: {
     contrato:        'Contrato',
     campo:           'Campo',
@@ -20,10 +26,15 @@ export const WELL_FORM_LOCALE = {
     departamento:    'Departamento',
     municipio:       'Municipio',
     cluster:         'Cluster / Locación',
+    cuenca:          'Cuenca',
+    tipoContrato:    'Tipo de Contrato',
   },
   actions: {
-    save:   'Guardar',
-    cancel: 'Cancelar',
+    save:      'Guardar',
+    cancel:    'Cancelar',
+    next:      'Siguiente',
+    previous:  'Anterior',
+    saveDraft: 'Guardar Borrador',
   },
   errors: {
     required:              'Este campo es requerido.',
@@ -47,5 +58,20 @@ export const WELL_FORM_LOCALE = {
     selectTipoAngulo:      'Seleccione el tipo',
     selectTipoObjetivo:    'Seleccione el tipo',
     selectTipoTerminacion: 'Seleccione el tipo',
+  },
+  preview: {
+    title:         'Nombre del Pozo',
+    placeholder:   'Complete contrato, denominación y consecutivo para ver el nombre',
+    available:     'Disponible',
+    unavailable:   'Nombre ya en uso',
+    checking:      'Verificando...',
+    errorChecking: 'No se pudo verificar',
+  },
+  summary: {
+    sectionContract:  'Contrato y Campo',
+    sectionTechnical: 'Datos Técnicos',
+    sectionLocation:  'Ubicación',
+    status:           'Estado',
+    statusDraft:      'Borrador',
   },
 } as const;
