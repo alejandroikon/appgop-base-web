@@ -3,6 +3,7 @@ using GOP.Domain.Interfaces;
 using GOP.Domain.Interfaces.Services;
 using GOP.Infrastructure.Identity;
 using GOP.Infrastructure.Persistence;
+using GOP.Infrastructure.Persistence.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,8 +20,16 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException(
                 "La cadena de conexión 'DefaultConnection' no está configurada.");
 
-        services.AddDbContext<GopDbContext>(options =>
-            options.UseSqlServer(connectionString));
+        // Registrar interceptor como Scoped (accede a ICurrentUserService que es Scoped)
+        services.AddScoped<AuditableEntityInterceptor>();
+
+        services.AddDbContext<GopDbContext>((serviceProvider, options) =>
+        {
+            options.UseSqlServer(connectionString);
+
+            var interceptor = serviceProvider.GetRequiredService<AuditableEntityInterceptor>();
+            options.AddInterceptors(interceptor);
+        });
 
         services.AddScoped<IApplicationDbContext>(sp =>
             sp.GetRequiredService<GopDbContext>());
