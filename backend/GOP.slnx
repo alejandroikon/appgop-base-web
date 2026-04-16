@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GOP.API/GOP.API.csproj" />
+    <Project Path="src/GOP.Application/GOP.Application.csproj" />
+    <Project Path="src/GOP.Domain/GOP.Domain.csproj" />
+    <Project Path="src/GOP.Infrastructure/GOP.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GOP.API.Tests/GOP.API.Tests.csproj" />
+    <Project Path="tests/GOP.Application.Tests/GOP.Application.Tests.csproj" />
+    <Project Path="tests/GOP.Domain.Tests/GOP.Domain.Tests.csproj" />
+    <Project Path="tests/GOP.Infrastructure.Tests/GOP.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

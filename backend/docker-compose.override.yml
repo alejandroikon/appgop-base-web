@@ -1,0 +1,5 @@
+services:
+  sqlserver:
+    restart: unless-stopped
+    environment:
+      MSSQL_COLLATION: "SQL_Latin1_General_CP1_CI_AS"

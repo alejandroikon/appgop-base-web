@@ -1,0 +1,50 @@
+## .NET Core build outputs
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet packages
+*.nupkg
+*.snupkg
+packages/
+!default.props
+
+## Visual Studio files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww]indows/
+[Aa]rm/
+[Aa]rm64/
+[Bb]uild[Oo]utput/
+
+## Roslyn cache
+*.VisualState.xml
+
+## Other
+*.DS_Store
+Thumbs.db
+*.orig
+
+## Secrets / environment-specific
+appsettings.Production.json
+appsettings.Staging.json
+secrets.json
+.env
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## Coverage reports
+coverage/
+*.coveragexml
