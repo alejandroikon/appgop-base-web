@@ -1,4 +1,5 @@
 using GOP.Infrastructure.Persistence;
+using GOP.Infrastructure.Persistence.Interceptors;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +10,8 @@ using Microsoft.Extensions.Logging;
 namespace GOP.API.Tests.Fixtures;
 
 /// <summary>
-/// Factory compartida entre clases de test API para evitar el conflicto de Serilog
-/// "logger already frozen" cuando múltiples WebApplicationFactory se crean en el mismo proceso.
-/// Usada via [Collection("ApiIntegrationTests")] en los test classes.
+/// Factory compartida entre clases de test API.
+/// Reemplaza SQL Server por InMemory sin interceptor de auditoría.
 /// </summary>
 public sealed class GopTestWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -21,15 +21,29 @@ public sealed class GopTestWebApplicationFactory : WebApplicationFactory<Program
 
         builder.ConfigureServices(services =>
         {
-            // Reemplazar SQL Server por InMemory para tests sin Docker
-            services.RemoveAll<DbContextOptions<GopDbContext>>();
-            services.RemoveAll<GopDbContext>();
+            // Eliminar TODAS las descriptors que involucren GopDbContext
+            // (incluyendo el registro via factory de IDbContextOptionsConfiguration)
+            var toRemove = services.Where(d =>
+                d.ServiceType.FullName != null &&
+                (d.ServiceType.FullName.Contains("GopDbContext") ||
+                 d.ServiceType.FullName.Contains("DbContextOptions") ||
+                 d.ServiceType == typeof(AuditableEntityInterceptor)))
+                .ToList();
 
+            foreach (var d in toRemove)
+                services.Remove(d);
+
+            // Sin interceptor en tests InMemory (no hay SQL Server real)
             services.AddDbContext<GopDbContext>(options =>
-                options.UseInMemoryDatabase("TestDb_Integration"));
+                options.UseInMemoryDatabase("TestDb_Wells_Integration"));
 
-            // Suprimir Serilog para evitar "logger already frozen"
-            // cuando esta factory comparte proceso con otros factories xUnit
+            // Registrar IApplicationDbContext e IUnitOfWork apuntando al nuevo DbContext
+            services.AddScoped<GOP.Application.Common.Interfaces.IApplicationDbContext>(
+                sp => sp.GetRequiredService<GopDbContext>());
+            services.AddScoped<GOP.Domain.Interfaces.IUnitOfWork>(
+                sp => sp.GetRequiredService<GopDbContext>());
+
+            // Suprimir Serilog
             services.RemoveAll<ILoggerFactory>();
             services.AddLogging(logging => logging.AddConsole());
         });
