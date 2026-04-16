@@ -1,0 +1,161 @@
+<p-toast />
+<p-confirmDialog />
+
+<div class="flex flex-col gap-4">
+  <!-- Encabezado de página -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-semibold text-text-primary">{{ locale.title }}</h1>
+    <p-button
+      [label]="locale.actions.create"
+      icon="pi pi-plus"
+      (onClick)="onCreate()"
+      data-testid="btn-create-well"
+    />
+  </div>
+
+  <!-- Toolbar de filtros -->
+  <div class="flex flex-wrap gap-3 items-center p-4 bg-surface rounded-lg border border-border">
+    <p-iconfield class="flex-1 min-w-48">
+      <p-inputicon styleClass="pi pi-search" />
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="searchTerm"
+        [placeholder]="locale.filters.search"
+        (ngModelChange)="onSearch($event)"
+        class="w-full"
+        data-testid="input-search"
+      />
+    </p-iconfield>
+
+    <p-select
+      [options]="contratos()"
+      [(ngModel)]="selectedContratoId"
+      optionLabel="nombre"
+      optionValue="id"
+      [placeholder]="locale.filters.allContratos"
+      [showClear]="true"
+      (onChange)="onContratoFilterChange($event.value)"
+      styleClass="min-w-56"
+      data-testid="dropdown-filter-contrato"
+    />
+  </div>
+
+  <!-- Tabla principal -->
+  <p-table
+    [value]="wells()"
+    [lazy]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    [totalRecords]="totalRecords()"
+    [loading]="isLoading()"
+    [paginator]="true"
+    [rows]="20"
+    [rowsPerPageOptions]="[10, 20, 50]"
+    [showCurrentPageReport]="true"
+    [currentPageReportTemplate]="locale.messages.pageReport"
+    [sortMode]="'single'"
+    styleClass="p-datatable-sm"
+    data-testid="table-wells"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="nombrePozo" class="min-w-48">
+          {{ locale.columns.nombrePozo }}
+          <p-sortIcon field="nombrePozo" />
+        </th>
+        <th pSortableColumn="operadora">
+          {{ locale.columns.operadora }}
+          <p-sortIcon field="operadora" />
+        </th>
+        <th pSortableColumn="contrato">
+          {{ locale.columns.contrato }}
+          <p-sortIcon field="contrato" />
+        </th>
+        <th>{{ locale.columns.campo }}</th>
+        <th>{{ locale.columns.clasificacion }}</th>
+        <th pSortableColumn="estado">
+          {{ locale.columns.estado }}
+          <p-sortIcon field="estado" />
+        </th>
+        <th pSortableColumn="createdAt">
+          {{ locale.columns.createdAt }}
+          <p-sortIcon field="createdAt" />
+        </th>
+        <th class="w-32 text-center">{{ locale.columns.acciones }}</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-well>
+      <tr [attr.data-testid]="'row-well-' + well.id">
+        <td class="font-medium">{{ well.nombrePozo }}</td>
+        <td>{{ well.operadora }}</td>
+        <td>{{ well.contrato }}</td>
+        <td>{{ well.campo }}</td>
+        <td>{{ well.clasificacion }}</td>
+        <td>
+          <p-tag
+            [value]="getEstadoLabel(well.estado)"
+            [severity]="getEstadoSeverity(well.estado)"
+            [attr.data-testid]="'badge-estado-' + well.id"
+          />
+        </td>
+        <td>{{ formatDate(well.createdAt) }}</td>
+        <td>
+          <div class="flex gap-1 justify-center">
+            <p-button
+              icon="pi pi-eye"
+              [rounded]="true"
+              [text]="true"
+              severity="secondary"
+              size="small"
+              [attr.title]="locale.actions.view"
+              [attr.data-testid]="'btn-view-' + well.id"
+              (onClick)="onEdit(well.id)"
+            />
+            @if (well.estado === 'BORRADOR') {
+              <p-button
+                icon="pi pi-pencil"
+                [rounded]="true"
+                [text]="true"
+                severity="info"
+                size="small"
+                [attr.title]="locale.actions.edit"
+                [attr.data-testid]="'btn-edit-' + well.id"
+                (onClick)="onEdit(well.id)"
+              />
+              <p-button
+                icon="pi pi-trash"
+                [rounded]="true"
+                [text]="true"
+                severity="danger"
+                size="small"
+                [attr.title]="locale.actions.delete"
+                [attr.data-testid]="'btn-delete-' + well.id"
+                (onClick)="onDelete(well)"
+              />
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center py-8 text-text-secondary">
+          <i class="pi pi-inbox text-4xl block mb-2"></i>
+          {{ locale.messages.empty }}
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="loadingbody">
+      @for (row of [1, 2, 3, 4, 5]; track row) {
+        <tr>
+          @for (col of [1, 2, 3, 4, 5, 6, 7, 8]; track col) {
+            <td><p-skeleton height="1.5rem" /></td>
+          }
+        </tr>
+      }
+    </ng-template>
+  </p-table>
+</div>

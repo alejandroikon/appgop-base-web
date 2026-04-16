@@ -15,15 +15,17 @@
 
 **Propósito:** Crear los tipos, interfaces DTO, modelos de dominio y mappers para Wells y catálogos. Todos los archivos viven en `domains/wells/models/` (propiedad privada del dominio, ver CONSTITUTION.md §6.1).
 
-- [ ] T001 [P] Crear `well-enums.ts` — tipos literales: `WellStatus` (BORRADOR, PENDING_UWI, READY_FISCAL, FISCALIZADO), `TipoTrayectoria` (ST, P, PR, ML, G, O), `Clasificacion` (EXPLORATORIO, DESARROLLO, ESTRATIGRAFICO), `TipoUbicacion` (CONTINENTAL, COSTA_FUERA), `TipoAngulo` (H, V, D), `TipoObjetivo` (PH, I, M, D), `TipoTerminacion` (CD, LC, LR, GP, CC, OH, O); constantes de opciones para dropdowns: `TIPO_TRAYECTORIA_OPTIONS`, `CLASIFICACION_OPTIONS`, etc. — `src/app/domains/wells/models/well-enums.ts`
-- [ ] T002 [P] Crear `well.dto.ts` — interfaces reflejando contract.yml: `WellListItemDTO` (id, nombrePozo, operadora, contrato, campo, clasificacion, estado, createdAt), `WellDetailDTO` (todos los campos del WellDetail schema), `WellLocationDTO` (departamentoId, departamento, codigoDaneDpto, municipioId, municipio, codigoDaneMpio, clusterId?, cluster?), `CreateWellRequestDTO`, `UpdateWellRequestDTO` (ambos con los campos del form), `PagedResponseDTO<T>` (items, total, page, pageSize) — `src/app/domains/wells/models/well.dto.ts`
-- [ ] T003 [P] Crear `catalog.dto.ts` — interfaces: `ContratoItemDTO` (id, nombre, tipo, cuenca), `CampoItemDTO` (id, nombre, contratoId), `DepartamentoItemDTO` (id, nombre, codigoDane), `MunicipioItemDTO` (id, nombre, departamentoId, codigoDane), `ClusterItemDTO` (id, nombre, campoId) — `src/app/domains/wells/models/catalog.dto.ts`
-- [ ] T004 Crear `well.model.ts` — interfaces de dominio frontend: `WellListItem`, `Well` (con todos los campos tipados usando los enums de T001), `WellLocation` — `src/app/domains/wells/models/well.model.ts`
-- [ ] T005 Crear `catalog.model.ts` — interfaces: `Contrato` (id, nombre, tipo, cuenca), `Campo` (id, nombre, contratoId), `Departamento` (id, nombre, codigoDane), `Municipio` (id, nombre, departamentoId, codigoDane), `Cluster` (id, nombre, campoId) — `src/app/domains/wells/models/catalog.model.ts`
-- [ ] T006 Crear `well.mapper.ts` — funciones puras: `mapWellListItemDTOToModel(dto: WellListItemDTO): WellListItem`, `mapWellDetailDTOToModel(dto: WellDetailDTO): Well`; mapeo directo camelCase→camelCase con cast de enums — `src/app/domains/wells/models/well.mapper.ts`
-- [ ] T007 [BLOQUEANTE] Crear `index.ts` — barrel export de todos los modelos, DTOs, enums y mappers del dominio wells — `src/app/domains/wells/models/index.ts`
+- [x] T001 [P] Crear `well-enums.ts` — tipos literales: `WellStatus` (BORRADOR, PENDING_UWI, READY_FISCAL, FISCALIZADO), `TipoTrayectoria` (ST, P, PR, ML, G, O), `Clasificacion` (EXPLORATORIO, DESARROLLO, ESTRATIGRAFICO), `TipoUbicacion` (CONTINENTAL, COSTA_FUERA), `TipoAngulo` (H, V, D), `TipoObjetivo` (PH, I, M, D), `TipoTerminacion` (CD, LC, LR, GP, CC, OH, O); constantes de opciones para dropdowns: `TIPO_TRAYECTORIA_OPTIONS`, `CLASIFICACION_OPTIONS`, etc. — `src/app/domains/wells/models/well-enums.ts`
+- [x] T002 [P] Crear `well.dto.ts` — interfaces reflejando contract.yml: `WellListItemDTO` (id, nombrePozo, operadora, contrato, campo, clasificacion, estado, createdAt), `WellDetailDTO` (todos los campos del WellDetail schema), `WellLocationDTO` (departamentoId, departamento, codigoDaneDpto, municipioId, municipio, codigoDaneMpio, clusterId?, cluster?), `CreateWellRequestDTO`, `UpdateWellRequestDTO` (ambos con los campos del form), `PagedResponseDTO<T>` (items, total, page, pageSize) — `src/app/domains/wells/models/well.dto.ts`
+- [x] T003 [P] Crear `catalog.dto.ts` — interfaces: `ContratoItemDTO` (id, nombre, tipo, cuenca), `CampoItemDTO` (id, nombre, contratoId), `DepartamentoItemDTO` (id, nombre, codigoDane), `MunicipioItemDTO` (id, nombre, departamentoId, codigoDane), `ClusterItemDTO` (id, nombre, campoId) — `src/app/domains/wells/models/catalog.dto.ts`
+- [x] T004 Crear `well.model.ts` — interfaces de dominio frontend: `WellListItem`, `Well` (con todos los campos tipados usando los enums de T001), `WellLocation` — `src/app/domains/wells/models/well.model.ts`
+- [x] T005 Crear `catalog.model.ts` — interfaces: `Contrato` (id, nombre, tipo, cuenca), `Campo` (id, nombre, contratoId), `Departamento` (id, nombre, codigoDane), `Municipio` (id, nombre, departamentoId, codigoDane), `Cluster` (id, nombre, campoId) — `src/app/domains/wells/models/catalog.model.ts`
+- [x] T006 Crear `well.mapper.ts` — funciones puras: `mapWellListItemDTOToModel(dto: WellListItemDTO): WellListItem`, `mapWellDetailDTOToModel(dto: WellDetailDTO): Well`; mapeo directo camelCase→camelCase con cast de enums — `src/app/domains/wells/models/well.mapper.ts`
+- [x] T007 [BLOQUEANTE] Crear `index.ts` — barrel export de todos los modelos, DTOs, enums y mappers del dominio wells — `src/app/domains/wells/models/index.ts`
 
-**Checkpoint:** `ng build` → exit code 0. Tipos disponibles para consumo.
+**[EMERGENTE] T007b** — Crear mock handlers de wells (CRUD + catálogos) y registrarlos en `mock.registry.ts` — necesario para que el sistema funcione con `useMocks=true`. Incluye 5 pozos semilla, 3 contratos, 5 campos, 4 departamentos, 6 municipios, 4 clusters. CRUD en memoria completo. — `src/app/domains/wells/mocks/wells.mock-handlers.ts` + `src/app/domains/wells/mocks/index.ts` + actualización de `core/http/mock.registry.ts`
+
+**Checkpoint:** `ng build` ✅
 
 ---
 
@@ -31,11 +33,11 @@
 
 **Propósito:** Agregar endpoints de wells y catálogos a la configuración centralizada y crear el servicio API del dominio.
 
-- [ ] T008 [BLOQUEANTE] Modificar `api-endpoints.ts` — agregar grupo `wells`: `base` (`/api/v1/wells`), `byId` (función con id); agregar grupo `catalogs`: `contratos`, `campos`, `departamentos`, `municipios`, `clusters` (todas las URLs del contrato) — `src/app/core/http/api-endpoints.ts`
-- [ ] T009 [HU-020] [HU-021] [HU-022] [HU-023] [HU-024] [HU-025] Crear `wells-api.service.ts` — `@Injectable({ providedIn: 'root' })`, inyecta `HttpClient`; 10 métodos: `getWells(params)` → GET con HttpParams, `getWell(id)` → GET byId, `createWell(data)` → POST, `updateWell(id, data)` → PUT, `deleteWell(id)` → DELETE retorna `Observable<void>`; 5 catálogos: `getContratos()` → GET, `getCampos(contratoId)` → GET con query param, `getDepartamentos()` → GET, `getMunicipios(departamentoId)` → GET con query param, `getClusters(campoId)` → GET con query param; sin `catchError` (CONSTITUTION.md §5) — `src/app/domains/wells/services/wells-api.service.ts`
-- [ ] T010 Crear barrel export de servicios — `src/app/domains/wells/services/index.ts`
+- [x] T008 [BLOQUEANTE] Modificar `api-endpoints.ts` — agregar grupo `wells`: `base` (`/api/v1/wells`), `byId` (función con id); agregar grupo `catalogs`: `contratos`, `campos`, `departamentos`, `municipios`, `clusters` (todas las URLs del contrato) — `src/app/core/http/api-endpoints.ts`
+- [x] T009 [HU-020] [HU-021] [HU-022] [HU-023] [HU-024] [HU-025] Crear `wells-api.service.ts` — `@Injectable({ providedIn: 'root' })`, inyecta `HttpClient`; 10 métodos: `getWells(params)` → GET con HttpParams, `getWell(id)` → GET byId, `createWell(data)` → POST, `updateWell(id, data)` → PUT, `deleteWell(id)` → DELETE retorna `Observable<void>`; 5 catálogos: `getContratos()` → GET, `getCampos(contratoId)` → GET con query param, `getDepartamentos()` → GET, `getMunicipios(departamentoId)` → GET con query param, `getClusters(campoId)` → GET con query param; sin `catchError` (CONSTITUTION.md §5) — `src/app/domains/wells/services/wells-api.service.ts`
+- [x] T010 Crear barrel export de servicios — `src/app/domains/wells/services/index.ts`
 
-**Checkpoint:** `ng build` → exit code 0. Servicio disponible para inyección.
+**Checkpoint:** `ng build` ✅
 
 ---
 
@@ -43,11 +45,11 @@
 
 **Propósito:** Crear la página de listado con tabla PrimeNG paginada server-side, filtros y acciones de fila.
 
-- [ ] T011 [P] [HU-020] Crear `well-manage/locale.ts` — constante `WELL_MANAGE_LOCALE` con: `title`, `actions` (create, edit, delete, view), `columns` (nombrePozo, operadora, contrato, campo, clasificacion, estado, createdAt), `filters` (search, contrato, allContratos), `messages` (deleteConfirm, deleteSuccess, empty); todo `as const` — `src/app/domains/wells/features/well-manage/locale.ts`
-- [ ] T012 [HU-020] Crear `well-manage.component.ts` — Smart component standalone, `ChangeDetectionStrategy.OnPush`; inyecta `WellsApiService`, `Router`, `MessageService`; Signals: `wells`, `totalRecords`, `isLoading`, `filters` (page, pageSize, search, contratoId), `contratos` (para dropdown de filtro); `ngOnInit` → carga contratos + wells; método `loadWells()` llama `wellsApiService.getWells(filters())` → mapea con `mapWellListItemDTOToModel`; método `onLazyLoad(event)` → actualiza filtros desde evento PrimeNG; método `onSearch(term)` con debounce; método `onCreate()` → navigate `/wells/create`; método `onEdit(id)` → navigate `/wells/${id}/edit`; método `onDelete(id)` → confirm dialog → `wellsApiService.deleteWell(id)` → reload — `src/app/domains/wells/features/well-manage/well-manage.component.ts`
-- [ ] T013 [HU-020] Crear `well-manage.component.html` — template: heading con `locale.title`, toolbar con input de búsqueda + `p-dropdown` de contratos (con opción "Todos") + botón "Nuevo Pozo"; `p-table` con `[lazy]="true"` `(onLazyLoad)="onLazyLoad($event)"` `[value]="wells()"` `[totalRecords]="totalRecords()"` `[loading]="isLoading()"` `[paginator]="true"` `[rows]="20"` `[rowsPerPageOptions]="[10,20,50]"`; columnas: nombrePozo, operadora, contrato, campo, clasificacion (badge), estado (badge con color), createdAt (formateado); columna de acciones: botones ver/editar/eliminar (editar y eliminar solo si estado BORRADOR con `@if`); empty message con `locale.messages.empty` — `src/app/domains/wells/features/well-manage/well-manage.component.html`
+- [x] T011 [P] [HU-020] Crear `well-manage/locale.ts` — constante `WELL_MANAGE_LOCALE` con: `title`, `actions` (create, edit, delete, view), `columns` (nombrePozo, operadora, contrato, campo, clasificacion, estado, createdAt, acciones), `filters` (search, contrato, allContratos), `messages` (deleteConfirm, deleteSuccess, empty, loading, pageReport); todo `as const` — `src/app/domains/wells/features/well-manage/locale.ts`
+- [x] T012 [HU-020] Crear `well-manage.component.ts` — Smart component standalone, `ChangeDetectionStrategy.OnPush`; inyecta `WellsApiService`, `Router`, `MessageService`, `ConfirmationService`; Signals: `wells`, `totalRecords`, `isLoading`, `filters` (page, pageSize, search, contratoId), `contratos` (para dropdown de filtro); `ngOnInit` → carga contratos + wells; método `loadWells()` llama `wellsApiService.getWells(filters())`; método `onLazyLoad(event)` → actualiza filtros desde evento PrimeNG; método `onSearch(term)` con debounce 400ms; método `onCreate()` → navigate `/wells/create`; método `onEdit(id)` → navigate `/wells/${id}/edit`; método `onDelete(well)` → confirm dialog → `wellsApiService.deleteWell(id)` → reload — `src/app/domains/wells/features/well-manage/well-manage.component.ts`
+- [x] T013 [HU-020] Crear `well-manage.component.html` — template: heading con `locale.title`, toolbar con input de búsqueda + `p-select` de contratos + botón "Nuevo Pozo"; `p-table` con `[lazy]="true"` server-side; columnas con sort; badges de estado con severidad; acciones de editar/eliminar solo para BORRADOR con `@if`; empty message desde locale — `src/app/domains/wells/features/well-manage/well-manage.component.html`
 
-**Checkpoint:** `ng build` → exit code 0. Componente de listado compilable.
+**Checkpoint:** `ng build` ✅
 
 ---
 
@@ -55,11 +57,11 @@
 
 **Propósito:** Crear la página de creación/edición con formulario reactivo y carga de catálogos.
 
-- [ ] T014 [P] [HU-021] Crear `well-form/locale.ts` — constante `WELL_FORM_LOCALE` con: `titleCreate`, `titleEdit`, `sections` (general, technical, location), `fields` (13 campos), `actions` (save, cancel), `errors` (required, denominacionPattern, consecutivoPattern), `messages` (createSuccess, updateSuccess); todo `as const` — `src/app/domains/wells/features/well-form/locale.ts`
-- [ ] T015 [HU-021] [HU-023] Crear `well-form.component.ts` — Smart component standalone, `ChangeDetectionStrategy.OnPush`; inyecta `WellsApiService`, `ActivatedRoute`, `Router`, `MessageService`; Signals: `isLoading`, `isEditMode`, `contratos`, `campos`, `departamentos`, `municipios`, `clusters`; `wellForm` ReactiveFormsModule FormGroup con todos los campos + validators (required, pattern para denominacion y consecutivo); `ngOnInit` → lee `route.paramMap` para detectar modo edit vs create; si edit → carga well + catálogos filtrados + patch form; carga catálogos root (contratos, departamentos); métodos `onContratoChange(id)` → carga campos, `onDepartamentoChange(id)` → carga municipios, `onCampoChange(id)` → carga clusters (llamadas manuales, no reactivas); método `onSubmit()` → si create: `wellsApiService.createWell(dto)` → toast success → navigate `/wells/manage`; si edit: `wellsApiService.updateWell(id, dto)` → toast success → navigate — `src/app/domains/wells/features/well-form/well-form.component.ts`
-- [ ] T016 [HU-021] [HU-023] Crear `well-form.component.html` — template: heading con `locale.titleCreate` / `locale.titleEdit` (según `isEditMode()`); sección "Información General" con dropdowns PrimeNG `p-dropdown` para contrato (con `(onChange)="onContratoChange($event)"`) y campo (dependiente); inputs de denominacion y consecutivo con validación inline; sección "Datos Técnicos" con 5 dropdowns para enums (tipoTrayectoria, clasificacion, tipoUbicacion, tipoAngulo, tipoObjetivo, tipoTerminacion) — opciones desde constantes de `well-enums.ts`; sección "Ubicación" con dropdowns de departamento (con onChange → municipios), municipio (dependiente), cluster (dependiente, opcional); botones Guardar (disabled si form invalid o isLoading) y Cancelar (navigate back); mensajes de error por campo con `@if` — `src/app/domains/wells/features/well-form/well-form.component.html`
+- [x] T014 [P] [HU-021] Crear `well-form/locale.ts` — constante `WELL_FORM_LOCALE` con: `titleCreate`, `titleEdit`, `sections` (general, technical, location), `fields` (13 campos), `placeholders` (11 mensajes), `actions` (save, cancel), `errors` (required, denominacionPattern, consecutivoPattern, denominacionMaxlength), `messages` (createSuccess, updateSuccess); todo `as const` — `src/app/domains/wells/features/well-form/locale.ts`
+- [x] T015 [HU-021] [HU-023] Crear `well-form.component.ts` — Smart component standalone, `ChangeDetectionStrategy.OnPush`; inyecta `WellsApiService`, `ActivatedRoute`, `Router`, `MessageService`; Signals: `isLoading`, `isSaving`, `isEditMode`, `contratos`, `campos`, `departamentos`, `municipios`, `clusters`; `wellForm` ReactiveFormsModule FormGroup con todos los campos + validators; `ngOnInit` → detecta modo edit vs create; métodos `onContratoChange`, `onDepartamentoChange`, `onCampoChange`; método `onSubmit()` → create o update según modo — `src/app/domains/wells/features/well-form/well-form.component.ts`
+- [x] T016 [HU-021] [HU-023] Crear `well-form.component.html` — template con 3 secciones (p-card): Información General, Datos Técnicos, Ubicación; dropdowns `p-select` con cascada; inputs con validación inline vía `p-message`; botones Guardar (disabled si form invalid o isSaving) y Cancelar — `src/app/domains/wells/features/well-form/well-form.component.html`
 
-**Checkpoint:** `ng build` → exit code 0. Componente de formulario compilable.
+**Checkpoint:** `ng build` ✅
 
 ---
 
@@ -67,10 +69,10 @@
 
 **Propósito:** Conectar los componentes a las rutas del dominio wells y verificar que el sidebar navega correctamente.
 
-- [ ] T017 [BLOQUEANTE] Modificar `wells.routes.ts` — reemplazar array vacío por rutas: `{ path: '', redirectTo: 'manage', pathMatch: 'full' }`, `{ path: 'manage', loadComponent: () => WellManageComponent }`, `{ path: 'create', loadComponent: () => WellFormComponent }`, `{ path: ':id/edit', loadComponent: () => WellFormComponent }` — `src/app/domains/wells/wells.routes.ts`
-- [ ] T018 Verificar `nav-items.ts` — confirmar que el módulo "Pozos" del sidebar apunta a `/wells` (ya debería existir desde 002-layout); si no existe, agregar item con icono `pi pi-map-marker`, ruta `/wells`, roles `[ADMIN, SUPERVISOR, OPERADOR, AUDITOR]` — `src/app/core/layout/sidebar/nav-items.ts`
+- [x] T017 [BLOQUEANTE] Modificar `wells.routes.ts` — rutas: `{ path: '', redirectTo: 'manage' }`, `{ path: 'manage', loadComponent: WellManageComponent }`, `{ path: 'create', loadComponent: WellFormComponent }`, `{ path: ':id/edit', loadComponent: WellFormComponent }` — `src/app/domains/wells/wells.routes.ts`
+- [x] T018 Verificar `nav-items.ts` — agregado item `wells` con icono `pi pi-map-marker`, ruta `/wells`, roles `[ADMIN, SUPERVISOR, OPERADOR, AUDITOR]`; agregado `sidebar.wells: 'Gestión de Pozos'` en `shared/locale/locale.ts` — `src/app/core/layout/sidebar/nav-items.ts`
 
-**Checkpoint:** `ng build` → exit code 0. Navegar a `/wells` muestra el listado. Click en "Nuevo Pozo" navega a `/wells/create`.
+**Checkpoint:** `ng build` ✅
 
 ---
 
@@ -78,12 +80,12 @@
 
 **Propósito:** Verificación transversal y build limpio.
 
-- [ ] T019 [P] Verificar que todos los imports usan path aliases (`@wells/*`, `@core/*`, `@shared/*`) — revisar archivos creados
-- [ ] T020 [P] Verificar que ningún texto está hardcodeado en templates — todo proviene de locale.ts
-- [ ] T021 [P] Eliminar archivos `.gitkeep` de las carpetas `models/`, `services/`, `features/` del dominio wells (ya tienen archivos reales) — `src/app/domains/wells/models/.gitkeep`, `src/app/domains/wells/services/.gitkeep`, `src/app/domains/wells/features/.gitkeep`
-- [ ] T022 Ejecutar `ng build` final y corregir errores de compilación — todos los archivos
+- [x] T019 [P] Verificar que todos los imports usan path aliases (`@wells/*`, `@core/*`, `@shared/*`) — OK, cero rutas relativas entre capas
+- [x] T020 [P] Verificar que ningún texto está hardcodeado en templates — corregido `currentPageReportTemplate` y error de maxlength
+- [x] T021 [P] Eliminar archivos `.gitkeep` de las carpetas `models/`, `services/`, `features/` del dominio wells — eliminados
+- [x] T022 Ejecutar `ng build` final y corregir errores de compilación — `ng build` ✅ exitoso
 
-**Checkpoint final:** `ng build` exitoso. El listado de pozos carga datos del backend (o mocks si `useMocks: true`). El formulario permite crear/editar pozos en estado borrador. La navegación por sidebar funciona.
+**Checkpoint final:** `ng build` ✅ — Feature lista para PR.
 
 ---
 
@@ -154,6 +156,7 @@ T001, T002, T003      # paralelas: enums, well DTOs, catalog DTOs
 T004, T005            # paralelas: well model, catalog model
 T006                  # well mapper
 T007                  # barrel index.ts
+[T007b EMERGENTE]     # mock handlers wells
 ```
 **Validación:** `ng build` ✅
 
@@ -188,7 +191,7 @@ T016                  # well-form.component.html
 
 ```
 T017                  # wells.routes.ts
-T018                  # verificar nav-items.ts
+T018                  # verificar nav-items.ts + locale wells
 ```
 **Validación:** `ng build` ✅
 
@@ -206,10 +209,10 @@ T022                  # ng build final
 
 | Bloque | Propósito | Tareas | Archivos nuevos | Archivos modif. | Verificación |
 |---|---|---|---|---|---|
-| B1 — Modelos | Enums + DTOs + models + mappers | T001–T007 (7) | 7 | 0 | `ng build` |
-| B2 — Service | API endpoints + WellsApiService | T008–T010 (3) | 2 | 1 | `ng build` |
-| B3 — Listado | Página well-manage con p-table | T011–T013 (3) | 3 | 0 | `ng build` |
-| B4 — Formulario | Página well-form reactivo | T014–T016 (3) | 3 | 0 | `ng build` |
-| B5 — Rutas | Conectar componentes a rutas | T017–T018 (2) | 0 | 1–2 | `ng build` |
-| B6 — Polish | Verificación y build limpio | T019–T022 (4) | 0 | varios | `ng build` |
-| **Total** | | **22 tareas** | **15 nuevos** | **2–3 modif.** | |
+| B1 — Modelos | Enums + DTOs + models + mappers + mocks | T001–T007 + T007b (8) | 9 | 1 | `ng build` ✅ |
+| B2 — Service | API endpoints + WellsApiService | T008–T010 (3) | 2 | 1 | `ng build` ✅ |
+| B3 — Listado | Página well-manage con p-table | T011–T013 (3) | 3 | 0 | `ng build` ✅ |
+| B4 — Formulario | Página well-form reactivo | T014–T016 (3) | 3 | 0 | `ng build` ✅ |
+| B5 — Rutas | Conectar componentes a rutas | T017–T018 (2) | 0 | 2 | `ng build` ✅ |
+| B6 — Polish | Verificación y build limpio | T019–T022 (4) | 0 | varios | `ng build` ✅ |
+| **Total** | | **23 tareas** | **17 nuevos** | **4 modif.** | |

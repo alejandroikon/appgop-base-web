@@ -9,4 +9,15 @@ export const API = {
     refresh: `${hosts.gopApi}/api/v1/auth/refresh`,
     me:      `${hosts.gopApi}/api/v1/auth/me`,
   },
+  wells: {
+    base:  `${hosts.gopApi}/api/v1/wells`,
+    byId:  (id: string) => `${hosts.gopApi}/api/v1/wells/${id}`,
+  },
+  catalogs: {
+    contratos:     `${hosts.gopApi}/api/v1/catalogs/contratos`,
+    campos:        `${hosts.gopApi}/api/v1/catalogs/campos`,
+    departamentos: `${hosts.gopApi}/api/v1/catalogs/departamentos`,
+    municipios:    `${hosts.gopApi}/api/v1/catalogs/municipios`,
+    clusters:      `${hosts.gopApi}/api/v1/catalogs/clusters`,
+  },
 } as const;

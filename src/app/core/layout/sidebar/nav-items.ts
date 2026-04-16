@@ -16,6 +16,12 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ['ADMIN', 'SUPERVISOR', 'OPERADOR', 'AUDITOR'],
   },
   {
+    key: 'wells',
+    icon: 'pi pi-map-marker',
+    route: '/wells',
+    roles: ['ADMIN', 'SUPERVISOR', 'OPERADOR', 'AUDITOR'],
+  },
+  {
     key: 'admin',
     icon: 'pi pi-shield',
     roles: ['ADMIN', 'AUDITOR'],
