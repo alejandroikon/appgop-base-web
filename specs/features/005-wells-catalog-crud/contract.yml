@@ -1,0 +1,551 @@
+openapi: 3.1.0
+
+info:
+  title: "GOP 360° — 005 Wells Catalog CRUD"
+  version: "1.0.0"
+  description: |
+    Contrato OpenAPI para CRUD de pozos y catálogos de soporte.
+    Referencia: specs/features/005-wells-catalog-crud/spec.md
+
+servers:
+  - url: /api/v1
+    description: Base path versionado
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ─── WELLS ──────────────────────────────────────────────
+  /wells:
+    get:
+      operationId: listWells
+      summary: Listar pozos con paginación y filtros
+      description: "Referencia: spec.md HU-020"
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      tags: [Wells]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortDirParam'
+        - name: contratoId
+          in: query
+          required: false
+          schema: { type: integer }
+          description: Filtrar por contrato
+        - name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [BORRADOR, PENDING_UWI, READY_FISCAL, FISCALIZADO]
+          description: Filtrar por estado del pozo
+      responses:
+        '200':
+          description: Lista paginada de pozos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PagedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WellListItem'
+              example:
+                items:
+                  - id: "550e8400-e29b-41d4-a716-446655440000"
+                    nombrePozo: "Llanos Orientales-ALPHA-01"
+                    operadora: "Ecopetrol S.A."
+                    contrato: "Contrato E&P Llanos"
+                    campo: "Campo Rubiales"
+                    clasificacion: "EXPLORATORIO"
+                    estado: "BORRADOR"
+                    createdAt: "2024-11-15T14:30:00Z"
+                total: 42
+                page: 1
+                pageSize: 20
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+    post:
+      operationId: createWell
+      summary: Crear un nuevo pozo en estado borrador
+      description: "Referencia: spec.md HU-021"
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR]
+      tags: [Wells]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWellRequest'
+            example:
+              contratoId: 1
+              campoId: 1
+              tipoTrayectoria: "ST"
+              clasificacion: "EXPLORATORIO"
+              denominacion: "ALPHA"
+              consecutivo: "01"
+              tipoUbicacion: "CONTINENTAL"
+              tipoAngulo: "V"
+              tipoObjetivo: "PH"
+              tipoTerminacion: "CD"
+              departamentoId: 1
+              municipioId: 1
+              clusterId: 1
+      responses:
+        '201':
+          description: Pozo creado exitosamente
+          headers:
+            Location:
+              schema: { type: string }
+              example: "/api/v1/wells/550e8400-e29b-41d4-a716-446655440000"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellDetail'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422':
+          description: Error de validación
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Validation Failed"
+                status: 422
+                detail: "Uno o más campos contienen errores de validación."
+                errors:
+                  denominacion: ["La denominación es requerida."]
+
+  /wells/{wellId}:
+    get:
+      operationId: getWell
+      summary: Obtener detalle completo de un pozo
+      description: "Referencia: spec.md HU-022"
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      tags: [Wells]
+      parameters:
+        - $ref: '#/components/parameters/WellIdParam'
+      responses:
+        '200':
+          description: Detalle del pozo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WellDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Pozo no encontrado
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Resource Not Found"
+                status: 404
+                detail: "No se encontró un pozo con el ID proporcionado."
+
+    put:
+      operationId: updateWell
+      summary: Actualizar un pozo en estado borrador
+      description: "Referencia: spec.md HU-023"
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR]
+      tags: [Wells]
+      parameters:
+        - $ref: '#/components/parameters/WellIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateWellRequest' }
+      responses:
+        '200':
+          description: Pozo actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WellDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Pozo no encontrado
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+        '422':
+          description: Validación fallida o pozo no en estado borrador
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+    delete:
+      operationId: deleteWell
+      summary: Eliminar (soft delete) un pozo en estado borrador
+      description: "Referencia: spec.md HU-024"
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR]
+      tags: [Wells]
+      parameters:
+        - $ref: '#/components/parameters/WellIdParam'
+      responses:
+        '204': { description: Pozo eliminado exitosamente }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Pozo no encontrado
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+        '422':
+          description: Pozo no está en estado borrador
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  # ─── CATÁLOGOS ──────────────────────────────────────────
+  /catalogs/contratos:
+    get:
+      operationId: listContratos
+      summary: Listar todos los contratos disponibles
+      description: "Referencia: spec.md HU-025, Escenario 1"
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      tags: [Catalogs]
+      responses:
+        '200':
+          description: Lista de contratos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ContratoItem' }
+              example:
+                - id: 1
+                  nombre: "Contrato E&P Llanos"
+                  tipo: "E&P"
+                  cuenca: "Llanos Orientales"
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /catalogs/campos:
+    get:
+      operationId: listCampos
+      summary: Listar campos filtrados por contrato
+      description: "Referencia: spec.md HU-025, Escenario 2"
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      tags: [Catalogs]
+      parameters:
+        - name: contratoId
+          in: query
+          required: true
+          schema: { type: integer }
+          description: ID del contrato padre
+      responses:
+        '200':
+          description: Lista de campos del contrato
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CampoItem' }
+              example:
+                - id: 1
+                  nombre: "Campo Rubiales"
+                  contratoId: 1
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /catalogs/departamentos:
+    get:
+      operationId: listDepartamentos
+      summary: Listar todos los departamentos
+      description: "Referencia: spec.md HU-025, Escenario 3"
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      tags: [Catalogs]
+      responses:
+        '200':
+          description: Lista de departamentos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DepartamentoItem' }
+              example:
+                - id: 1
+                  nombre: "Meta"
+                  codigoDane: "50"
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /catalogs/municipios:
+    get:
+      operationId: listMunicipios
+      summary: Listar municipios filtrados por departamento
+      description: "Referencia: spec.md HU-025, Escenario 4"
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      tags: [Catalogs]
+      parameters:
+        - name: departamentoId
+          in: query
+          required: true
+          schema: { type: integer }
+          description: ID del departamento padre
+      responses:
+        '200':
+          description: Lista de municipios del departamento
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MunicipioItem' }
+              example:
+                - id: 1
+                  nombre: "Puerto Gaitán"
+                  departamentoId: 1
+                  codigoDane: "50568"
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /catalogs/clusters:
+    get:
+      operationId: listClusters
+      summary: Listar clusters filtrados por campo
+      description: "Referencia: spec.md HU-025, Escenario 5"
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      tags: [Catalogs]
+      parameters:
+        - name: campoId
+          in: query
+          required: true
+          schema: { type: integer }
+          description: ID del campo padre
+      responses:
+        '200':
+          description: Lista de clusters del campo
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ClusterItem' }
+              example:
+                - id: 1
+                  nombre: "Cluster Norte"
+                  campoId: 1
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSizeParam:
+      name: pageSize
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    SearchParam:
+      name: search
+      in: query
+      required: false
+      schema: { type: string, maxLength: 200 }
+    SortByParam:
+      name: sortBy
+      in: query
+      required: false
+      schema: { type: string }
+    SortDirParam:
+      name: sortDir
+      in: query
+      required: false
+      schema: { type: string, enum: [asc, desc], default: asc }
+    WellIdParam:
+      name: wellId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+      description: ID del pozo
+
+  responses:
+    Unauthorized:
+      description: Token JWT ausente, expirado o inválido
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Forbidden:
+      description: El usuario no tiene el rol requerido
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  schemas:
+    # ─── WELL SCHEMAS ─────────────────────────────────────
+    WellListItem:
+      type: object
+      required: [id, nombrePozo, operadora, contrato, campo, clasificacion, estado, createdAt]
+      properties:
+        id: { type: string, format: uuid, example: "550e8400-e29b-41d4-a716-446655440000" }
+        nombrePozo: { type: string, example: "Llanos Orientales-ALPHA-01" }
+        operadora: { type: string, example: "Ecopetrol S.A." }
+        contrato: { type: string, example: "Contrato E&P Llanos" }
+        campo: { type: string, example: "Campo Rubiales" }
+        clasificacion: { type: string, enum: [EXPLORATORIO, DESARROLLO, ESTRATIGRAFICO], example: "EXPLORATORIO" }
+        estado: { type: string, enum: [BORRADOR, PENDING_UWI, READY_FISCAL, FISCALIZADO], example: "BORRADOR" }
+        createdAt: { type: string, format: date-time, example: "2024-11-15T14:30:00Z" }
+
+    WellDetail:
+      type: object
+      required: [id, operadora, contratoId, contrato, tipoContrato, cuenca, campoId, campo,
+                 tipoTrayectoria, clasificacion, denominacion, consecutivo, nombrePozo,
+                 tipoUbicacion, tipoAngulo, tipoObjetivo, tipoTerminacion, estado, ubicacion, createdAt]
+      properties:
+        id: { type: string, format: uuid, example: "550e8400-e29b-41d4-a716-446655440000" }
+        operadora: { type: string, example: "Ecopetrol S.A." }
+        contratoId: { type: integer, example: 1 }
+        contrato: { type: string, example: "Contrato E&P Llanos" }
+        tipoContrato: { type: string, example: "E&P" }
+        cuenca: { type: string, example: "Llanos Orientales" }
+        campoId: { type: integer, example: 1 }
+        campo: { type: string, example: "Campo Rubiales" }
+        tipoTrayectoria: { type: string, enum: [ST, P, PR, ML, G, O], example: "ST" }
+        clasificacion: { type: string, enum: [EXPLORATORIO, DESARROLLO, ESTRATIGRAFICO], example: "EXPLORATORIO" }
+        denominacion: { type: string, maxLength: 50, example: "ALPHA" }
+        consecutivo: { type: string, pattern: "^\\d{2}$", example: "01" }
+        nombrePozo: { type: string, example: "Llanos Orientales-ALPHA-01" }
+        tipoUbicacion: { type: string, enum: [CONTINENTAL, COSTA_FUERA], example: "CONTINENTAL" }
+        tipoAngulo: { type: string, enum: [H, V, D], example: "V" }
+        tipoObjetivo: { type: string, enum: [PH, I, M, D], example: "PH" }
+        tipoTerminacion: { type: string, enum: [CD, LC, LR, GP, CC, OH, O], example: "CD" }
+        estado: { type: string, enum: [BORRADOR, PENDING_UWI, READY_FISCAL, FISCALIZADO], example: "BORRADOR" }
+        ubicacion:
+          $ref: '#/components/schemas/WellLocation'
+        createdAt: { type: string, format: date-time, example: "2024-11-15T14:30:00Z" }
+        lastModifiedAt: { type: ["string", "null"], format: date-time, example: null }
+
+    WellLocation:
+      type: object
+      required: [departamentoId, departamento, codigoDaneDpto, municipioId, municipio, codigoDaneMpio]
+      properties:
+        departamentoId: { type: integer, example: 1 }
+        departamento: { type: string, example: "Meta" }
+        codigoDaneDpto: { type: string, example: "50" }
+        municipioId: { type: integer, example: 1 }
+        municipio: { type: string, example: "Puerto Gaitán" }
+        codigoDaneMpio: { type: string, example: "50568" }
+        clusterId: { type: ["integer", "null"], example: 1 }
+        cluster: { type: ["string", "null"], example: "Cluster Norte" }
+
+    CreateWellRequest:
+      type: object
+      required: [contratoId, campoId, tipoTrayectoria, clasificacion, denominacion,
+                 consecutivo, tipoUbicacion, tipoAngulo, tipoObjetivo, tipoTerminacion,
+                 departamentoId, municipioId]
+      properties:
+        contratoId: { type: integer, example: 1 }
+        campoId: { type: integer, example: 1 }
+        tipoTrayectoria: { type: string, enum: [ST, P, PR, ML, G, O], example: "ST" }
+        clasificacion: { type: string, enum: [EXPLORATORIO, DESARROLLO, ESTRATIGRAFICO], example: "EXPLORATORIO" }
+        denominacion: { type: string, maxLength: 50, pattern: "^[A-Za-záéíóúÁÉÍÓÚñÑ ]+$", example: "ALPHA" }
+        consecutivo: { type: string, pattern: "^\\d{2}$", example: "01" }
+        tipoUbicacion: { type: string, enum: [CONTINENTAL, COSTA_FUERA], example: "CONTINENTAL" }
+        tipoAngulo: { type: string, enum: [H, V, D], example: "V" }
+        tipoObjetivo: { type: string, enum: [PH, I, M, D], example: "PH" }
+        tipoTerminacion: { type: string, enum: [CD, LC, LR, GP, CC, OH, O], example: "CD" }
+        departamentoId: { type: integer, example: 1 }
+        municipioId: { type: integer, example: 1 }
+        clusterId: { type: ["integer", "null"], example: 1 }
+
+    UpdateWellRequest:
+      type: object
+      required: [contratoId, campoId, tipoTrayectoria, clasificacion, denominacion,
+                 consecutivo, tipoUbicacion, tipoAngulo, tipoObjetivo, tipoTerminacion,
+                 departamentoId, municipioId]
+      properties:
+        contratoId: { type: integer, example: 1 }
+        campoId: { type: integer, example: 1 }
+        tipoTrayectoria: { type: string, enum: [ST, P, PR, ML, G, O], example: "ST" }
+        clasificacion: { type: string, enum: [EXPLORATORIO, DESARROLLO, ESTRATIGRAFICO], example: "EXPLORATORIO" }
+        denominacion: { type: string, maxLength: 50, pattern: "^[A-Za-záéíóúÁÉÍÓÚñÑ ]+$", example: "ALPHA" }
+        consecutivo: { type: string, pattern: "^\\d{2}$", example: "01" }
+        tipoUbicacion: { type: string, enum: [CONTINENTAL, COSTA_FUERA], example: "CONTINENTAL" }
+        tipoAngulo: { type: string, enum: [H, V, D], example: "V" }
+        tipoObjetivo: { type: string, enum: [PH, I, M, D], example: "PH" }
+        tipoTerminacion: { type: string, enum: [CD, LC, LR, GP, CC, OH, O], example: "CD" }
+        departamentoId: { type: integer, example: 1 }
+        municipioId: { type: integer, example: 1 }
+        clusterId: { type: ["integer", "null"], example: 1 }
+
+    # ─── CATALOG SCHEMAS ──────────────────────────────────
+    ContratoItem:
+      type: object
+      required: [id, nombre, tipo, cuenca]
+      properties:
+        id: { type: integer, example: 1 }
+        nombre: { type: string, example: "Contrato E&P Llanos" }
+        tipo: { type: string, example: "E&P" }
+        cuenca: { type: string, example: "Llanos Orientales" }
+
+    CampoItem:
+      type: object
+      required: [id, nombre, contratoId]
+      properties:
+        id: { type: integer, example: 1 }
+        nombre: { type: string, example: "Campo Rubiales" }
+        contratoId: { type: integer, example: 1 }
+
+    DepartamentoItem:
+      type: object
+      required: [id, nombre, codigoDane]
+      properties:
+        id: { type: integer, example: 1 }
+        nombre: { type: string, example: "Meta" }
+        codigoDane: { type: string, example: "50" }
+
+    MunicipioItem:
+      type: object
+      required: [id, nombre, departamentoId, codigoDane]
+      properties:
+        id: { type: integer, example: 1 }
+        nombre: { type: string, example: "Puerto Gaitán" }
+        departamentoId: { type: integer, example: 1 }
+        codigoDane: { type: string, example: "50568" }
+
+    ClusterItem:
+      type: object
+      required: [id, nombre, campoId]
+      properties:
+        id: { type: integer, example: 1 }
+        nombre: { type: string, example: "Cluster Norte" }
+        campoId: { type: integer, example: 1 }
+
+    # ─── SHARED SCHEMAS ───────────────────────────────────
+    PagedResponse:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items: { type: array, items: {} }
+        total: { type: integer, minimum: 0, example: 42 }
+        page: { type: integer, minimum: 1, example: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100, example: 20 }
+
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type: { type: string, format: uri, example: "https://tools.ietf.org/html/rfc7807" }
+        title: { type: string, example: "Validation Failed" }
+        status: { type: integer, example: 422 }
+        detail: { type: string, example: "Uno o más campos contienen errores de validación." }
+        instance: { type: string, example: "/api/v1/wells" }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+        traceId: { type: string, example: "00-abc123-01" }
