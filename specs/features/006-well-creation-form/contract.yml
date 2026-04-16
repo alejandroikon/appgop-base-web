@@ -1,0 +1,171 @@
+openapi: 3.1.0
+
+info:
+  title: "GOP 360° — 006 Well Creation Form"
+  version: "1.0.0"
+  description: |
+    Contrato OpenAPI para la feature 006-well-creation-form.
+    Define el endpoint NUEVO de esta iteración: preview-name.
+    Los endpoints de CRUD (POST/PUT/GET /wells) y catálogos (GET /catalogs/*)
+    están definidos en 005-wells-catalog-crud/contract.yml y son consumidos por esta feature.
+    Referencia: specs/features/006-well-creation-form/spec.md
+
+servers:
+  - url: /api/v1
+    description: Base path versionado — todos los endpoints son relativos a este prefijo
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Wells
+    description: Operaciones sobre pozos
+
+paths:
+  # ─── NUEVO ENDPOINT — Iteración 4 ─────────────────────────────────────────
+  /wells/preview-name:
+    get:
+      operationId: previewWellName
+      summary: Previsualizar nombre del pozo y verificar disponibilidad
+      description: |
+        Calcula el nombre del pozo ({cuenca}-{denominación}-{consecutivo}) a partir del
+        contratoId (para resolver la cuenca), la denominación y el consecutivo.
+        Verifica si ya existe un pozo con ese nombre en el sistema.
+        Referencia: spec.md HU-035, Escenario 3
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR]
+      tags: [Wells]
+      parameters:
+        - name: contratoId
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID del contrato (para resolver cuenca)
+          example: 1
+        - name: denominacion
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 50
+          description: Denominación del pozo
+          example: "ALPHA"
+        - name: consecutivo
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^\\d{2}$"
+          description: Consecutivo de 2 dígitos
+          example: "01"
+        - name: excludeWellId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: "ID del pozo a excluir de la verificación (para modo edición)"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Preview del nombre calculado con estado de disponibilidad
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellNamePreview'
+              example:
+                nombrePozo: "Llanos Orientales-ALPHA-01"
+                available: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Parámetros inválidos
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Validation Failed"
+                status: 422
+                detail: "Uno o más parámetros contienen errores de validación."
+                errors:
+                  contratoId: ["El contrato no existe."]
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Token JWT obtenido en /api/v1/auth/login"
+
+  schemas:
+    WellNamePreview:
+      type: object
+      required: [nombrePozo, available]
+      properties:
+        nombrePozo:
+          type: string
+          description: "Nombre calculado del pozo: {cuenca}-{denominación}-{consecutivo}"
+          example: "Llanos Orientales-ALPHA-01"
+        available:
+          type: boolean
+          description: "true si no existe otro pozo con este nombre; false si ya está en uso"
+          example: true
+
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+          format: uri
+          example: "https://tools.ietf.org/html/rfc7807"
+        title:
+          type: string
+          example: "Validation Failed"
+        status:
+          type: integer
+          example: 422
+        detail:
+          type: string
+          example: "Uno o más campos contienen errores de validación."
+        instance:
+          type: string
+          example: "/api/v1/wells/preview-name"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        traceId:
+          type: string
+          example: "00-abc123-01"
+
+  responses:
+    Unauthorized:
+      description: Token JWT ausente, expirado o inválido
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://tools.ietf.org/html/rfc7807"
+            title: "Unauthorized"
+            status: 401
+            detail: "Token de autenticación requerido."
+    Forbidden:
+      description: El usuario no tiene el rol requerido
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://tools.ietf.org/html/rfc7807"
+            title: "Forbidden"
+            status: 403
+            detail: "No tiene permisos para realizar esta acción."
