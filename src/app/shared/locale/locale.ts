@@ -35,6 +35,7 @@ export const APP_LOCALE = {
   },
   sidebar: {
     dashboard:      'Panel de Control',
+    wells:          'Gestión de Pozos',
     admin:          'Seguridad & Administración',
     adminUsers:     'Gestión de Usuarios',
     adminAuditLogs: 'Registros de Auditoría',
