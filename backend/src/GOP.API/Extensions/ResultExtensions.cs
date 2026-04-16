@@ -35,6 +35,8 @@ public static class ResultExtensions
     private static IActionResult MapErrorToActionResult(Error error) =>
         error.Code switch
         {
+            var c when c.StartsWith("Auth.") =>
+                new UnauthorizedObjectResult(CreateProblemDetails(401, "Unauthorized", error.Message)),
             var c when c.EndsWith(".NotFound") =>
                 new NotFoundObjectResult(CreateProblemDetails(404, "Resource Not Found", error.Message)),
             var c when c.Contains(".Duplicate") =>

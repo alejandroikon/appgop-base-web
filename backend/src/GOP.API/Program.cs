@@ -1,7 +1,11 @@
+using System.Text;
 using GOP.API.Middleware;
 using GOP.Application;
 using GOP.Infrastructure;
+using GOP.Infrastructure.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
 // Bootstrap logger para capturar errores de arranque
@@ -23,6 +27,31 @@ try
     builder.Services
         .AddApplication()
         .AddInfrastructure(builder.Configuration);
+
+    // JWT Authentication
+    var jwtSettings = builder.Configuration
+        .GetSection(JwtSettings.SectionName)
+        .Get<JwtSettings>()!;
+
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = jwtSettings.Issuer,
+                ValidateAudience = true,
+                ValidAudience = jwtSettings.Audience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(jwtSettings.SigningKey)),
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero,
+            };
+        });
+
+    builder.Services.AddAuthorization();
 
     // Controllers
     builder.Services.AddControllers();
@@ -76,6 +105,9 @@ try
             settings.DocumentPath = "/swagger/v1/swagger.json";
         });
     }
+
+    app.UseAuthentication();
+    app.UseAuthorization();
 
     app.MapControllers();
 

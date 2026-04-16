@@ -1,8 +1,8 @@
 using GOP.Application.Common.Interfaces;
 using GOP.Domain.Interfaces;
 using GOP.Domain.Interfaces.Services;
+using GOP.Infrastructure.Identity;
 using GOP.Infrastructure.Persistence;
-using GOP.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +28,20 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp =>
             sp.GetRequiredService<GopDbContext>());
 
-        services.AddScoped<ICurrentUserService, CurrentUserServiceStub>();
+        // JWT Settings (for Infrastructure services)
+        services.Configure<JwtSettings>(
+            configuration.GetSection(JwtSettings.SectionName));
+
+        // JwtTokenOptions (for Application handlers, bound from same config section)
+        services.Configure<JwtTokenOptions>(
+            configuration.GetSection(JwtSettings.SectionName));
+
+        // Identity services
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IUserSeedStore, UserSeedStoreAdapter>();
+        services.AddSingleton<IRefreshTokenStore, InMemoryRefreshTokenStore>();
 
         return services;
     }

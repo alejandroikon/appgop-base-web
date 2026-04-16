@@ -1,35 +1,18 @@
-using FluentAssertions;
-using GOP.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Net;
 using System.Text.Json;
+using FluentAssertions;
+using GOP.API.Tests.Fixtures;
 
 namespace GOP.API.Tests.Controllers;
 
-public sealed class HealthControllerTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection("ApiIntegrationTests")]
+public sealed class HealthControllerTests
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly GopTestWebApplicationFactory _factory;
 
-    public HealthControllerTests(WebApplicationFactory<Program> factory)
+    public HealthControllerTests(GopTestWebApplicationFactory factory)
     {
-        _factory = factory.WithWebHostBuilder(builder =>
-        {
-            builder.UseEnvironment("Testing");
-
-            builder.ConfigureServices(services =>
-            {
-                // Reemplazar SQL Server por InMemory para no depender de Docker en CI
-                services.RemoveAll<DbContextOptions<GopDbContext>>();
-                services.RemoveAll<GopDbContext>();
-
-                services.AddDbContext<GopDbContext>(options =>
-                    options.UseInMemoryDatabase("TestDb_Health"));
-            });
-        });
+        _factory = factory;
     }
 
     [Fact]

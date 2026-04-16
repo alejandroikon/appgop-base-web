@@ -7,6 +7,7 @@ public interface ICurrentUserService
     string Name { get; }
     string Role { get; }
     int TenantId { get; }
+    string TenantName { get; }
     bool IsAuthenticated { get; }
     bool IsInRole(string role);
 }
