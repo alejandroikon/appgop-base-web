@@ -1,0 +1,345 @@
+openapi: 3.1.0
+
+info:
+  title: "GOP 360° — 004 Auth API"
+  version: "1.0.0"
+  description: |
+    Contrato OpenAPI para la autenticación JWT del sistema GOP 360°.
+    Referencia: specs/features/004-auth-api/spec.md
+
+servers:
+  - url: /api/v1
+    description: Base path versionado
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      operationId: login
+      summary: Autenticación con email y contraseña
+      description: |
+        Valida credenciales contra usuarios seed y retorna JWT access + refresh token.
+        Referencia: spec.md HU-009
+      security: []
+      x-roles: []
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "admin@gop.co"
+              password: "Admin123*"
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                refreshToken: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                expiresIn: 1800
+                user:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  email: "admin@gop.co"
+                  name: "Administrador ANH"
+                  role: "ADMIN"
+                  tenantId: "1"
+                  tenantName: "Agencia Nacional de Hidrocarburos"
+        '401':
+          description: Credenciales incorrectas
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Unauthorized"
+                status: 401
+                detail: "Correo o contraseña incorrectos."
+                instance: "/api/v1/auth/login"
+        '422':
+          description: Error de validación en los campos
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Validation Failed"
+                status: 422
+                detail: "Uno o más campos contienen errores de validación."
+                instance: "/api/v1/auth/login"
+                errors:
+                  email: ["El correo electrónico es requerido."]
+                  password: ["La contraseña es requerida."]
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/refresh:
+    post:
+      operationId: refreshToken
+      summary: Renovar access token con refresh token vigente
+      description: |
+        Consume el refresh token actual (single-use) y emite nuevo par access + refresh.
+        Referencia: spec.md HU-010
+      security: []
+      x-roles: []
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+            example:
+              refreshToken: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      responses:
+        '200':
+          description: Token renovado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.new..."
+                refreshToken: "f1e2d3c4-b5a6-0987-fedc-ba0987654321"
+                expiresIn: 1800
+                user:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  email: "admin@gop.co"
+                  name: "Administrador ANH"
+                  role: "ADMIN"
+                  tenantId: "1"
+                  tenantName: "Agencia Nacional de Hidrocarburos"
+        '401':
+          description: Refresh token expirado, inválido o ya utilizado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Unauthorized"
+                status: 401
+                detail: "Token de actualización inválido."
+                instance: "/api/v1/auth/refresh"
+        '422':
+          description: Error de validación
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Validation Failed"
+                status: 422
+                detail: "Uno o más campos contienen errores de validación."
+                instance: "/api/v1/auth/refresh"
+                errors:
+                  refreshToken: ["El token de actualización es requerido."]
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: Obtener perfil del usuario autenticado
+      description: |
+        Lee los claims del JWT y retorna el perfil del usuario.
+        Referencia: spec.md HU-011
+      security:
+        - bearerAuth: []
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: Perfil del usuario autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                email: "admin@gop.co"
+                name: "Administrador ANH"
+                role: "ADMIN"
+                tenantId: "1"
+                tenantName: "Agencia Nacional de Hidrocarburos"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Token JWT obtenido en /api/v1/auth/login"
+
+  responses:
+    Unauthorized:
+      description: Token JWT ausente, expirado o inválido
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://tools.ietf.org/html/rfc7807"
+            title: "Unauthorized"
+            status: 401
+            detail: "Token de autenticación requerido."
+
+    InternalServerError:
+      description: Error interno del servidor
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://tools.ietf.org/html/rfc7807"
+            title: "Internal Server Error"
+            status: 500
+            detail: "Error interno del servidor."
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 256
+          description: "Correo electrónico del usuario (case-insensitive)"
+          example: "admin@gop.co"
+        password:
+          type: string
+          maxLength: 128
+          description: "Contraseña del usuario (case-sensitive)"
+          example: "Admin123*"
+      example:
+        email: "admin@gop.co"
+        password: "Admin123*"
+
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          description: "Refresh token obtenido en login o refresh anterior"
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      example:
+        refreshToken: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+    TokenResponse:
+      type: object
+      required: [accessToken, refreshToken, expiresIn, user]
+      properties:
+        accessToken:
+          type: string
+          description: "JWT access token firmado con HS256"
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: "Token opaco para renovar el access token (single-use)"
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        expiresIn:
+          type: integer
+          description: "Segundos hasta la expiración del access token"
+          example: 1800
+        user:
+          $ref: '#/components/schemas/UserProfile'
+      example:
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        expiresIn: 1800
+        user:
+          id: "550e8400-e29b-41d4-a716-446655440000"
+          email: "admin@gop.co"
+          name: "Administrador ANH"
+          role: "ADMIN"
+          tenantId: "1"
+          tenantName: "Agencia Nacional de Hidrocarburos"
+
+    UserProfile:
+      type: object
+      required: [id, email, name, role, tenantId, tenantName]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "ID único del usuario"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          description: "Correo electrónico"
+          example: "admin@gop.co"
+        name:
+          type: string
+          description: "Nombre completo"
+          example: "Administrador ANH"
+        role:
+          type: string
+          enum: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+          description: "Rol del usuario en el sistema"
+          example: "ADMIN"
+        tenantId:
+          type: string
+          description: "ID del tenant/operadora"
+          example: "1"
+        tenantName:
+          type: string
+          description: "Nombre del tenant/operadora"
+          example: "Agencia Nacional de Hidrocarburos"
+      example:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        email: "admin@gop.co"
+        name: "Administrador ANH"
+        role: "ADMIN"
+        tenantId: "1"
+        tenantName: "Agencia Nacional de Hidrocarburos"
+
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+          format: uri
+          example: "https://tools.ietf.org/html/rfc7807"
+        title:
+          type: string
+          example: "Unauthorized"
+        status:
+          type: integer
+          example: 401
+        detail:
+          type: string
+          example: "Correo o contraseña incorrectos."
+        instance:
+          type: string
+          example: "/api/v1/auth/login"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example: {}
+        traceId:
+          type: string
+          example: "00-abc123def456-01"
