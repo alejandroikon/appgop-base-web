@@ -1,0 +1,166 @@
+openapi: 3.1.0
+
+info:
+  title: "GOP 360° — 003 Backend Scaffold"
+  version: "1.0.0"
+  description: |
+    Contrato OpenAPI mínimo para la feature de scaffolding del backend.
+    Solo define el endpoint de health check — no hay endpoints de negocio.
+    Referencia: specs/features/003-backend-scaffold/spec.md
+
+servers:
+  - url: /api/v1
+    description: Base path versionado — todos los endpoints son relativos a este prefijo
+
+security: []    # Esta feature no tiene endpoints autenticados
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Verificar el estado de salud de la API y sus dependencias
+      description: |
+        Retorna el estado de salud del sistema y cada dependencia verificada.
+        Endpoint público — no requiere autenticación.
+        Referencia: spec.md HT-002
+      security: []
+      x-roles: []
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Todas las dependencias están saludables
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "Healthy"
+                totalDuration: "00:00:00.0234567"
+                checks:
+                  - name: "sqlserver"
+                    status: "Healthy"
+                    duration: "00:00:00.0123456"
+                  - name: "efcore"
+                    status: "Healthy"
+                    duration: "00:00:00.0054321"
+
+        '503':
+          description: Una o más dependencias no están disponibles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "Unhealthy"
+                totalDuration: "00:00:05.0012345"
+                checks:
+                  - name: "sqlserver"
+                    status: "Unhealthy"
+                    duration: "00:00:05.0001234"
+                    description: "Connection to SQL Server failed"
+                  - name: "efcore"
+                    status: "Unhealthy"
+                    duration: "00:00:00.0001000"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Token JWT obtenido en /api/v1/auth/login (no requerido en esta feature)"
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, checks]
+      properties:
+        status:
+          type: string
+          enum: [Healthy, Degraded, Unhealthy]
+          description: "Estado general del sistema"
+          example: "Healthy"
+        totalDuration:
+          type: string
+          description: "Duración total de la verificación (TimeSpan)"
+          example: "00:00:00.0234567"
+        checks:
+          type: array
+          description: "Estado individual de cada dependencia verificada"
+          items:
+            $ref: '#/components/schemas/HealthCheck'
+      example:
+        status: "Healthy"
+        totalDuration: "00:00:00.0234567"
+        checks:
+          - name: "sqlserver"
+            status: "Healthy"
+            duration: "00:00:00.0123456"
+
+    HealthCheck:
+      type: object
+      required: [name, status]
+      properties:
+        name:
+          type: string
+          description: "Nombre de la dependencia"
+          example: "sqlserver"
+        status:
+          type: string
+          enum: [Healthy, Degraded, Unhealthy]
+          description: "Estado de la dependencia"
+          example: "Healthy"
+        duration:
+          type: string
+          description: "Duración de la verificación (TimeSpan)"
+          example: "00:00:00.0123456"
+        description:
+          type: ["string", "null"]
+          description: "Descripción adicional (solo en caso de error)"
+          example: null
+
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: "URI de referencia del tipo de error"
+          example: "https://tools.ietf.org/html/rfc7807"
+        title:
+          type: string
+          description: "Título corto y legible del error"
+          example: "Internal Server Error"
+        status:
+          type: integer
+          description: "Código HTTP del error"
+          example: 500
+        detail:
+          type: string
+          description: "Descripción legible del error para el usuario"
+          example: "Error interno del servidor."
+        instance:
+          type: string
+          description: "URI de la request que generó el error"
+          example: "/api/v1/health"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: "Errores de validación por campo (solo en 422)"
+          example: {}
+        traceId:
+          type: string
+          description: "ID de correlación para trazabilidad"
+          example: "00-abc123def456-01"
+      example:
+        type: "https://tools.ietf.org/html/rfc7807"
+        title: "Internal Server Error"
+        status: 500
+        detail: "Error interno del servidor."
+        instance: "/api/v1/health"
+        traceId: "00-abc123def456-01"
