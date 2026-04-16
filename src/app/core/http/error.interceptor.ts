@@ -28,9 +28,14 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       const messageService = inject(MessageService);
 
       switch (error.status) {
-        case 401:
-          inject(Store).dispatch(AuthActions.sessionExpired());
+        case 401: {
+          const isAuthUrl =
+            req.url.includes('/auth/login') || req.url.includes('/auth/refresh');
+          if (!isAuthUrl) {
+            inject(Store).dispatch(AuthActions.sessionExpired());
+          }
           break;
+        }
 
         case 0:
           messageService.add({

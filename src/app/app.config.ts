@@ -10,7 +10,9 @@ import { MessageService } from 'primeng/api';
 import Aura from '@primeuix/themes/aura';
 
 import { routes } from './app.routes';
+import { mockInterceptor } from '@core/http/mock.interceptor';
 import { authInterceptor } from '@core/http/auth.interceptor';
+import { tokenRefreshInterceptor } from '@core/http/token-refresh.interceptor';
 import { errorInterceptor } from '@core/http/error.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -20,9 +22,14 @@ export const appConfig: ApplicationConfig = {
     // Router
     provideRouter(routes, withComponentInputBinding()),
 
-    // HTTP + interceptores (orden: auth primero, errores después)
+    // HTTP + interceptores (orden: mock → auth → refresh → errores)
     provideHttpClient(
-      withInterceptors([authInterceptor, errorInterceptor])
+      withInterceptors([
+        mockInterceptor,
+        authInterceptor,
+        tokenRefreshInterceptor,
+        errorInterceptor,
+      ])
     ),
 
     // NgRx Store global

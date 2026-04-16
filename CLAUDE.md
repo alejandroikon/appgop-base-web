@@ -71,10 +71,10 @@ El mapa funcional completo del sistema está en:
 
 > **Actualizar esta sección cada vez que se cambie de feature o módulo.**
 
-- **Feature:** Layout Base — Sidebar + TopHeader (completada)
-- **Spec:** `specs/features/002-layout/spec.md`
-- **Plan:** `specs/features/002-layout/plan.md`
-- **Tareas:** `specs/features/002-layout/tasks.md`
+- **Feature:** Auth API Real — Integración JWT (completada)
+- **Spec:** `specs/features/004-auth-api/spec.md`
+- **Plan:** `specs/features/004-auth-api/plan.fe.md`
+- **Tareas:** `specs/features/004-auth-api/tasks.fe.md`
 
 ---
 

@@ -7,6 +7,6 @@ export const API = {
   auth: {
     login:   `${hosts.gopApi}/api/v1/auth/login`,
     refresh: `${hosts.gopApi}/api/v1/auth/refresh`,
-    logout:  `${hosts.gopApi}/api/v1/auth/logout`,
+    me:      `${hosts.gopApi}/api/v1/auth/me`,
   },
 } as const;

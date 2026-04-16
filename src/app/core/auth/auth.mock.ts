@@ -1,6 +1,5 @@
 import { delay, Observable, of, throwError } from 'rxjs';
-import { AuthUser } from '@shared/models';
-import { UserRole } from '@shared/models';
+import { AuthUser, UserRole } from '@shared/models';
 
 interface MockUser {
   email: string;
@@ -12,41 +11,41 @@ interface MockUser {
   tenantName: string;
 }
 
-const MOCK_USERS: MockUser[] = [
+export const MOCK_USERS: MockUser[] = [
   {
-    email: 'admin@gop360.com',
+    email: 'admin@gop.co',
     password: 'Admin123*',
-    id: 'usr-001',
+    id: '550e8400-e29b-41d4-a716-446655440001',
     name: 'Administrador ANH',
     role: 'ADMIN',
-    tenantId: 'tenant-anh',
+    tenantId: '1',
     tenantName: 'Agencia Nacional de Hidrocarburos',
   },
   {
-    email: 'supervisor@gop360.com',
+    email: 'supervisor@gop.co',
     password: 'Super123*',
-    id: 'usr-002',
+    id: '550e8400-e29b-41d4-a716-446655440002',
     name: 'Supervisor Ecopetrol',
     role: 'SUPERVISOR',
-    tenantId: 'tenant-ecopetrol',
+    tenantId: '2',
     tenantName: 'Ecopetrol S.A.',
   },
   {
-    email: 'operador@gop360.com',
+    email: 'operador@gop.co',
     password: 'Oper123*',
-    id: 'usr-003',
+    id: '550e8400-e29b-41d4-a716-446655440003',
     name: 'Operador Ecopetrol',
     role: 'OPERADOR',
-    tenantId: 'tenant-ecopetrol',
+    tenantId: '2',
     tenantName: 'Ecopetrol S.A.',
   },
   {
-    email: 'auditor@gop360.com',
+    email: 'auditor@gop.co',
     password: 'Audit123*',
-    id: 'usr-004',
+    id: '550e8400-e29b-41d4-a716-446655440004',
     name: 'Auditor ANH',
     role: 'AUDITOR',
-    tenantId: 'tenant-anh',
+    tenantId: '1',
     tenantName: 'Agencia Nacional de Hidrocarburos',
   },
 ];

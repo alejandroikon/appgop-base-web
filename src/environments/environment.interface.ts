@@ -7,6 +7,7 @@ export interface AppEnvironment {
   };
   featureFlags: {
     enableBetaFeatures: boolean;
+    useMocks: boolean;
   };
   loginBgUrl: string;
 }

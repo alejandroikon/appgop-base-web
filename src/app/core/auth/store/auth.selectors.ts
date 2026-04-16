@@ -6,6 +6,8 @@ export const selectCurrentUser = authFeature.selectUser;
 export const selectIsAuthenticated = authFeature.selectIsAuthenticated;
 export const selectAuthIsLoading = authFeature.selectIsLoading;
 export const selectAuthError = authFeature.selectError;
+export const selectAccessToken = authFeature.selectAccessToken;
+export const selectRefreshToken = authFeature.selectRefreshToken;
 
 export const selectCurrentTenant = createSelector(
   selectCurrentUser,

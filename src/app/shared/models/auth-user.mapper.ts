@@ -1,14 +1,14 @@
 import { AuthUser } from './auth-user.model';
-import { AuthUserDTO } from './auth-user.dto';
+import { UserProfileDTO } from './auth-user.dto';
 import { UserRole } from './user-role.model';
 
-export function mapAuthUserDTOToModel(dto: AuthUserDTO): AuthUser {
+export function mapUserProfileDTOToModel(dto: UserProfileDTO): AuthUser {
   return {
-    id: dto.user_id,
+    id: dto.id,
     email: dto.email,
-    name: dto.full_name,
-    role: dto.role_code as UserRole,
-    tenantId: dto.tenant_id,
-    tenantName: dto.tenant_name,
+    name: dto.name,
+    role: dto.role as UserRole,
+    tenantId: dto.tenantId,
+    tenantName: dto.tenantName,
   };
 }
