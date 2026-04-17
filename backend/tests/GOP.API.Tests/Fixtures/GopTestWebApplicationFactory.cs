@@ -11,7 +11,16 @@ namespace GOP.API.Tests.Fixtures;
 
 /// <summary>
 /// Factory compartida entre clases de test API.
-/// Reemplaza SQL Server por InMemory sin interceptor de auditoría.
+/// Reemplaza SQL Server por EF Core InMemory sin interceptor de auditoría.
+///
+/// NOTA (BE-M02 — aceptado con conocimiento): Se usa EF InMemory en lugar de Testcontainers SQL Server.
+/// Limitaciones conocidas:
+///   - No aplica FK enforcement → inserciones con FK inválidas no fallan.
+///   - No replica índices únicos reales → DuplicateUwi no se valida a nivel DB.
+///   - Los global query filters (IsDeleted, TenantId) se comportan igual → no hay diferencia.
+/// Impacto real: los tests de integración API no detectan violaciones de constraints de SQL Server.
+/// Decisión: aceptable para el MVP dado que los constraints están cubiertos en GOP.Domain.Tests
+/// y GOP.Application.Tests. Migración a Testcontainers queda pendiente para iteraciones P2.
 /// </summary>
 public sealed class GopTestWebApplicationFactory : WebApplicationFactory<Program>
 {

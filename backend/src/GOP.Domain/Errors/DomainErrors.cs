@@ -65,6 +65,10 @@ public static partial class DomainErrors
             "Well.IncompleteWellData",
             "El pozo tiene campos requeridos sin completar.");
 
+        public static Error InvalidEnumValue(string fieldName, string value) => new(
+            "Well.InvalidFieldValue",
+            $"El valor '{value}' no es válido para el campo '{fieldName}'.");
+
         public static readonly Error FiscalizedImmutable = new(
             "Well.FiscalizedImmutable",
             "No se puede modificar un pozo fiscalizado.");
