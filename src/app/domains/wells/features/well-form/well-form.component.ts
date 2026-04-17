@@ -11,7 +11,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { Subject, catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
+import { Subject, catchError, debounceTime, distinctUntilChanged, finalize, map, of, switchMap } from 'rxjs';
 import { StepperModule } from 'primeng/stepper';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
@@ -408,15 +408,15 @@ export class WellFormComponent implements OnInit {
             params.consecutivo,
             this.editId ?? undefined,
           )
-          .pipe(catchError(() => {
-            this.namePreviewLoading.set(false);
-            return of(null);
-          }));
+          .pipe(
+            finalize(() => this.namePreviewLoading.set(false)),
+            // catchError solo mantiene el stream exterior vivo; el toast lo muestra errorInterceptor
+            catchError(() => of(null)),
+          );
       }),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((preview) => {
       this.namePreview.set(preview);
-      this.namePreviewLoading.set(false);
     });
   }
 
