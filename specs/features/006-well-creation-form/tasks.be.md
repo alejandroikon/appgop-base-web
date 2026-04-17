@@ -8,7 +8,7 @@
 
 ## Bloque 1 — Domain (`dotnet build GOP.Domain`)
 
-- [ ] **T001**: Crear/verificar `Domain/Errors/DomainErrors.Contrato.cs`
+- [x] **T001**: Crear/verificar `Domain/Errors/DomainErrors.Contrato.cs`
   - Agregar clase parcial `DomainErrors.Contrato` con error `NotFound`
   - Si ya existe de iteración 005, verificar que incluya `NotFound` y marcar como completada
   - Archivo: `src/GOP.Domain/Errors/DomainErrors.Contrato.cs`
@@ -19,23 +19,23 @@
 
 ## Bloque 2 — Application (`dotnet build GOP.Application`)
 
-- [ ] **T002** [P]: Crear `Application/Features/Wells/Queries/PreviewWellName/WellNamePreviewDto.cs`
+- [x] **T002** [P]: Crear `Application/Features/Wells/Queries/PreviewWellName/WellNamePreviewDto.cs`
   - `public sealed record WellNamePreviewDto(string NombrePozo, bool Available);`
   - Archivo: `src/GOP.Application/Features/Wells/Queries/PreviewWellName/WellNamePreviewDto.cs`
 
-- [ ] **T003** [P]: Crear `Application/Features/Wells/Queries/PreviewWellName/PreviewWellNameQuery.cs`
+- [x] **T003** [P]: Crear `Application/Features/Wells/Queries/PreviewWellName/PreviewWellNameQuery.cs`
   - Record inmutable con: `ContratoId (int)`, `Denominacion (string)`, `Consecutivo (string)`, `ExcludeWellId (Guid?)`
   - Implementa `IRequest<Result<WellNamePreviewDto>>`
   - Archivo: `src/GOP.Application/Features/Wells/Queries/PreviewWellName/PreviewWellNameQuery.cs`
 
-- [ ] **T004**: Crear `Application/Features/Wells/Queries/PreviewWellName/PreviewWellNameQueryHandler.cs`
+- [x] **T004**: Crear `Application/Features/Wells/Queries/PreviewWellName/PreviewWellNameQueryHandler.cs`
   - Inyecta `IApplicationDbContext`
   - Resuelve cuenca del contrato, calcula nombre, verifica existencia
   - Retorna `Result<WellNamePreviewDto>`
   - Usa `AsNoTracking()` (CONSTITUTION.backend.md §4.4)
   - Archivo: `src/GOP.Application/Features/Wells/Queries/PreviewWellName/PreviewWellNameQueryHandler.cs`
 
-- [ ] **T005**: Crear `Application/Features/Wells/Queries/PreviewWellName/PreviewWellNameQueryValidator.cs`
+- [x] **T005**: Crear `Application/Features/Wells/Queries/PreviewWellName/PreviewWellNameQueryValidator.cs`
   - Valida ContratoId > 0, Denominacion no vacía + pattern letras, Consecutivo pattern 2 dígitos
   - Mensajes en español (CONSTITUTION.backend.md §5.3)
   - Archivo: `src/GOP.Application/Features/Wells/Queries/PreviewWellName/PreviewWellNameQueryValidator.cs`
@@ -46,7 +46,7 @@
 
 ## Bloque 3 — API (`dotnet build GOP.API`)
 
-- [ ] **T006**: Modificar `API/Controllers/WellsController.cs`
+- [x] **T006**: Modificar `API/Controllers/WellsController.cs`
   - Agregar action `PreviewWellName` con `[HttpGet("preview-name")]`
   - Roles: `[Authorize(Roles = "ADMIN,SUPERVISOR,OPERADOR")]`
   - Recibe query params: `contratoId`, `denominacion`, `consecutivo`, `excludeWellId?`
@@ -60,7 +60,7 @@
 
 ## Bloque 4 — Tests (`dotnet test`)
 
-- [ ] **T007**: Crear `Application.Tests/Features/Wells/Queries/PreviewWellNameQueryHandlerTests.cs`
+- [x] **T007**: Crear `Application.Tests/Features/Wells/Queries/PreviewWellNameQueryHandlerTests.cs`
   - Test 1: `Handle_ValidQuery_ReturnsAvailableName` — contrato existe, nombre no duplicado → Success + Available=true
   - Test 2: `Handle_DuplicateName_ReturnsUnavailable` — nombre ya existe → Success + Available=false
   - Test 3: `Handle_ContratoNotFound_ReturnsFailure` — contrato no existe → Failure con Contrato.NotFound

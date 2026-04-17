@@ -5,6 +5,7 @@ using GOP.Application.Features.Wells.Commands.DeleteWell;
 using GOP.Application.Features.Wells.Commands.UpdateWell;
 using GOP.Application.Features.Wells.Queries.GetWellById;
 using GOP.Application.Features.Wells.Queries.GetWellsList;
+using GOP.Application.Features.Wells.Queries.PreviewWellName;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -78,6 +79,23 @@ public sealed class WellsController(ISender sender) : ControllerBase
             body.ClusterId);
         return (await sender.Send(command, cancellationToken)).ToActionResult();
     }
+
+    /// <summary>GET /api/v1/wells/preview-name — HU-035: Previsualizar nombre del pozo y verificar disponibilidad</summary>
+    [HttpGet("preview-name")]
+    [Authorize(Roles = "ADMIN,SUPERVISOR,OPERADOR")]
+    [ProducesResponseType(typeof(WellNamePreviewDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> PreviewWellName(
+        [FromQuery] int contratoId,
+        [FromQuery] string denominacion,
+        [FromQuery] string consecutivo,
+        [FromQuery] Guid? excludeWellId,
+        CancellationToken cancellationToken = default)
+        => (await sender.Send(
+            new PreviewWellNameQuery(contratoId, denominacion, consecutivo, excludeWellId),
+            cancellationToken)).ToActionResult();
 
     /// <summary>DELETE /api/v1/wells/{id} — HU-024: Eliminar (soft delete) un pozo en borrador</summary>
     [HttpDelete("{id:guid}")]
