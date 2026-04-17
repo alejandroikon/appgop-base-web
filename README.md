@@ -467,3 +467,4 @@ Proyecto confidencial desarrollado para la Agencia Nacional de Hidrocarburos (AN
 **Actualizado:** 2026-04-17  
 **Rama:** `gop-base-web`  
 **Versión:** 1.0 (Post-QA, pre-correcciones P0)
+
