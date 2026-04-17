@@ -8,6 +8,10 @@
   --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
+  /* Aliases usados por componentes del UIKit Storybook */
+  --font-sans:    var(--font-family-sans);
+  --font-heading: 'Montserrat', sans-serif;
+
   /* Escala de tamaños */
   --font-size-xs:   0.75rem;   /* 12px */
   --font-size-sm:   0.875rem;  /* 14px */

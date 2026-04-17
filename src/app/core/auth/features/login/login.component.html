@@ -1,15 +1,15 @@
 <div>
-  <h2 class="text-xl font-semibold text-gray-900 mb-1">{{ locale.title }}</h2>
-  <p class="text-sm text-gray-400 mb-6">{{ locale.subtitle }}</p>
+  <h2 class="text-xl font-semibold text-[var(--color-text-primary)] mb-1">{{ locale.title }}</h2>
+  <p class="text-sm text-[var(--color-text-secondary)] mb-6">{{ locale.subtitle }}</p>
 
   <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
     <!-- Campo Correo Electrónico -->
     <div>
-      <label for="email" class="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-1.5">
-        {{ locale.fields.email }} <span class="text-red-500">*</span>
+      <label for="email" class="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5">
+        {{ locale.fields.email }} <span class="text-[var(--color-error)]">*</span>
       </label>
       <div class="relative">
-        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--color-text-secondary)] pointer-events-none">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
               d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
@@ -21,25 +21,25 @@
           formControlName="email"
           [placeholder]="locale.fields.emailPlaceholder"
           (focus)="onFieldFocus()"
-          class="w-full pl-9 pr-3 py-2 bg-white text-gray-900 placeholder-gray-400 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition"
-          [class.border-red-400]="loginForm.controls.email.touched && loginForm.controls.email.invalid"
+          class="w-full pl-9 pr-3 py-2 bg-[var(--color-surface)] text-[var(--color-text-primary)] placeholder-[var(--color-text-disabled)] border border-[var(--color-border)] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition"
+          [class.border-error]="loginForm.controls.email.touched && loginForm.controls.email.invalid"
         />
       </div>
       @if (loginForm.controls.email.touched && loginForm.controls.email.hasError('required')) {
-        <p class="mt-1 text-xs text-red-500">{{ locale.errors.required }}</p>
+        <p class="mt-1 text-xs text-[var(--color-error)]">{{ locale.errors.required }}</p>
       }
       @if (loginForm.controls.email.touched && loginForm.controls.email.hasError('email') && !loginForm.controls.email.hasError('required')) {
-        <p class="mt-1 text-xs text-red-500">{{ locale.errors.emailInvalid }}</p>
+        <p class="mt-1 text-xs text-[var(--color-error)]">{{ locale.errors.emailInvalid }}</p>
       }
     </div>
 
     <!-- Campo Contraseña -->
     <div>
-      <label for="password" class="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-1.5">
-        {{ locale.fields.password }} <span class="text-red-500">*</span>
+      <label for="password" class="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5">
+        {{ locale.fields.password }} <span class="text-[var(--color-error)]">*</span>
       </label>
       <div class="relative">
-        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--color-text-secondary)] pointer-events-none">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
               d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
@@ -50,14 +50,14 @@
           [type]="showPassword() ? 'text' : 'password'"
           formControlName="password"
           (focus)="onFieldFocus()"
-          class="w-full pl-9 pr-9 py-2 bg-white text-gray-900 placeholder-gray-400 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition"
-          [class.border-red-400]="loginForm.controls.password.touched && loginForm.controls.password.invalid"
+          class="w-full pl-9 pr-9 py-2 bg-[var(--color-surface)] text-[var(--color-text-primary)] placeholder-[var(--color-text-disabled)] border border-[var(--color-border)] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition"
+          [class.border-error]="loginForm.controls.password.touched && loginForm.controls.password.invalid"
         />
         <button
           type="button"
           (click)="togglePassword()"
           [attr.aria-label]="showPassword() ? locale.actions.hidePassword : locale.actions.showPassword"
-          class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition"
+          class="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition"
         >
           @if (showPassword()) {
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,21 +75,21 @@
         </button>
       </div>
       @if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
-        <p class="mt-1 text-xs text-red-500">{{ locale.errors.required }}</p>
+        <p class="mt-1 text-xs text-[var(--color-error)]">{{ locale.errors.required }}</p>
       }
     </div>
 
     <!-- Enlace Olvidó contraseña -->
     <div class="flex justify-end">
-      <a routerLink="/forgot-password" class="text-xs text-gray-500 hover:text-gray-700 hover:underline transition">
+      <a routerLink="/forgot-password" class="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:underline transition">
         {{ locale.actions.forgotPassword }}
       </a>
     </div>
 
     <!-- Error de autenticación -->
     @if (authError()) {
-      <div class="p-3 bg-red-50 border border-red-200 rounded-md">
-        <p class="text-sm text-red-600">{{ authError() }}</p>
+      <div class="p-3 bg-[var(--color-error-light)] border border-[var(--color-error)] rounded-md">
+        <p class="text-sm text-[var(--color-error)]">{{ authError() }}</p>
       </div>
     }
 
@@ -97,7 +97,7 @@
     <button
       type="submit"
       [disabled]="isLoading()"
-      class="w-full py-2.5 bg-slate-800 text-white text-sm font-semibold rounded-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800 focus:ring-offset-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
+      class="w-full py-2.5 bg-[var(--color-primary)] text-[var(--color-primary-contrast)] text-sm font-semibold rounded-md hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {{ isLoading() ? locale.actions.submitting : locale.actions.submit }}
     </button>

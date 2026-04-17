@@ -32,6 +32,14 @@
   --p-border-radius-sm:       var(--radius-sm);
   --p-border-radius-md:       var(--radius-md);
   --p-border-radius-lg:       var(--radius-lg);
+
+  /* Fondos */
+  --p-primary-50:             var(--color-primary-light);
+  --p-surface-50:             var(--color-surface-alt);
+  --p-surface-100:            var(--primitive-gray-100);
+
+  /* Border radius de contenido */
+  --p-content-border-radius:  var(--radius-md);
 }
 
 /* ----------------------------------------------------------
