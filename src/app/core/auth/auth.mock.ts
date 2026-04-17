@@ -13,8 +13,8 @@ interface MockUser {
 
 export const MOCK_USERS: MockUser[] = [
   {
-    email: 'admin@gop.co',
-    password: 'Admin123*',
+    email: 'admin@gop360.com',
+    password: 'Admin123!',
     id: '550e8400-e29b-41d4-a716-446655440001',
     name: 'Administrador ANH',
     role: 'ADMIN',
@@ -22,8 +22,8 @@ export const MOCK_USERS: MockUser[] = [
     tenantName: 'Agencia Nacional de Hidrocarburos',
   },
   {
-    email: 'supervisor@gop.co',
-    password: 'Super123*',
+    email: 'supervisor@gop360.com',
+    password: 'Super123!',
     id: '550e8400-e29b-41d4-a716-446655440002',
     name: 'Supervisor Ecopetrol',
     role: 'SUPERVISOR',
@@ -31,8 +31,8 @@ export const MOCK_USERS: MockUser[] = [
     tenantName: 'Ecopetrol S.A.',
   },
   {
-    email: 'operador@gop.co',
-    password: 'Oper123*',
+    email: 'operador@gop360.com',
+    password: 'Oper123!',
     id: '550e8400-e29b-41d4-a716-446655440003',
     name: 'Operador Ecopetrol',
     role: 'OPERADOR',
@@ -40,8 +40,8 @@ export const MOCK_USERS: MockUser[] = [
     tenantName: 'Ecopetrol S.A.',
   },
   {
-    email: 'auditor@gop.co',
-    password: 'Audit123*',
+    email: 'auditor@gop360.com',
+    password: 'Audit123!',
     id: '550e8400-e29b-41d4-a716-446655440004',
     name: 'Auditor ANH',
     role: 'AUDITOR',
