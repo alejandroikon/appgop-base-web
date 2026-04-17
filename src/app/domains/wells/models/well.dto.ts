@@ -8,6 +8,7 @@ export interface WellListItemDTO {
   campo: string;
   clasificacion: string;
   estado: string;
+  uwi: string | null;
   createdAt: string;
 }
 
@@ -41,6 +42,7 @@ export interface WellDetailDTO {
   tipoObjetivo: string;
   tipoTerminacion: string;
   estado: string;
+  uwi: string | null;
   ubicacion: WellLocationDTO;
   createdAt: string;
   lastModifiedAt: string | null;

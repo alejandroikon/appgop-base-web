@@ -15,6 +15,7 @@ export function mapWellListItemDTOToModel(dto: WellListItemDTO): WellListItem {
     campo: dto.campo,
     clasificacion: dto.clasificacion as Clasificacion,
     estado: dto.estado as WellStatus,
+    uwi: dto.uwi ?? null,
     createdAt: dto.createdAt,
   };
 }
@@ -52,6 +53,7 @@ export function mapWellDetailDTOToModel(dto: WellDetailDTO): Well {
     tipoObjetivo: dto.tipoObjetivo as TipoObjetivo,
     tipoTerminacion: dto.tipoTerminacion as TipoTerminacion,
     estado: dto.estado as WellStatus,
+    uwi: dto.uwi ?? null,
     ubicacion: mapWellLocationDTOToModel(dto.ubicacion),
     createdAt: dto.createdAt,
     lastModifiedAt: dto.lastModifiedAt,

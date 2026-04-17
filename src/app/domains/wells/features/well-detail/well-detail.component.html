@@ -1,0 +1,184 @@
+<p-toast />
+
+@if (isLoadingWell()) {
+  <div
+    class="flex items-center justify-center min-h-64"
+    data-testid="well-detail-loading"
+  >
+    <p-progressSpinner strokeWidth="4" />
+  </div>
+} @else if (well()) {
+  <div
+    class="flex flex-col gap-6"
+    data-testid="well-detail-container"
+  >
+    <!-- ─── Header: Nombre, Estado, UWI, Acciones ─── -->
+    <div class="flex flex-col gap-3">
+      <!-- Navegación -->
+      <a
+        [routerLink]="['/wells/manage']"
+        class="flex items-center gap-1 text-sm text-text-secondary hover:text-primary transition-colors w-fit"
+        data-testid="btn-back"
+      >
+        <i class="pi pi-arrow-left"></i>
+        {{ locale.actions['back'] }}
+      </a>
+
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <!-- Título y badge de estado -->
+        <div class="flex flex-col gap-2">
+          <h1
+            class="text-2xl font-semibold text-text-primary"
+            data-testid="well-detail-name"
+          >
+            {{ well()!.nombrePozo }}
+          </h1>
+          <div class="flex items-center gap-3">
+            <app-well-status-badge
+              [estado]="well()!.estado"
+              data-testid="well-detail-status-badge"
+            />
+            <span
+              class="text-sm text-text-secondary"
+              data-testid="well-detail-uwi"
+            >
+              {{ locale.uwi.label }}:
+              <strong>{{ well()!.uwi ?? locale.uwi.pending }}</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- Acciones contextuales -->
+        <div class="flex flex-wrap gap-2 items-center">
+          @if (well()!.estado === 'BORRADOR' && currentUser()?.role !== 'AUDITOR') {
+            <p-button
+              [label]="locale.actions['edit']"
+              icon="pi pi-pencil"
+              severity="secondary"
+              [outlined]="true"
+              [routerLink]="['/wells', well()!.id, 'edit']"
+              data-testid="btn-edit-well"
+            />
+          }
+          <app-well-transition-actions
+            [estado]="well()!.estado"
+            [userRole]="currentUser()?.role ?? 'AUDITOR'"
+            [isLoading]="isTransitioning()"
+            (transition)="onTransitionRequested($event)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Sección: Información del Contrato ─── -->
+    <p-card [header]="locale.sections.contract">
+      <div
+        class="grid grid-cols-2 gap-x-8 gap-y-3 md:grid-cols-3"
+        data-testid="section-contract"
+      >
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.operadora }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.operadora }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.contrato }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.contrato }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.tipoContrato }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoContrato }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.cuenca }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.cuenca }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.campo }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.campo }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.clasificacion }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.clasificacion }}</p>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- ─── Sección: Datos Técnicos ─── -->
+    <p-card [header]="locale.sections.technical">
+      <div
+        class="grid grid-cols-2 gap-x-8 gap-y-3 md:grid-cols-3"
+        data-testid="section-technical"
+      >
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.denominacion }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.denominacion }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.consecutivo }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.consecutivo }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.tipoTrayectoria }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoTrayectoria }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.tipoUbicacion }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoUbicacion }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.tipoAngulo }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoAngulo }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.tipoObjetivo }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoObjetivo }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.tipoTerminacion }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoTerminacion }}</p>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- ─── Sección: Ubicación Geográfica ─── -->
+    <p-card [header]="locale.sections.location">
+      <div
+        class="grid grid-cols-2 gap-x-8 gap-y-3 md:grid-cols-3"
+        data-testid="section-location"
+      >
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.departamento }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.ubicacion.departamento }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.municipio }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.ubicacion.municipio }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-text-secondary">{{ locale.labels.cluster }}</p>
+          <p class="text-sm font-medium text-text-primary">
+            {{ well()!.ubicacion.cluster ?? locale.labels.noData }}
+          </p>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- ─── Sección: Historial de Transiciones ─── -->
+    <p-card [header]="locale.sections.history">
+      <app-well-history-timeline
+        [history]="history()"
+        [isLoading]="isLoadingHistory()"
+        data-testid="section-history"
+      />
+    </p-card>
+  </div>
+}
+
+<!-- Diálogo de confirmación de transición -->
+<app-transition-confirm-dialog
+  [visible]="dialogVisible()"
+  [action]="dialogAction()"
+  [isLoading]="isTransitioning()"
+  (confirm)="onTransitionConfirmed($event)"
+  (cancel)="onDialogCancel()"
+/>
