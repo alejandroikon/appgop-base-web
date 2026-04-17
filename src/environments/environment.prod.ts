@@ -8,7 +8,7 @@ export const environment: AppEnvironment = {
   },
   featureFlags: {
     enableBetaFeatures: false,
-    useMocks: false,
+    useMocks: true,
   },
   loginBgUrl: 'assets/images/login-bg.jpg',
 };
