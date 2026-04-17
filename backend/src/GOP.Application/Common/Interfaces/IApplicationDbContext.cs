@@ -14,6 +14,7 @@ public interface IApplicationDbContext
     DbSet<Departamento> Departamentos { get; }
     DbSet<Municipio> Municipios { get; }
     DbSet<Cluster> Clusters { get; }
+    DbSet<WellTransitionHistory> WellTransitionHistory { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -1,9 +1,12 @@
+using GOP.API.Contracts;
 using GOP.API.Extensions;
 using GOP.Application.Common;
 using GOP.Application.Features.Wells.Commands.CreateWell;
 using GOP.Application.Features.Wells.Commands.DeleteWell;
+using GOP.Application.Features.Wells.Commands.TransitionWell;
 using GOP.Application.Features.Wells.Commands.UpdateWell;
 using GOP.Application.Features.Wells.Queries.GetWellById;
+using GOP.Application.Features.Wells.Queries.GetWellHistory;
 using GOP.Application.Features.Wells.Queries.GetWellsList;
 using GOP.Application.Features.Wells.Queries.PreviewWellName;
 using MediatR;
@@ -96,6 +99,32 @@ public sealed class WellsController(ISender sender) : ControllerBase
         => (await sender.Send(
             new PreviewWellNameQuery(contratoId, denominacion, consecutivo, excludeWellId),
             cancellationToken)).ToActionResult();
+
+    /// <summary>PATCH /api/v1/wells/{id}/transition — HU-040..043: Ejecutar transición de estado</summary>
+    [HttpPatch("{id:guid}/transition")]
+    [Authorize(Roles = "ADMIN,SUPERVISOR,OPERADOR")]
+    [ProducesResponseType(typeof(TransitionResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> TransitionWell(
+        Guid id,
+        [FromBody] TransitionWellRequest request,
+        CancellationToken cancellationToken = default)
+        => (await sender.Send(new TransitionWellCommand(id, request.Action, request.Comment), cancellationToken))
+            .ToActionResult();
+
+    /// <summary>GET /api/v1/wells/{id}/history — HU-044: Consultar historial de transiciones</summary>
+    [HttpGet("{id:guid}/history")]
+    [Authorize]
+    [ProducesResponseType(typeof(IReadOnlyList<TransitionHistoryItemDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetWellHistory(Guid id, CancellationToken cancellationToken = default)
+        => (await sender.Send(new GetWellHistoryQuery(id), cancellationToken)).ToActionResult();
 
     /// <summary>DELETE /api/v1/wells/{id} — HU-024: Eliminar (soft delete) un pozo en borrador</summary>
     [HttpDelete("{id:guid}")]

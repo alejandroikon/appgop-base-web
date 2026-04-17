@@ -41,7 +41,11 @@ public static class ResultExtensions
                 new NotFoundObjectResult(CreateProblemDetails(404, "Resource Not Found", error.Message)),
             var c when c.Contains(".Duplicate") =>
                 new ConflictObjectResult(CreateProblemDetails(409, "Conflict", error.Message)),
-            var c when c.EndsWith(".Unauthorized") =>
+            var c when c.Contains(".InvalidTransition") =>
+                new ConflictObjectResult(CreateProblemDetails(409, "Conflict", error.Message)),
+            var c when c.Contains(".FiscalizedImmutable") =>
+                new ConflictObjectResult(CreateProblemDetails(409, "Conflict", error.Message)),
+            var c when c.EndsWith(".Unauthorized") || c.EndsWith(".TransitionUnauthorized") =>
                 new ObjectResult(CreateProblemDetails(403, "Forbidden", error.Message)) { StatusCode = 403 },
             _ =>
                 new UnprocessableEntityObjectResult(

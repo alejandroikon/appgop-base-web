@@ -101,6 +101,15 @@ internal sealed class WellConfiguration : IEntityTypeConfiguration<Well>
                 .HasMaxLength(10);
         });
 
+        // UWI — generado en transición ENVIAR, nullable hasta ese momento
+        builder.Property(w => w.Uwi)
+            .HasMaxLength(50);
+
+        builder.HasIndex(w => w.Uwi)
+            .IsUnique()
+            .HasFilter("[Uwi] IS NOT NULL")
+            .HasDatabaseName("IX_Wells_Uwi");
+
         // FKs a catálogos (sin cascade para evitar delete en cascada de datos master)
         builder.HasOne<Contrato>()
             .WithMany()
