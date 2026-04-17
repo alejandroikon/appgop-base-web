@@ -71,13 +71,19 @@ internal sealed class UpdateWellCommandHandler(
             clusterNombre = cluster?.Nombre;
         }
 
-        // 8. Parsear enums
-        var tipoTrayectoria = Enum.Parse<TipoTrayectoria>(request.TipoTrayectoria, ignoreCase: true);
-        var clasificacion = Enum.Parse<Clasificacion>(request.Clasificacion, ignoreCase: true);
-        var tipoUbicacion = Enum.Parse<TipoUbicacion>(request.TipoUbicacion, ignoreCase: true);
-        var tipoAngulo = Enum.Parse<TipoAngulo>(request.TipoAngulo, ignoreCase: true);
-        var tipoObjetivo = Enum.Parse<TipoObjetivo>(request.TipoObjetivo, ignoreCase: true);
-        var tipoTerminacion = Enum.Parse<TipoTerminacion>(request.TipoTerminacion, ignoreCase: true);
+        // 8. Parsear enums — defensivo: TryParse evita excepciones si el validator es bypaseado
+        if (!Enum.TryParse<TipoTrayectoria>(request.TipoTrayectoria, ignoreCase: true, out var tipoTrayectoria))
+            return Result.Failure<WellDetailDto>(DomainErrors.Well.InvalidEnumValue("TipoTrayectoria", request.TipoTrayectoria));
+        if (!Enum.TryParse<Clasificacion>(request.Clasificacion, ignoreCase: true, out var clasificacion))
+            return Result.Failure<WellDetailDto>(DomainErrors.Well.InvalidEnumValue("Clasificacion", request.Clasificacion));
+        if (!Enum.TryParse<TipoUbicacion>(request.TipoUbicacion, ignoreCase: true, out var tipoUbicacion))
+            return Result.Failure<WellDetailDto>(DomainErrors.Well.InvalidEnumValue("TipoUbicacion", request.TipoUbicacion));
+        if (!Enum.TryParse<TipoAngulo>(request.TipoAngulo, ignoreCase: true, out var tipoAngulo))
+            return Result.Failure<WellDetailDto>(DomainErrors.Well.InvalidEnumValue("TipoAngulo", request.TipoAngulo));
+        if (!Enum.TryParse<TipoObjetivo>(request.TipoObjetivo, ignoreCase: true, out var tipoObjetivo))
+            return Result.Failure<WellDetailDto>(DomainErrors.Well.InvalidEnumValue("TipoObjetivo", request.TipoObjetivo));
+        if (!Enum.TryParse<TipoTerminacion>(request.TipoTerminacion, ignoreCase: true, out var tipoTerminacion))
+            return Result.Failure<WellDetailDto>(DomainErrors.Well.InvalidEnumValue("TipoTerminacion", request.TipoTerminacion));
 
         // 9. Construir ubicación actualizada
         var location = new WellLocation

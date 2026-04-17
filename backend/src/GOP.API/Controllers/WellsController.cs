@@ -142,19 +142,4 @@ public sealed class WellsController(ISender sender) : ControllerBase
     }
 }
 
-/// <summary>DTO de body para PUT /api/v1/wells/{id} — desacopla Id del path del body.</summary>
-public sealed record UpdateWellRequest(
-    int ContratoId,
-    int CampoId,
-    string TipoTrayectoria,
-    string Clasificacion,
-    string Denominacion,
-    string Consecutivo,
-    string TipoUbicacion,
-    string TipoAngulo,
-    string TipoObjetivo,
-    string TipoTerminacion,
-    int DepartamentoId,
-    int MunicipioId,
-    int? ClusterId
-);
+

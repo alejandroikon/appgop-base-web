@@ -1,8 +1,7 @@
+using GOP.API.Extensions;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using System.Text.Json;
 
 namespace GOP.API.Controllers;
 
@@ -18,24 +17,7 @@ public sealed class HealthController(HealthCheckService healthCheckService) : Co
     public async Task<IActionResult> GetHealth(CancellationToken cancellationToken)
     {
         var report = await healthCheckService.CheckHealthAsync(cancellationToken);
-
-        var response = new
-        {
-            status = report.Status.ToString(),
-            totalDuration = report.TotalDuration.ToString(),
-            checks = report.Entries.Select(entry => new
-            {
-                name = entry.Key,
-                status = entry.Value.Status.ToString(),
-                duration = entry.Value.Duration.ToString(),
-                description = entry.Value.Description
-            })
-        };
-
-        var statusCode = report.Status == HealthStatus.Healthy
-            ? StatusCodes.Status200OK
-            : StatusCodes.Status503ServiceUnavailable;
-
-        return StatusCode(statusCode, response);
+        var statusCode = report.Status == HealthStatus.Healthy ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable;
+        return StatusCode(statusCode, report.ToApiResponse());
     }
 }
