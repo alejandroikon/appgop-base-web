@@ -15,6 +15,7 @@ public sealed class GopDbContext(DbContextOptions<GopDbContext> options)
     public DbSet<Departamento> Departamentos => Set<Departamento>();
     public DbSet<Municipio> Municipios => Set<Municipio>();
     public DbSet<Cluster> Clusters => Set<Cluster>();
+    public DbSet<WellTransitionHistory> WellTransitionHistory => Set<WellTransitionHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

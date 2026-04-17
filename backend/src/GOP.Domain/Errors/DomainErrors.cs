@@ -44,5 +44,29 @@ public static partial class DomainErrors
         public static readonly Error MunicipioNotBelongsToDepartamento = new(
             "Well.MunicipioNotBelongsToDepartamento",
             "El municipio seleccionado no pertenece al departamento indicado.");
+
+        public static Error InvalidTransition(string action, string currentState) => new(
+            "Well.InvalidTransition",
+            $"La acción {action} no es válida desde el estado {currentState}.");
+
+        public static readonly Error TransitionUnauthorized = new(
+            "Well.TransitionUnauthorized",
+            "No tiene permisos para ejecutar esta transición.");
+
+        public static readonly Error DuplicateUwi = new(
+            "Well.DuplicateUwi",
+            "Ya existe un pozo con el UWI generado.");
+
+        public static readonly Error CommentRequired = new(
+            "Well.CommentRequired",
+            "El motivo de devolución es requerido.");
+
+        public static readonly Error IncompleteWellData = new(
+            "Well.IncompleteWellData",
+            "El pozo tiene campos requeridos sin completar.");
+
+        public static readonly Error FiscalizedImmutable = new(
+            "Well.FiscalizedImmutable",
+            "No se puede modificar un pozo fiscalizado.");
     }
 }

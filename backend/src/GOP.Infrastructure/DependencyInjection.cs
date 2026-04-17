@@ -1,9 +1,12 @@
 using GOP.Application.Common.Interfaces;
 using GOP.Domain.Interfaces;
+using GOP.Domain.Interfaces.Repositories;
 using GOP.Domain.Interfaces.Services;
 using GOP.Infrastructure.Identity;
 using GOP.Infrastructure.Persistence;
 using GOP.Infrastructure.Persistence.Interceptors;
+using GOP.Infrastructure.Persistence.Repositories;
+using GOP.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,6 +47,12 @@ public static class DependencyInjection
         // JwtTokenOptions (for Application handlers, bound from same config section)
         services.Configure<JwtTokenOptions>(
             configuration.GetSection(JwtSettings.SectionName));
+
+        // Repositorios
+        services.AddScoped<IWellRepository, WellRepository>();
+
+        // Servicios de dominio
+        services.AddScoped<IUwiGenerator, UwiGenerator>();
 
         // Identity services
         services.AddHttpContextAccessor();

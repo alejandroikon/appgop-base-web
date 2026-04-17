@@ -18,6 +18,7 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
     public DbSet<Departamento> Departamentos => Set<Departamento>();
     public DbSet<Municipio> Municipios => Set<Municipio>();
     public DbSet<Cluster> Clusters => Set<Cluster>();
+    public DbSet<WellTransitionHistory> WellTransitionHistory => Set<WellTransitionHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,6 +33,13 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
             w.Property(x => x.TipoTerminacion).HasConversion<string>();
             w.Property(x => x.Estado).HasConversion<string>();
             w.OwnsOne(x => x.Location);
+        });
+
+        modelBuilder.Entity<WellTransitionHistory>(h =>
+        {
+            h.Property(x => x.FromState).HasConversion<string>();
+            h.Property(x => x.ToState).HasConversion<string>();
+            h.Property(x => x.Action).HasConversion<string>();
         });
 
         base.OnModelCreating(modelBuilder);
