@@ -77,6 +77,7 @@
           {{ locale.columns.estado }}
           <p-sortIcon field="estado" />
         </th>
+        <th>UWI</th>
         <th pSortableColumn="createdAt">
           {{ locale.columns.createdAt }}
           <p-sortIcon field="createdAt" />
@@ -87,17 +88,25 @@
 
     <ng-template pTemplate="body" let-well>
       <tr [attr.data-testid]="'row-well-' + well.id">
-        <td class="font-medium">{{ well.nombrePozo }}</td>
+        <td class="font-medium">
+          <a
+            [routerLink]="['/wells', well.id]"
+            class="text-primary hover:underline cursor-pointer"
+            [attr.data-testid]="'link-well-' + well.id"
+          >{{ well.nombrePozo }}</a>
+        </td>
         <td>{{ well.operadora }}</td>
         <td>{{ well.contrato }}</td>
         <td>{{ well.campo }}</td>
         <td>{{ well.clasificacion }}</td>
         <td>
-          <p-tag
-            [value]="getEstadoLabel(well.estado)"
-            [severity]="getEstadoSeverity(well.estado)"
+          <app-well-status-badge
+            [estado]="well.estado"
             [attr.data-testid]="'badge-estado-' + well.id"
           />
+        </td>
+        <td class="text-sm text-text-secondary">
+          {{ well.uwi ?? '-' }}
         </td>
         <td>{{ formatDate(well.createdAt) }}</td>
         <td>
@@ -110,7 +119,7 @@
               size="small"
               [attr.title]="locale.actions.view"
               [attr.data-testid]="'btn-view-' + well.id"
-              (onClick)="onEdit(well.id)"
+              [routerLink]="['/wells', well.id]"
             />
             @if (well.estado === 'BORRADOR') {
               <p-button
@@ -141,7 +150,7 @@
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="8" class="text-center py-8 text-text-secondary">
+        <td colspan="9" class="text-center py-8 text-text-secondary">
           <i class="pi pi-inbox text-4xl block mb-2"></i>
           {{ locale.messages.empty }}
         </td>
@@ -151,7 +160,7 @@
     <ng-template pTemplate="loadingbody">
       @for (row of [1, 2, 3, 4, 5]; track row) {
         <tr>
-          @for (col of [1, 2, 3, 4, 5, 6, 7, 8]; track col) {
+          @for (col of [1, 2, 3, 4, 5, 6, 7, 8, 9]; track col) {
             <td><p-skeleton height="1.5rem" /></td>
           }
         </tr>

@@ -9,6 +9,8 @@ import type {
   PagedResponseDTO,
   WellDetailDTO,
   WellListItemDTO,
+  TransitionResultDTO,
+  TransitionHistoryItemDTO,
 } from '@wells/models';
 
 // ─── Datos semilla ─────────────────────────────────────────────────────────────
@@ -59,6 +61,7 @@ const MOCK_WELLS_LIST: WellListItemDTO[] = [
     campo: 'Campo Rubiales',
     clasificacion: 'EXPLORATORIO',
     estado: 'BORRADOR',
+    uwi: null,
     createdAt: '2024-11-15T14:30:00Z',
   },
   {
@@ -69,6 +72,7 @@ const MOCK_WELLS_LIST: WellListItemDTO[] = [
     campo: 'Campo Quifa',
     clasificacion: 'DESARROLLO',
     estado: 'PENDING_UWI',
+    uwi: 'CO-50-50568-BETA-02-ST',
     createdAt: '2024-11-10T09:00:00Z',
   },
   {
@@ -79,6 +83,7 @@ const MOCK_WELLS_LIST: WellListItemDTO[] = [
     campo: 'Campo Cupiagua',
     clasificacion: 'EXPLORATORIO',
     estado: 'READY_FISCAL',
+    uwi: 'CO-85-85440-GAMMA-01-ST',
     createdAt: '2024-10-20T11:15:00Z',
   },
   {
@@ -89,6 +94,7 @@ const MOCK_WELLS_LIST: WellListItemDTO[] = [
     campo: 'Campo Acacías',
     clasificacion: 'ESTRATIGRAFICO',
     estado: 'FISCALIZADO',
+    uwi: 'CO-86-86568-DELTA-03-ST',
     createdAt: '2024-09-05T08:00:00Z',
   },
   {
@@ -99,6 +105,7 @@ const MOCK_WELLS_LIST: WellListItemDTO[] = [
     campo: 'Campo Rubiales',
     clasificacion: 'DESARROLLO',
     estado: 'BORRADOR',
+    uwi: null,
     createdAt: '2024-12-01T16:45:00Z',
   },
 ];
@@ -123,6 +130,7 @@ const MOCK_WELLS_DETAIL: Record<string, WellDetailDTO> = {
     tipoObjetivo: 'PH',
     tipoTerminacion: 'CD',
     estado: 'BORRADOR',
+    uwi: null,
     ubicacion: {
       departamentoId: 1,
       departamento: 'Meta',
@@ -258,6 +266,7 @@ export const wellsMockHandlers: MockHandler[] = [
         tipoObjetivo: body['tipoObjetivo'] as string,
         tipoTerminacion: body['tipoTerminacion'] as string,
         estado: 'BORRADOR',
+        uwi: null,
         ubicacion: {
           departamentoId: body['departamentoId'] as number,
           departamento: dpto?.nombre ?? '',
@@ -281,6 +290,7 @@ export const wellsMockHandlers: MockHandler[] = [
         campo: campo?.nombre ?? '',
         clasificacion: body['clasificacion'] as string,
         estado: 'BORRADOR',
+        uwi: null,
         createdAt: newDetail.createdAt,
       });
 
@@ -418,6 +428,129 @@ export const wellsMockHandlers: MockHandler[] = [
       const campoId = parseInt(url.searchParams.get('campoId') ?? '0', 10);
       const result = MOCK_CLUSTERS.filter((c) => c.campoId === campoId);
       return new HttpResponse({ status: 200, body: result });
+    },
+  },
+
+  // PATCH /api/v1/wells/:id/transition — transición de estado
+  {
+    urlPattern: /\/api\/v1\/wells\/[^/]+\/transition$/,
+    method: 'PATCH',
+    handle: (req: HttpRequest<unknown>): HttpResponse<unknown> => {
+      const segments = req.url.split('/');
+      const id = segments[segments.length - 2] ?? '';
+      const well = mockWellsDetailDb[id];
+
+      if (!well) {
+        return new HttpResponse({
+          status: 404,
+          body: {
+            type: 'https://tools.ietf.org/html/rfc7807',
+            title: 'Resource Not Found',
+            status: 404,
+            detail: 'No se encontró un pozo con el ID proporcionado.',
+          },
+        });
+      }
+
+      const body = req.body as { action: string; comment?: string | null };
+      const action = body.action;
+      const comment = body.comment ?? null;
+
+      // Tabla de transiciones válidas: estado actual → nuevo estado
+      const TRANSITION_MAP: Record<string, Record<string, string>> = {
+        BORRADOR:     { ENVIAR: 'PENDING_UWI' },
+        PENDING_UWI:  { APROBAR_UWI: 'READY_FISCAL', DEVOLVER: 'BORRADOR' },
+        READY_FISCAL: { FISCALIZAR: 'FISCALIZADO', DEVOLVER: 'BORRADOR' },
+        FISCALIZADO:  {},
+      };
+
+      const nuevoEstado = TRANSITION_MAP[well.estado]?.[action];
+      if (!nuevoEstado) {
+        return new HttpResponse({
+          status: 409,
+          body: {
+            type: 'https://tools.ietf.org/html/rfc7807',
+            title: 'Conflict',
+            status: 409,
+            detail: `La acción ${action} no es válida desde el estado ${well.estado}.`,
+          },
+        });
+      }
+
+      const estadoAnterior = well.estado;
+      // Generar UWI mock al hacer ENVIAR (primera transición)
+      const uwi = action === 'ENVIAR'
+        ? 'CO-50-50568-ALPHA-01-ST'
+        : well.uwi;
+
+      // Actualizar en memoria
+      mockWellsDetailDb[id] = { ...well, estado: nuevoEstado, uwi };
+      const listIdx = mockWellsDb.findIndex((w) => w.id === id);
+      if (listIdx >= 0) {
+        mockWellsDb[listIdx] = { ...mockWellsDb[listIdx], estado: nuevoEstado, uwi };
+      }
+
+      const result: TransitionResultDTO = {
+        id,
+        estado: nuevoEstado,
+        estadoAnterior,
+        uwi,
+        action,
+        comment,
+        transitionedAt: new Date().toISOString(),
+        transitionedBy: 'Usuario Mock',
+      };
+      return new HttpResponse({ status: 200, body: result });
+    },
+  },
+
+  // GET /api/v1/wells/:id/history — historial de transiciones
+  {
+    urlPattern: /\/api\/v1\/wells\/[^/]+\/history$/,
+    method: 'GET',
+    handle: (req: HttpRequest<unknown>): HttpResponse<unknown> => {
+      const segments = req.url.split('/');
+      const id = segments[segments.length - 2] ?? '';
+      const well = mockWellsDetailDb[id];
+
+      if (!well) {
+        return new HttpResponse({
+          status: 404,
+          body: {
+            type: 'https://tools.ietf.org/html/rfc7807',
+            title: 'Resource Not Found',
+            status: 404,
+            detail: 'No se encontró un pozo con el ID proporcionado.',
+          },
+        });
+      }
+
+      const history: TransitionHistoryItemDTO[] = [
+        {
+          id: '770e8400-e29b-41d4-a716-446655440001',
+          fromState: 'PENDING_UWI',
+          toState: 'BORRADOR',
+          action: 'DEVOLVER',
+          comment: 'Denominación incorrecta, verificar nomenclatura del campo.',
+          performedBy: '660e8400-e29b-41d4-a716-446655440000',
+          performedByName: 'María Gómez',
+          performedByRole: 'SUPERVISOR',
+          createdAt: '2024-11-16T10:00:00Z',
+        },
+        {
+          id: '770e8400-e29b-41d4-a716-446655440000',
+          fromState: 'BORRADOR',
+          toState: 'PENDING_UWI',
+          action: 'ENVIAR',
+          comment: null,
+          performedBy: '660e8400-e29b-41d4-a716-446655440000',
+          performedByName: 'Juan Pérez',
+          performedByRole: 'OPERADOR',
+          createdAt: '2024-11-15T14:30:00Z',
+        },
+      ];
+
+      return new HttpResponse({ status: 200, body: history });
     },
   },
 ];

@@ -21,6 +21,14 @@ export const wellsRoutes: Routes = [
       ),
   },
   {
+    // Ruta de detalle — debe ir ANTES de :id/edit para que Angular resuelva correctamente
+    path: ':id',
+    loadComponent: () =>
+      import('./features/well-detail/well-detail.component').then(
+        (m) => m.WellDetailComponent,
+      ),
+  },
+  {
     path: ':id/edit',
     loadComponent: () =>
       import('./features/well-form/well-form.component').then(

@@ -18,6 +18,7 @@ export interface WellListItem {
   campo: string;
   clasificacion: Clasificacion;
   estado: WellStatus;
+  uwi: string | null;
   createdAt: string;
 }
 
@@ -51,6 +52,7 @@ export interface Well {
   tipoObjetivo: TipoObjetivo;
   tipoTerminacion: TipoTerminacion;
   estado: WellStatus;
+  uwi: string | null;
   ubicacion: WellLocation;
   createdAt: string;
   lastModifiedAt: string | null;

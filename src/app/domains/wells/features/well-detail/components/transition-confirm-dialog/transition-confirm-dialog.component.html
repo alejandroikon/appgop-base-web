@@ -1,0 +1,56 @@
+<p-dialog
+  [visible]="visible()"
+  [header]="dialogHeader()"
+  [modal]="true"
+  [closable]="!isLoading()"
+  [style]="{ width: '32rem' }"
+  (onHide)="onHide()"
+  data-testid="transition-confirm-dialog"
+>
+  <div class="flex flex-col gap-4">
+    @if (isDevolver()) {
+      <p class="text-text-secondary text-sm">
+        {{ locale.dialog.devolverTitle }}
+      </p>
+      <textarea
+        pTextarea
+        [(ngModel)]="comment"
+        [placeholder]="locale.dialog.devolverPlaceholder"
+        [rows]="4"
+        class="w-full resize-none"
+        [disabled]="isLoading()"
+        data-testid="input-devolver-comment"
+      ></textarea>
+      <p class="text-xs text-text-secondary text-right">
+        {{ comment().length }} / 500
+      </p>
+    } @else {
+      <p
+        class="text-text-primary"
+        data-testid="confirm-message"
+      >
+        {{ locale.dialog.confirmMessage }}
+      </p>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        [label]="locale.dialog.cancel"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="isLoading()"
+        (onClick)="onCancel()"
+        data-testid="btn-dialog-cancel"
+      />
+      <p-button
+        [label]="locale.dialog.confirm"
+        [loading]="isLoading()"
+        [disabled]="!canConfirm() || isLoading()"
+        (onClick)="onConfirm()"
+        data-testid="btn-dialog-confirm"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

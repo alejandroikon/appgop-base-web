@@ -46,5 +46,14 @@ export type { Contrato, Campo, Departamento, Municipio, Cluster } from './catalo
 // DTO de preview de nombre (feature 006)
 export type { WellNamePreviewDTO } from './well-name-preview.dto';
 
-// Mappers
+// Mappers de pozos
 export { mapWellListItemDTOToModel, mapWellDetailDTOToModel } from './well.mapper';
+
+// Modelos de transición de estado (feature 007)
+export type { TransitionAction, TransitionResult, TransitionHistoryItem } from './well-transition.model';
+
+// DTOs de transición de estado
+export type { TransitionRequestDTO, TransitionResultDTO, TransitionHistoryItemDTO } from './well-transition.dto';
+
+// Mappers de transición de estado
+export { mapTransitionResultDTOToModel, mapTransitionHistoryItemDTOToModel } from './well-transition.mapper';

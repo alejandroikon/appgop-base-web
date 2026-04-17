@@ -1,0 +1,17 @@
+@if (availableActions().length > 0) {
+  <div
+    class="flex flex-wrap gap-2"
+    data-testid="well-transition-actions"
+  >
+    @for (entry of availableActions(); track entry.action) {
+      <p-button
+        [label]="locale.actions[entry.action]"
+        [severity]="entry.severity"
+        [loading]="isLoading()"
+        [disabled]="isLoading()"
+        [attr.data-testid]="'btn-transition-' + entry.action"
+        (onClick)="onTransitionClick(entry.action)"
+      />
+    }
+  </div>
+}

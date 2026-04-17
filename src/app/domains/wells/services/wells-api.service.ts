@@ -16,8 +16,25 @@ import {
   WellListItemDTO,
   mapWellDetailDTOToModel,
   mapWellListItemDTOToModel,
+  mapTransitionResultDTOToModel,
+  mapTransitionHistoryItemDTOToModel,
 } from '@wells/models';
-import type { Contrato, Campo, Departamento, Municipio, Cluster, Well, WellListItem, WellsQueryParams, WellNamePreviewDTO } from '@wells/models';
+import type {
+  Contrato,
+  Campo,
+  Departamento,
+  Municipio,
+  Cluster,
+  Well,
+  WellListItem,
+  WellsQueryParams,
+  WellNamePreviewDTO,
+  TransitionAction,
+  TransitionResult,
+  TransitionHistoryItem,
+  TransitionResultDTO,
+  TransitionHistoryItemDTO,
+} from '@wells/models';
 
 @Injectable({ providedIn: 'root' })
 export class WellsApiService {
@@ -100,6 +117,24 @@ export class WellsApiService {
     return this.http
       .get<ClusterItemDTO[]>(API.catalogs.clusters, { params })
       .pipe(map((items) => items as Cluster[]));
+  }
+
+  // ─── Máquina de estados (feature 007) ───────────────────────────────────────
+
+  transitionWell(
+    wellId: string,
+    action: TransitionAction,
+    comment?: string,
+  ): Observable<TransitionResult> {
+    return this.http
+      .patch<TransitionResultDTO>(API.wells.transition(wellId), { action, comment })
+      .pipe(map(mapTransitionResultDTOToModel));
+  }
+
+  getWellHistory(wellId: string): Observable<TransitionHistoryItem[]> {
+    return this.http
+      .get<TransitionHistoryItemDTO[]>(API.wells.history(wellId))
+      .pipe(map((items) => items.map(mapTransitionHistoryItemDTOToModel)));
   }
 
   // ─── Preview de nombre (feature 006) ────────────────────────────────────────

@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { WellsApiService } from '@wells/services';
 import type { Contrato, WellListItem, WellsQueryParams } from '@wells/models';
 import { WELL_MANAGE_LOCALE } from './locale';
+import { WellStatusBadgeComponent } from '../../components/well-status-badge/well-status-badge.component';
 
 // UI imports — PrimeNG 21 (componentes standalone, no módulos)
 import { CommonModule } from '@angular/common';
@@ -28,6 +29,7 @@ import { InputIconModule } from 'primeng/inputicon';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     TableModule,
     ButtonModule,
     SelectModule,
@@ -38,6 +40,7 @@ import { InputIconModule } from 'primeng/inputicon';
     SkeletonModule,
     IconFieldModule,
     InputIconModule,
+    WellStatusBadgeComponent,
   ],
 })
 export class WellManageComponent implements OnInit {
