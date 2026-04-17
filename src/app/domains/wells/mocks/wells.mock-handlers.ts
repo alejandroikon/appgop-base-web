@@ -179,6 +179,34 @@ export const wellsMockHandlers: MockHandler[] = [
     },
   },
 
+  // GET /api/v1/wells/preview-name — previsualizar nombre del pozo
+  // IMPORTANTE: debe estar antes del handler de /:id para que el interceptor lo encuentre primero
+  {
+    urlPattern: /\/api\/v1\/wells\/preview-name/,
+    method: 'GET',
+    handle: (req: HttpRequest<unknown>): HttpResponse<unknown> => {
+      const url = new URL(req.url, 'http://localhost');
+      const contratoId   = parseInt(url.searchParams.get('contratoId')   ?? '0', 10);
+      const denominacion = url.searchParams.get('denominacion')            ?? '';
+      const consecutivo  = url.searchParams.get('consecutivo')             ?? '';
+      const excludeWellId = url.searchParams.get('excludeWellId')          ?? null;
+
+      const contrato = MOCK_CONTRATOS.find((c) => c.id === contratoId);
+      const nombrePozo = contrato
+        ? `${contrato.cuenca}-${denominacion.trim()}-${consecutivo}`
+        : '';
+
+      const exists = mockWellsDb.some(
+        (w) => w.nombrePozo === nombrePozo && w.id !== excludeWellId,
+      );
+
+      return new HttpResponse({
+        status: 200,
+        body: { nombrePozo, available: !exists },
+      });
+    },
+  },
+
   // GET /api/v1/wells/:id — detalle
   {
     urlPattern: /\/api\/v1\/wells\/[^/]+$/,

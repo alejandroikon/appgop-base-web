@@ -17,7 +17,7 @@ import {
   mapWellDetailDTOToModel,
   mapWellListItemDTOToModel,
 } from '@wells/models';
-import type { Contrato, Campo, Departamento, Municipio, Cluster, Well, WellListItem, WellsQueryParams } from '@wells/models';
+import type { Contrato, Campo, Departamento, Municipio, Cluster, Well, WellListItem, WellsQueryParams, WellNamePreviewDTO } from '@wells/models';
 
 @Injectable({ providedIn: 'root' })
 export class WellsApiService {
@@ -100,5 +100,23 @@ export class WellsApiService {
     return this.http
       .get<ClusterItemDTO[]>(API.catalogs.clusters, { params })
       .pipe(map((items) => items as Cluster[]));
+  }
+
+  // ─── Preview de nombre (feature 006) ────────────────────────────────────────
+
+  previewWellName(
+    contratoId: number,
+    denominacion: string,
+    consecutivo: string,
+    excludeWellId?: string,
+  ): Observable<WellNamePreviewDTO> {
+    let params = new HttpParams()
+      .set('contratoId', contratoId.toString())
+      .set('denominacion', denominacion)
+      .set('consecutivo', consecutivo);
+    if (excludeWellId) {
+      params = params.set('excludeWellId', excludeWellId);
+    }
+    return this.http.get<WellNamePreviewDTO>(API.wells.previewName, { params });
   }
 }

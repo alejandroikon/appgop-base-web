@@ -1,0 +1,103 @@
+<div [formGroup]="formGroup()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+  <!-- Tipo de Trayectoria -->
+  <div class="flex flex-col gap-1">
+    <label class="text-sm font-medium text-text-primary" for="tipoTrayectoria">
+      {{ locale.fields.tipoTrayectoria }} <span class="text-error">*</span>
+    </label>
+    <p-select
+      inputId="tipoTrayectoria"
+      formControlName="tipoTrayectoria"
+      [options]="tipoTrayectoriaOpts()"
+      optionLabel="label"
+      optionValue="value"
+      [placeholder]="locale.placeholders.selectTipoTrayectoria"
+      styleClass="w-full"
+      data-testid="select-tipoTrayectoria"
+    />
+    @if (isFieldInvalid('tipoTrayectoria')) {
+      <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+    }
+  </div>
+
+  <!-- Tipo de Ubicación -->
+  <div class="flex flex-col gap-1">
+    <label class="text-sm font-medium text-text-primary" for="tipoUbicacion">
+      {{ locale.fields.tipoUbicacion }} <span class="text-error">*</span>
+    </label>
+    <p-select
+      inputId="tipoUbicacion"
+      formControlName="tipoUbicacion"
+      [options]="tipoUbicacionOpts()"
+      optionLabel="label"
+      optionValue="value"
+      [placeholder]="locale.placeholders.selectTipoUbicacion"
+      styleClass="w-full"
+      data-testid="select-tipoUbicacion"
+    />
+    @if (isFieldInvalid('tipoUbicacion')) {
+      <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+    }
+  </div>
+
+  <!-- Tipo de Ángulo -->
+  <div class="flex flex-col gap-1">
+    <label class="text-sm font-medium text-text-primary" for="tipoAngulo">
+      {{ locale.fields.tipoAngulo }} <span class="text-error">*</span>
+    </label>
+    <p-select
+      inputId="tipoAngulo"
+      formControlName="tipoAngulo"
+      [options]="tipoAnguloOpts()"
+      optionLabel="label"
+      optionValue="value"
+      [placeholder]="locale.placeholders.selectTipoAngulo"
+      styleClass="w-full"
+      data-testid="select-tipoAngulo"
+    />
+    @if (isFieldInvalid('tipoAngulo')) {
+      <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+    }
+  </div>
+
+  <!-- Tipo de Objetivo -->
+  <div class="flex flex-col gap-1">
+    <label class="text-sm font-medium text-text-primary" for="tipoObjetivo">
+      {{ locale.fields.tipoObjetivo }} <span class="text-error">*</span>
+    </label>
+    <p-select
+      inputId="tipoObjetivo"
+      formControlName="tipoObjetivo"
+      [options]="tipoObjetivoOpts()"
+      optionLabel="label"
+      optionValue="value"
+      [placeholder]="locale.placeholders.selectTipoObjetivo"
+      styleClass="w-full"
+      data-testid="select-tipoObjetivo"
+    />
+    @if (isFieldInvalid('tipoObjetivo')) {
+      <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+    }
+  </div>
+
+  <!-- Tipo de Terminación -->
+  <div class="flex flex-col gap-1">
+    <label class="text-sm font-medium text-text-primary" for="tipoTerminacion">
+      {{ locale.fields.tipoTerminacion }} <span class="text-error">*</span>
+    </label>
+    <p-select
+      inputId="tipoTerminacion"
+      formControlName="tipoTerminacion"
+      [options]="tipoTerminacionOpts()"
+      optionLabel="label"
+      optionValue="value"
+      [placeholder]="locale.placeholders.selectTipoTerminacion"
+      styleClass="w-full"
+      data-testid="select-tipoTerminacion"
+    />
+    @if (isFieldInvalid('tipoTerminacion')) {
+      <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+    }
+  </div>
+
+</div>

@@ -5,7 +5,8 @@
     <p-progressSpinner />
   </div>
 } @else {
-  <form [formGroup]="wellForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
+  <div class="flex flex-col gap-4">
+
     <!-- Encabezado -->
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-semibold text-text-primary">
@@ -13,318 +14,169 @@
       </h1>
     </div>
 
-    <!-- ─── Sección: Información General ─────────────────────────────────── -->
-    <p-card [header]="locale.sections.general">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- ─── Stepper ───────────────────────────────────────────────────────── -->
+    <p-stepper
+      [value]="activeStep()"
+      (valueChange)="activeStep.set($event ?? 1)"
+      [linear]="true"
+      data-testid="well-form-stepper"
+    >
+      <!-- ─── Paso 1: Información del Contrato ─────────────────────────── -->
+      <p-step-panel [value]="1">
+        <ng-template #content let-activateCallback="activateCallback">
+          <div class="flex flex-col gap-6">
+            <p class="text-lg font-semibold text-text-primary">{{ locale.steps.contractInfo }}</p>
 
-        <!-- Contrato -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="contratoId">
-            {{ locale.fields.contrato }} <span class="text-error">*</span>
-          </label>
-          <p-select
-            inputId="contratoId"
-            formControlName="contratoId"
-            [options]="contratos()"
-            optionLabel="nombre"
-            optionValue="id"
-            [placeholder]="locale.placeholders.selectContrato"
-            styleClass="w-full"
-            (onChange)="onContratoChange($event.value)"
-            data-testid="select-contratoId"
-          />
-          @if (isFieldInvalid('contratoId')) {
-            <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-          }
-        </div>
+            <app-step-contract-info
+              [formGroup]="wellForm"
+              [contratos]="contratos()"
+              [campos]="campos()"
+              [clusters]="clusters()"
+              [clasificacionOpts]="clasificacionOpts"
+              [cuenca]="cuencaDisplay()"
+              [tipoContrato]="tipoContratoDisplay()"
+              [namePreview]="namePreview()"
+              [namePreviewLoading]="namePreviewLoading()"
+              (contratoChanged)="onContratoChanged($event)"
+              (campoChanged)="onCampoChanged($event)"
+            />
 
-        <!-- Campo (dependiente de contrato) -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="campoId">
-            {{ locale.fields.campo }} <span class="text-error">*</span>
-          </label>
-          <p-select
-            inputId="campoId"
-            formControlName="campoId"
-            [options]="campos()"
-            optionLabel="nombre"
-            optionValue="id"
-            [placeholder]="locale.placeholders.selectCampo"
-            [disabled]="campos().length === 0"
-            styleClass="w-full"
-            (onChange)="onCampoChange($event.value)"
-            data-testid="select-campoId"
-          />
-          @if (isFieldInvalid('campoId')) {
-            <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-          }
-        </div>
+            <!-- Botones de paso 1 -->
+            <div class="flex justify-between gap-3 pt-2">
+              <p-button
+                type="button"
+                [label]="locale.actions.cancel"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="onCancel()"
+                data-testid="btn-cancel"
+              />
+              <p-button
+                type="button"
+                [label]="locale.actions.next"
+                [disabled]="!isStep1Valid()"
+                (onClick)="nextStep()"
+                data-testid="btn-next-step1"
+              />
+            </div>
+          </div>
+        </ng-template>
+      </p-step-panel>
 
-        <!-- Denominación -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="denominacion">
-            {{ locale.fields.denominacion }} <span class="text-error">*</span>
-          </label>
-          <input
-            pInputText
-            id="denominacion"
-            formControlName="denominacion"
-            type="text"
-            class="w-full bg-white text-text-primary placeholder-text-secondary"
-            placeholder="ALPHA"
-            data-testid="input-denominacion"
-          />
-          @if (isFieldInvalid('denominacion')) {
-            @if (hasError('denominacion', 'required')) {
-              <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-            } @else if (hasError('denominacion', 'pattern')) {
-              <p-message severity="error" [text]="locale.errors.denominacionPattern" styleClass="text-xs" />
-            } @else if (hasError('denominacion', 'maxlength')) {
-              <p-message severity="error" [text]="locale.errors.denominacionMaxlength" styleClass="text-xs" />
-            }
-          }
-        </div>
+      <!-- ─── Paso 2: Datos Técnicos ───────────────────────────────────── -->
+      <p-step-panel [value]="2">
+        <ng-template #content>
+          <div class="flex flex-col gap-6">
+            <p class="text-lg font-semibold text-text-primary">{{ locale.steps.technicalData }}</p>
 
-        <!-- Consecutivo -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="consecutivo">
-            {{ locale.fields.consecutivo }} <span class="text-error">*</span>
-          </label>
-          <input
-            pInputText
-            id="consecutivo"
-            formControlName="consecutivo"
-            type="text"
-            class="w-full bg-white text-text-primary placeholder-text-secondary"
-            placeholder="01"
-            maxlength="2"
-            data-testid="input-consecutivo"
-          />
-          @if (isFieldInvalid('consecutivo')) {
-            @if (hasError('consecutivo', 'required')) {
-              <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-            } @else if (hasError('consecutivo', 'pattern')) {
-              <p-message severity="error" [text]="locale.errors.consecutivoPattern" styleClass="text-xs" />
-            }
-          }
-        </div>
+            <app-step-technical-data
+              [formGroup]="wellForm"
+              [tipoTrayectoriaOpts]="tipoTrayectoriaOpts"
+              [tipoUbicacionOpts]="tipoUbicacionOpts"
+              [tipoAnguloOpts]="tipoAnguloOpts"
+              [tipoObjetivoOpts]="tipoObjetivoOpts"
+              [tipoTerminacionOpts]="tipoTerminacionOpts"
+            />
 
-      </div>
-    </p-card>
+            <!-- Botones de paso 2 -->
+            <div class="flex justify-between gap-3 pt-2">
+              <p-button
+                type="button"
+                [label]="locale.actions.previous"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="prevStep()"
+                data-testid="btn-prev-step2"
+              />
+              <p-button
+                type="button"
+                [label]="locale.actions.next"
+                [disabled]="!isStep2Valid()"
+                (onClick)="nextStep()"
+                data-testid="btn-next-step2"
+              />
+            </div>
+          </div>
+        </ng-template>
+      </p-step-panel>
 
-    <!-- ─── Sección: Datos Técnicos ───────────────────────────────────────── -->
-    <p-card [header]="locale.sections.technical">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- ─── Paso 3: Ubicación Geográfica ────────────────────────────── -->
+      <p-step-panel [value]="3">
+        <ng-template #content>
+          <div class="flex flex-col gap-6">
+            <p class="text-lg font-semibold text-text-primary">{{ locale.steps.location }}</p>
 
-        <!-- Tipo Trayectoria -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="tipoTrayectoria">
-            {{ locale.fields.tipoTrayectoria }} <span class="text-error">*</span>
-          </label>
-          <p-select
-            inputId="tipoTrayectoria"
-            formControlName="tipoTrayectoria"
-            [options]="tipoTrayectoriaOpts"
-            optionLabel="label"
-            optionValue="value"
-            [placeholder]="locale.placeholders.selectTipoTrayectoria"
-            styleClass="w-full"
-            data-testid="select-tipoTrayectoria"
-          />
-          @if (isFieldInvalid('tipoTrayectoria')) {
-            <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-          }
-        </div>
+            <app-step-location
+              [formGroup]="wellForm"
+              [departamentos]="departamentos()"
+              [municipios]="municipios()"
+              (departamentoChanged)="onDepartamentoChanged($event)"
+            />
 
-        <!-- Clasificación -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="clasificacion">
-            {{ locale.fields.clasificacion }} <span class="text-error">*</span>
-          </label>
-          <p-select
-            inputId="clasificacion"
-            formControlName="clasificacion"
-            [options]="clasificacionOpts"
-            optionLabel="label"
-            optionValue="value"
-            [placeholder]="locale.placeholders.selectClasificacion"
-            styleClass="w-full"
-            data-testid="select-clasificacion"
-          />
-          @if (isFieldInvalid('clasificacion')) {
-            <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-          }
-        </div>
+            <!-- Botones de paso 3 -->
+            <div class="flex justify-between gap-3 pt-2">
+              <p-button
+                type="button"
+                [label]="locale.actions.previous"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="prevStep()"
+                data-testid="btn-prev-step3"
+              />
+              <p-button
+                type="button"
+                [label]="locale.actions.next"
+                [disabled]="!isStep3Valid()"
+                (onClick)="nextStep()"
+                data-testid="btn-next-step3"
+              />
+            </div>
+          </div>
+        </ng-template>
+      </p-step-panel>
 
-        <!-- Tipo Ubicación -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="tipoUbicacion">
-            {{ locale.fields.tipoUbicacion }} <span class="text-error">*</span>
-          </label>
-          <p-select
-            inputId="tipoUbicacion"
-            formControlName="tipoUbicacion"
-            [options]="tipoUbicacionOpts"
-            optionLabel="label"
-            optionValue="value"
-            [placeholder]="locale.placeholders.selectTipoUbicacion"
-            styleClass="w-full"
-            data-testid="select-tipoUbicacion"
-          />
-          @if (isFieldInvalid('tipoUbicacion')) {
-            <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-          }
-        </div>
+      <!-- ─── Paso 4: Resumen y Confirmación ──────────────────────────── -->
+      <p-step-panel [value]="4">
+        <ng-template #content>
+          <div class="flex flex-col gap-6">
+            <p class="text-lg font-semibold text-text-primary">{{ locale.steps.summary }}</p>
 
-        <!-- Tipo Ángulo -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="tipoAngulo">
-            {{ locale.fields.tipoAngulo }} <span class="text-error">*</span>
-          </label>
-          <p-select
-            inputId="tipoAngulo"
-            formControlName="tipoAngulo"
-            [options]="tipoAnguloOpts"
-            optionLabel="label"
-            optionValue="value"
-            [placeholder]="locale.placeholders.selectTipoAngulo"
-            styleClass="w-full"
-            data-testid="select-tipoAngulo"
-          />
-          @if (isFieldInvalid('tipoAngulo')) {
-            <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-          }
-        </div>
+            <app-step-summary
+              [formData]="summaryFormData()"
+              [cuenca]="cuencaDisplay()"
+              [tipoContrato]="tipoContratoDisplay()"
+              [nombrePozo]="summaryNombrePozo()"
+              [contratoNombre]="summaryContratoNombre()"
+              [campoNombre]="summaryCampoNombre()"
+              [departamentoNombre]="summaryDepartamentoNombre()"
+              [municipioNombre]="summaryMunicipioNombre()"
+              [clusterNombre]="summaryClusterNombre()"
+            />
 
-        <!-- Tipo Objetivo -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="tipoObjetivo">
-            {{ locale.fields.tipoObjetivo }} <span class="text-error">*</span>
-          </label>
-          <p-select
-            inputId="tipoObjetivo"
-            formControlName="tipoObjetivo"
-            [options]="tipoObjetivoOpts"
-            optionLabel="label"
-            optionValue="value"
-            [placeholder]="locale.placeholders.selectTipoObjetivo"
-            styleClass="w-full"
-            data-testid="select-tipoObjetivo"
-          />
-          @if (isFieldInvalid('tipoObjetivo')) {
-            <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-          }
-        </div>
+            <!-- Botones de paso 4 -->
+            <div class="flex justify-between gap-3 pt-2">
+              <p-button
+                type="button"
+                [label]="locale.actions.previous"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="prevStep()"
+                data-testid="btn-prev-step4"
+              />
+              <p-button
+                type="button"
+                [label]="locale.actions.saveDraft"
+                [loading]="isSaving()"
+                [disabled]="!canSave()"
+                (onClick)="onSubmit()"
+                data-testid="btn-submit"
+              />
+            </div>
+          </div>
+        </ng-template>
+      </p-step-panel>
 
-        <!-- Tipo Terminación -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="tipoTerminacion">
-            {{ locale.fields.tipoTerminacion }} <span class="text-error">*</span>
-          </label>
-          <p-select
-            inputId="tipoTerminacion"
-            formControlName="tipoTerminacion"
-            [options]="tipoTerminacionOpts"
-            optionLabel="label"
-            optionValue="value"
-            [placeholder]="locale.placeholders.selectTipoTerminacion"
-            styleClass="w-full"
-            data-testid="select-tipoTerminacion"
-          />
-          @if (isFieldInvalid('tipoTerminacion')) {
-            <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-          }
-        </div>
+    </p-stepper>
 
-      </div>
-    </p-card>
-
-    <!-- ─── Sección: Ubicación ────────────────────────────────────────────── -->
-    <p-card [header]="locale.sections.location">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-        <!-- Departamento -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="departamentoId">
-            {{ locale.fields.departamento }} <span class="text-error">*</span>
-          </label>
-          <p-select
-            inputId="departamentoId"
-            formControlName="departamentoId"
-            [options]="departamentos()"
-            optionLabel="nombre"
-            optionValue="id"
-            [placeholder]="locale.placeholders.selectDepartamento"
-            styleClass="w-full"
-            (onChange)="onDepartamentoChange($event.value)"
-            data-testid="select-departamentoId"
-          />
-          @if (isFieldInvalid('departamentoId')) {
-            <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-          }
-        </div>
-
-        <!-- Municipio (dependiente de departamento) -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="municipioId">
-            {{ locale.fields.municipio }} <span class="text-error">*</span>
-          </label>
-          <p-select
-            inputId="municipioId"
-            formControlName="municipioId"
-            [options]="municipios()"
-            optionLabel="nombre"
-            optionValue="id"
-            [placeholder]="locale.placeholders.selectMunicipio"
-            [disabled]="municipios().length === 0"
-            styleClass="w-full"
-            data-testid="select-municipioId"
-          />
-          @if (isFieldInvalid('municipioId')) {
-            <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
-          }
-        </div>
-
-        <!-- Cluster (opcional, dependiente de campo) -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-text-primary" for="clusterId">
-            {{ locale.fields.cluster }}
-          </label>
-          <p-select
-            inputId="clusterId"
-            formControlName="clusterId"
-            [options]="clusters()"
-            optionLabel="nombre"
-            optionValue="id"
-            [placeholder]="locale.placeholders.selectCluster"
-            [showClear]="true"
-            [disabled]="clusters().length === 0"
-            styleClass="w-full"
-            data-testid="select-clusterId"
-          />
-        </div>
-
-      </div>
-    </p-card>
-
-    <!-- ─── Botones de acción ─────────────────────────────────────────────── -->
-    <div class="flex gap-3 justify-end">
-      <p-button
-        type="button"
-        [label]="locale.actions.cancel"
-        severity="secondary"
-        [outlined]="true"
-        (onClick)="onCancel()"
-        data-testid="btn-cancel"
-      />
-      <p-button
-        type="submit"
-        [label]="locale.actions.save"
-        [loading]="isSaving()"
-        [disabled]="wellForm.invalid"
-        data-testid="btn-submit"
-      />
-    </div>
-
-  </form>
+  </div>
 }

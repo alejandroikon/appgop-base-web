@@ -1,0 +1,171 @@
+<div [formGroup]="formGroup()" class="flex flex-col gap-6">
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <!-- Contrato -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="contratoId">
+        {{ locale.fields.contrato }} <span class="text-error">*</span>
+      </label>
+      <p-select
+        inputId="contratoId"
+        formControlName="contratoId"
+        [options]="contratos()"
+        optionLabel="nombre"
+        optionValue="id"
+        [placeholder]="locale.placeholders.selectContrato"
+        styleClass="w-full"
+        (onChange)="contratoChanged.emit($event.value)"
+        data-testid="select-contratoId"
+      />
+      @if (isFieldInvalid('contratoId')) {
+        <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+      }
+    </div>
+
+    <!-- Campo -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="campoId">
+        {{ locale.fields.campo }} <span class="text-error">*</span>
+      </label>
+      <p-select
+        inputId="campoId"
+        formControlName="campoId"
+        [options]="campos()"
+        optionLabel="nombre"
+        optionValue="id"
+        [placeholder]="locale.placeholders.selectCampo"
+        [disabled]="campos().length === 0"
+        styleClass="w-full"
+        (onChange)="campoChanged.emit($event.value)"
+        data-testid="select-campoId"
+      />
+      @if (isFieldInvalid('campoId')) {
+        <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+      }
+    </div>
+
+    <!-- Cuenca (read-only, derivada del contrato) -->
+    @if (cuenca()) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-text-primary">
+          {{ locale.fields.cuenca }}
+        </label>
+        <span class="text-sm text-text-primary py-2 px-3 rounded border border-border bg-surface-alt"
+              data-testid="display-cuenca">
+          {{ cuenca() }}
+        </span>
+      </div>
+    }
+
+    <!-- Tipo de Contrato (read-only, derivado del contrato) -->
+    @if (tipoContrato()) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-text-primary">
+          {{ locale.fields.tipoContrato }}
+        </label>
+        <span class="text-sm text-text-primary py-2 px-3 rounded border border-border bg-surface-alt"
+              data-testid="display-tipoContrato">
+          {{ tipoContrato() }}
+        </span>
+      </div>
+    }
+
+    <!-- Clasificación -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="clasificacion">
+        {{ locale.fields.clasificacion }} <span class="text-error">*</span>
+      </label>
+      <p-select
+        inputId="clasificacion"
+        formControlName="clasificacion"
+        [options]="clasificacionOpts()"
+        optionLabel="label"
+        optionValue="value"
+        [placeholder]="locale.placeholders.selectClasificacion"
+        styleClass="w-full"
+        data-testid="select-clasificacion"
+      />
+      @if (isFieldInvalid('clasificacion')) {
+        <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+      }
+    </div>
+
+    <!-- Denominación -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="denominacion">
+        {{ locale.fields.denominacion }} <span class="text-error">*</span>
+      </label>
+      <input
+        pInputText
+        id="denominacion"
+        formControlName="denominacion"
+        type="text"
+        class="w-full bg-white text-text-primary placeholder-text-secondary"
+        placeholder="ALPHA"
+        data-testid="input-denominacion"
+      />
+      @if (isFieldInvalid('denominacion')) {
+        @if (hasError('denominacion', 'required')) {
+          <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+        } @else if (hasError('denominacion', 'pattern')) {
+          <p-message severity="error" [text]="locale.errors.denominacionPattern" styleClass="text-xs" />
+        } @else if (hasError('denominacion', 'maxlength')) {
+          <p-message severity="error" [text]="locale.errors.denominacionMaxlength" styleClass="text-xs" />
+        }
+      }
+    </div>
+
+    <!-- Consecutivo -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="consecutivo">
+        {{ locale.fields.consecutivo }} <span class="text-error">*</span>
+      </label>
+      <input
+        pInputText
+        id="consecutivo"
+        formControlName="consecutivo"
+        type="text"
+        class="w-full bg-white text-text-primary placeholder-text-secondary"
+        placeholder="01"
+        maxlength="2"
+        data-testid="input-consecutivo"
+      />
+      @if (isFieldInvalid('consecutivo')) {
+        @if (hasError('consecutivo', 'required')) {
+          <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+        } @else if (hasError('consecutivo', 'pattern')) {
+          <p-message severity="error" [text]="locale.errors.consecutivoPattern" styleClass="text-xs" />
+        }
+      }
+    </div>
+
+    <!-- Cluster (opcional) -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="clusterId">
+        {{ locale.fields.cluster }}
+      </label>
+      <p-select
+        inputId="clusterId"
+        formControlName="clusterId"
+        [options]="clusters()"
+        optionLabel="nombre"
+        optionValue="id"
+        [placeholder]="locale.placeholders.selectCluster"
+        [showClear]="true"
+        [disabled]="clusters().length === 0"
+        styleClass="w-full"
+        data-testid="select-clusterId"
+      />
+    </div>
+
+  </div>
+
+  <!-- Preview del nombre del pozo -->
+  <app-well-name-preview
+    [nombrePozo]="namePreview()?.nombrePozo ?? null"
+    [available]="namePreview()?.available ?? null"
+    [loading]="namePreviewLoading()"
+  />
+
+</div>

@@ -1,0 +1,45 @@
+<div [formGroup]="formGroup()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+  <!-- Departamento -->
+  <div class="flex flex-col gap-1">
+    <label class="text-sm font-medium text-text-primary" for="departamentoId">
+      {{ locale.fields.departamento }} <span class="text-error">*</span>
+    </label>
+    <p-select
+      inputId="departamentoId"
+      formControlName="departamentoId"
+      [options]="departamentos()"
+      optionLabel="nombre"
+      optionValue="id"
+      [placeholder]="locale.placeholders.selectDepartamento"
+      styleClass="w-full"
+      (onChange)="departamentoChanged.emit($event.value)"
+      data-testid="select-departamentoId"
+    />
+    @if (isFieldInvalid('departamentoId')) {
+      <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+    }
+  </div>
+
+  <!-- Municipio -->
+  <div class="flex flex-col gap-1">
+    <label class="text-sm font-medium text-text-primary" for="municipioId">
+      {{ locale.fields.municipio }} <span class="text-error">*</span>
+    </label>
+    <p-select
+      inputId="municipioId"
+      formControlName="municipioId"
+      [options]="municipios()"
+      optionLabel="nombre"
+      optionValue="id"
+      [placeholder]="locale.placeholders.selectMunicipio"
+      [disabled]="municipios().length === 0"
+      styleClass="w-full"
+      data-testid="select-municipioId"
+    />
+    @if (isFieldInvalid('municipioId')) {
+      <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+    }
+  </div>
+
+</div>
