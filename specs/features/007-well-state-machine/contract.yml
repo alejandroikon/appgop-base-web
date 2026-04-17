@@ -1,0 +1,409 @@
+openapi: 3.1.0
+
+info:
+  title: "GOP 360° — 007 Well State Machine"
+  version: "1.0.0"
+  description: |
+    Contrato OpenAPI para la feature 007-well-state-machine.
+    Define endpoints de transición de estado y consulta de historial.
+    Extiende WellDetail y WellListItem de 005-wells-catalog-crud/contract.yml
+    con el campo `uwi` (adición no-breaking, ver CONSTITUTION.contracts.md §12.2).
+    Referencia: specs/features/007-well-state-machine/spec.md
+
+servers:
+  - url: /api/v1
+    description: Base path versionado — todos los endpoints son relativos a este prefijo
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: WellTransitions
+    description: Transiciones de estado y historial del pozo
+
+paths:
+  # ─── TRANSICIÓN DE ESTADO ─────────────────────────────────────────
+  /wells/{wellId}/transition:
+    patch:
+      operationId: transitionWell
+      summary: Ejecutar una transición de estado en el pozo
+      description: |
+        Ejecuta una acción de transición sobre el pozo. La acción válida depende
+        del estado actual del pozo y del rol del usuario.
+        Genera UWI automáticamente en la transición ENVIAR (si no existe).
+        Referencia: spec.md HU-040, HU-041, HU-042, HU-043
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR]
+      tags: [WellTransitions]
+      parameters:
+        - $ref: '#/components/parameters/WellIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionRequest'
+            examples:
+              enviar:
+                summary: Enviar pozo para asignación UWI
+                value:
+                  action: "ENVIAR"
+              aprobarUwi:
+                summary: Aprobar UWI del pozo
+                value:
+                  action: "APROBAR_UWI"
+              devolver:
+                summary: Devolver pozo a borrador con motivo
+                value:
+                  action: "DEVOLVER"
+                  comment: "Denominación incorrecta, verificar nomenclatura del campo."
+              fiscalizar:
+                summary: Fiscalizar pozo
+                value:
+                  action: "FISCALIZAR"
+      responses:
+        '200':
+          description: Transición ejecutada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransitionResult'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                estado: "PENDING_UWI"
+                estadoAnterior: "BORRADOR"
+                uwi: "CO-50-50568-ALPHA-01-ST"
+                action: "ENVIAR"
+                comment: null
+                transitionedAt: "2024-11-15T14:30:00Z"
+                transitionedBy: "Juan Pérez"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Pozo no encontrado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Resource Not Found"
+                status: 404
+                detail: "No se encontró un pozo con el ID proporcionado."
+                instance: "/api/v1/wells/550e8400-e29b-41d4-a716-446655440000/transition"
+        '409':
+          description: Transición no válida desde el estado actual o UWI duplicado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Conflict"
+                status: 409
+                detail: "La acción ENVIAR no es válida desde el estado PENDING_UWI."
+                instance: "/api/v1/wells/550e8400-e29b-41d4-a716-446655440000/transition"
+        '422':
+          description: Validación fallida (campos incompletos, comentario faltante)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Validation Failed"
+                status: 422
+                detail: "Uno o más campos contienen errores de validación."
+                instance: "/api/v1/wells/550e8400-e29b-41d4-a716-446655440000/transition"
+                errors:
+                  comment: ["El motivo de devolución es requerido."]
+
+  # ─── HISTORIAL DE TRANSICIONES ────────────────────────────────────
+  /wells/{wellId}/history:
+    get:
+      operationId: getWellHistory
+      summary: Consultar historial de transiciones de un pozo
+      description: |
+        Retorna todas las transiciones de estado del pozo, ordenadas por fecha descendente.
+        Todos los roles autenticados pueden consultar (respetando multi-tenant).
+        Referencia: spec.md HU-044
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      tags: [WellTransitions]
+      parameters:
+        - $ref: '#/components/parameters/WellIdParam'
+      responses:
+        '200':
+          description: Historial de transiciones del pozo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransitionHistoryItem'
+              example:
+                - id: "770e8400-e29b-41d4-a716-446655440001"
+                  fromState: "PENDING_UWI"
+                  toState: "BORRADOR"
+                  action: "DEVOLVER"
+                  comment: "Denominación incorrecta, verificar nomenclatura del campo."
+                  performedBy: "660e8400-e29b-41d4-a716-446655440000"
+                  performedByName: "María Gómez"
+                  performedByRole: "SUPERVISOR"
+                  createdAt: "2024-11-16T10:00:00Z"
+                - id: "770e8400-e29b-41d4-a716-446655440000"
+                  fromState: "BORRADOR"
+                  toState: "PENDING_UWI"
+                  action: "ENVIAR"
+                  comment: null
+                  performedBy: "660e8400-e29b-41d4-a716-446655440000"
+                  performedByName: "Juan Pérez"
+                  performedByRole: "OPERADOR"
+                  createdAt: "2024-11-15T14:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Pozo no encontrado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Resource Not Found"
+                status: 404
+                detail: "No se encontró un pozo con el ID proporcionado."
+                instance: "/api/v1/wells/550e8400-e29b-41d4-a716-446655440000/history"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Token JWT obtenido en /api/v1/auth/login"
+
+  parameters:
+    WellIdParam:
+      name: wellId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ID del pozo
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+  responses:
+    Unauthorized:
+      description: Token JWT ausente, expirado o inválido
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://tools.ietf.org/html/rfc7807"
+            title: "Unauthorized"
+            status: 401
+            detail: "Token de autenticación requerido."
+    Forbidden:
+      description: El usuario no tiene el rol requerido para esta transición
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://tools.ietf.org/html/rfc7807"
+            title: "Forbidden"
+            status: 403
+            detail: "No tiene permisos para ejecutar esta transición."
+
+  schemas:
+    # ─── REQUEST ──────────────────────────────────────────────────────
+    TransitionRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [ENVIAR, APROBAR_UWI, DEVOLVER, FISCALIZAR]
+          description: |
+            Acción de transición a ejecutar.
+            - ENVIAR: BORRADOR → PENDING_UWI (genera UWI). Roles: ADMIN, SUPERVISOR, OPERADOR.
+            - APROBAR_UWI: PENDING_UWI → READY_FISCAL. Roles: ADMIN, SUPERVISOR.
+            - DEVOLVER: PENDING_UWI|READY_FISCAL → BORRADOR (requiere comment). Roles: ADMIN, SUPERVISOR.
+            - FISCALIZAR: READY_FISCAL → FISCALIZADO. Roles: ADMIN, SUPERVISOR.
+          example: "ENVIAR"
+        comment:
+          type: ["string", "null"]
+          minLength: 10
+          maxLength: 500
+          description: "Motivo de la transición. Requerido para DEVOLVER, opcional para las demás."
+          example: "Denominación incorrecta, verificar nomenclatura del campo."
+      example:
+        action: "ENVIAR"
+        comment: null
+
+    # ─── RESPONSES ────────────────────────────────────────────────────
+    TransitionResult:
+      type: object
+      required: [id, estado, estadoAnterior, action, transitionedAt, transitionedBy]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "ID del pozo"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        estado:
+          type: string
+          enum: [BORRADOR, PENDING_UWI, READY_FISCAL, FISCALIZADO]
+          description: "Nuevo estado del pozo tras la transición"
+          example: "PENDING_UWI"
+        estadoAnterior:
+          type: string
+          enum: [BORRADOR, PENDING_UWI, READY_FISCAL, FISCALIZADO]
+          description: "Estado del pozo antes de la transición"
+          example: "BORRADOR"
+        uwi:
+          type: ["string", "null"]
+          maxLength: 50
+          description: "UWI del pozo. Se genera en la transición ENVIAR. Null si aún no existe."
+          example: "CO-50-50568-ALPHA-01-ST"
+        action:
+          type: string
+          enum: [ENVIAR, APROBAR_UWI, DEVOLVER, FISCALIZAR]
+          description: "Acción ejecutada"
+          example: "ENVIAR"
+        comment:
+          type: ["string", "null"]
+          maxLength: 500
+          description: "Comentario de la transición (presente en DEVOLVER)"
+          example: null
+        transitionedAt:
+          type: string
+          format: date-time
+          description: "Fecha y hora de la transición (UTC)"
+          example: "2024-11-15T14:30:00Z"
+        transitionedBy:
+          type: string
+          maxLength: 200
+          description: "Nombre del usuario que ejecutó la transición"
+          example: "Juan Pérez"
+      example:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        estado: "PENDING_UWI"
+        estadoAnterior: "BORRADOR"
+        uwi: "CO-50-50568-ALPHA-01-ST"
+        action: "ENVIAR"
+        comment: null
+        transitionedAt: "2024-11-15T14:30:00Z"
+        transitionedBy: "Juan Pérez"
+
+    TransitionHistoryItem:
+      type: object
+      required: [id, fromState, toState, action, performedBy, performedByName, performedByRole, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "ID del registro de historial"
+          example: "770e8400-e29b-41d4-a716-446655440000"
+        fromState:
+          type: string
+          enum: [BORRADOR, PENDING_UWI, READY_FISCAL, FISCALIZADO]
+          description: "Estado antes de la transición"
+          example: "BORRADOR"
+        toState:
+          type: string
+          enum: [BORRADOR, PENDING_UWI, READY_FISCAL, FISCALIZADO]
+          description: "Estado después de la transición"
+          example: "PENDING_UWI"
+        action:
+          type: string
+          enum: [ENVIAR, APROBAR_UWI, DEVOLVER, FISCALIZAR]
+          description: "Acción ejecutada"
+          example: "ENVIAR"
+        comment:
+          type: ["string", "null"]
+          maxLength: 500
+          description: "Comentario de la transición (presente en DEVOLVER)"
+          example: null
+        performedBy:
+          type: string
+          format: uuid
+          description: "ID del usuario que ejecutó la transición"
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        performedByName:
+          type: string
+          maxLength: 200
+          description: "Nombre del usuario"
+          example: "Juan Pérez"
+        performedByRole:
+          type: string
+          enum: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+          description: "Rol del usuario al momento de la transición"
+          example: "OPERADOR"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Fecha y hora del registro (UTC)"
+          example: "2024-11-15T14:30:00Z"
+      example:
+        id: "770e8400-e29b-41d4-a716-446655440000"
+        fromState: "BORRADOR"
+        toState: "PENDING_UWI"
+        action: "ENVIAR"
+        comment: null
+        performedBy: "660e8400-e29b-41d4-a716-446655440000"
+        performedByName: "Juan Pérez"
+        performedByRole: "OPERADOR"
+        createdAt: "2024-11-15T14:30:00Z"
+
+    # ─── EXTENSIONES A SCHEMAS DE 005 (no-breaking) ──────────────────
+    # Nota: Estos schemas documentan la adición del campo `uwi` a
+    # WellDetail y WellListItem de 005-wells-catalog-crud/contract.yml.
+    # Es una adición no-breaking (nuevo campo en response) per
+    # CONSTITUTION.contracts.md §12.2.
+    #
+    # WellDetail.uwi:
+    #   type: ["string", "null"]
+    #   maxLength: 50
+    #   example: "CO-50-50568-ALPHA-01-ST"
+    #
+    # WellListItem.uwi:
+    #   type: ["string", "null"]
+    #   maxLength: 50
+    #   example: "CO-50-50568-ALPHA-01-ST"
+
+    # ─── SHARED ───────────────────────────────────────────────────────
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+          format: uri
+          example: "https://tools.ietf.org/html/rfc7807"
+        title:
+          type: string
+          example: "Conflict"
+        status:
+          type: integer
+          example: 409
+        detail:
+          type: string
+          example: "La acción ENVIAR no es válida desde el estado PENDING_UWI."
+        instance:
+          type: string
+          example: "/api/v1/wells/550e8400-e29b-41d4-a716-446655440000/transition"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        traceId:
+          type: string
+          example: "00-abc123-01"
