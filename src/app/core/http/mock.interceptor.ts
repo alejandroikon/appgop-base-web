@@ -1,5 +1,5 @@
-import { HttpInterceptorFn, HttpRequest, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { HttpErrorResponse, HttpInterceptorFn, HttpRequest, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { environment } from '@env/environment';
 import { MOCK_HANDLERS } from './mock.registry';
 
@@ -22,7 +22,20 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
 
   if (handler) {
     const response = handler.handle(req);
-    if (response) return of(response);
+    if (response) {
+      if (response.status >= 200 && response.status < 300) {
+        return of(response);
+      }
+      return throwError(
+        () =>
+          new HttpErrorResponse({
+            error: response.body,
+            status: response.status,
+            statusText: response.statusText,
+            url: req.url,
+          })
+      );
+    }
   }
 
   return next(req);
