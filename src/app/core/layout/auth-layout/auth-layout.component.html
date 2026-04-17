@@ -5,22 +5,22 @@
     [style.background-image]="'url(' + loginBgUrl + ')'"
   >
     <!-- Overlay azul navy -->
-    <div class="absolute inset-0 bg-slate-900/80"></div>
+    <div class="absolute inset-0 bg-[var(--sidebar-bg)]/80"></div>
 
     <!-- Contenido del panel izquierdo -->
     <div class="relative z-10 flex flex-col justify-end p-10 pb-16">
-      <span class="block w-12 h-1 bg-amber-400 mb-6"></span>
-      <h1 class="text-white text-3xl font-bold leading-tight mb-3">
+      <span class="block w-12 h-1 bg-[var(--color-accent)] mb-6"></span>
+      <h1 class="text-[var(--color-text-inverse)] text-3xl font-bold leading-tight mb-3">
         {{ locale.welcome }}
       </h1>
-      <p class="text-slate-300 text-sm leading-relaxed">
+      <p class="text-[var(--color-text-secondary)] text-sm leading-relaxed">
         {{ locale.subtitle }}
       </p>
     </div>
   </div>
 
   <!-- Panel Derecho — Contenido (2/3, 100% en móvil) -->
-  <div class="flex flex-col w-full lg:w-2/3 bg-white px-8 sm:px-12 lg:px-16 py-6">
+  <div class="flex flex-col w-full lg:w-2/3 bg-[var(--color-surface)] px-8 sm:px-12 lg:px-16 py-6">
     <!-- Contenido central (logo + formulario) — centrado vertical -->
     <div class="flex-1 flex items-center py-8">
       <div class="w-full max-w-sm">
@@ -36,7 +36,7 @@
 
     <!-- Pie del panel -->
     <div class="shrink-0">
-      <span class="text-xs text-gray-400">{{ locale.version }}</span>
+      <span class="text-xs text-[var(--color-text-secondary)]">{{ locale.version }}</span>
     </div>
   </div>
 </div>

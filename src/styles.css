@@ -1,3 +1,7 @@
+/* Google Fonts — Inter (body) + Montserrat (headings) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap');
+
+/* Design tokens — orden obligatorio: tokens -> tipografía -> overrides */
 @import './styles/_tokens.css';
 @import './styles/_typography.css';
 @import './styles/_overrides.css';
@@ -5,3 +9,45 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================
+   Estilos base del documento
+   ============================================================ */
+body {
+  margin: 0;
+  font-family: var(--font-sans, var(--font-family-sans));
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6, .headline {
+  font-family: var(--font-heading);
+  color: var(--color-heading);
+}
+
+/* ============================================================
+   Focus visible global — Accesibilidad WCAG 2.1 AA
+   Outline amarillo ANH en todos los elementos interactivos
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   Clase sr-only — accesibilidad NTC 5854
+   Oculta visualmente pero accesible para screen readers
+   ============================================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -80,6 +80,15 @@
   --color-warning:           var(--primitive-yellow-500);
   --color-warning-light:     var(--primitive-yellow-50);
 
+  /* Secundario (usado en sidebar, header, variante moderna) */
+  --color-secondary:        var(--primitive-navy-700);
+
+  /* Acento / Marca secundaria ANH */
+  --color-accent:           var(--primitive-amber-400);
+
+  /* Títulos y encabezados — navy institucional ANH */
+  --color-heading:          var(--primitive-navy-900);
+
   /* Sidebar */
   --sidebar-bg:              var(--primitive-navy-900);
   --sidebar-text:            rgba(255, 255, 255, 0.75);
@@ -101,4 +110,32 @@
   --radius-lg:  0.75rem;  /* 12px */
   --radius-xl:  1rem;     /* 16px */
   --radius-full:9999px;
+
+  /* Aliases de retrocompatibilidad con UIKit Storybook */
+  --color-bg-base:   var(--color-surface);
+  --color-text-base: var(--color-text-primary);
+}
+
+/* ============================================================
+   Tema oscuro / Propuesta 2: Moderno
+   Activo con [data-theme='modern'] en <html> o clase .theme-modern
+   ============================================================ */
+:root[data-theme='modern'],
+.theme-modern {
+  --color-heading:       var(--primitive-white);
+  --color-primary:       var(--primitive-navy-900);
+  --color-primary-hover: var(--primitive-navy-800);
+  --color-primary-light: color-mix(in srgb, var(--primitive-navy-900) 10%, transparent);
+  --color-secondary:     var(--primitive-navy-700);
+
+  --color-surface:       var(--primitive-gray-900);
+  --color-surface-alt:   var(--primitive-gray-700);
+  --color-surface-raised:var(--primitive-gray-700);
+
+  --color-border:        var(--primitive-gray-700);
+  --color-border-strong: var(--primitive-gray-500);
+
+  --color-text-primary:  var(--primitive-white);
+  --color-text-secondary:var(--primitive-gray-400);
+  --color-text-disabled: var(--primitive-gray-500);
 }
