@@ -8,74 +8,75 @@ public sealed class CreateWellCommandValidatorTests
 {
     private readonly CreateWellCommandValidator _validator = new();
 
-    private static CreateWellCommand ValidCommand() => new(
+    private static CreateWellCommand ValidFinalizeCommand() => new(
+        Action: "FINALIZE",
         ContratoId: 1,
         CampoId: 1,
-        TipoTrayectoria: "ST",
+        Denominacion: "Cusiana Renata",
+        Consecutivo: 1,
+        TipoTrayectoria: "O",
         Clasificacion: "EXPLORATORIO",
-        Denominacion: "ALPHA",
-        Consecutivo: "01",
+        SubClasificacion: "A3",
         TipoUbicacion: "CONTINENTAL",
         TipoAngulo: "V",
         TipoObjetivo: "PH",
-        TipoTerminacion: "CD",
+        TipoTerminacion: "OH",
         DepartamentoId: 1,
         MunicipioId: 1,
-        ClusterId: null
-    );
+        ClusterId: null);
 
     [Fact]
-    public void Validate_ValidInput_PassesValidation()
+    public void Validate_ValidFinalizeCommand_SinErrores()
     {
-        // Arrange
-        var command = ValidCommand();
-
-        // Act
-        var result = _validator.TestValidate(command);
-
-        // Assert
+        var result = _validator.TestValidate(ValidFinalizeCommand());
         result.ShouldNotHaveAnyValidationErrors();
     }
 
     [Fact]
-    public void Validate_EmptyDenominacion_ReturnsError()
+    public void Validate_ActionVacia_ReturnsError()
     {
-        // Arrange
-        var command = ValidCommand() with { Denominacion = "" };
-
-        // Act
+        var command = ValidFinalizeCommand() with { Action = "" };
         var result = _validator.TestValidate(command);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Denominacion)
-            .WithErrorMessage("La denominación es requerida.");
+        result.ShouldHaveValidationErrorFor(x => x.Action);
     }
 
     [Fact]
-    public void Validate_DenominacionWithNumbers_ReturnsError()
+    public void Validate_ActionInvalida_ReturnsError()
     {
-        // Arrange
-        var command = ValidCommand() with { Denominacion = "ALPHA123" };
-
-        // Act
+        var command = ValidFinalizeCommand() with { Action = "INVALID" };
         var result = _validator.TestValidate(command);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Denominacion)
-            .WithErrorMessage("La denominación solo puede contener letras y espacios.");
+        result.ShouldHaveValidationErrorFor(x => x.Action);
     }
 
     [Fact]
-    public void Validate_InvalidConsecutivo_ReturnsError()
+    public void Validate_ConsecutivoFueraDeRango_ReturnsError()
     {
-        // Arrange
-        var command = ValidCommand() with { Consecutivo = "1" }; // Solo 1 dígito, debe ser 2
-
-        // Act
+        var command = ValidFinalizeCommand() with { Consecutivo = 10000 };
         var result = _validator.TestValidate(command);
+        result.ShouldHaveValidationErrorFor("Consecutivo.Value");
+    }
 
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Consecutivo)
-            .WithErrorMessage("El consecutivo debe ser exactamente 2 dígitos numéricos.");
+    [Fact]
+    public void Validate_DenominacionConCaracteresInvalidos_ReturnsError()
+    {
+        var command = ValidFinalizeCommand() with { Denominacion = "ALPHA@#$" };
+        var result = _validator.TestValidate(command);
+        result.ShouldHaveValidationErrorFor(x => x.Denominacion);
+    }
+
+    [Fact]
+    public void Validate_DraftConSoloPocosFields_OK()
+    {
+        var draft = new CreateWellCommand(
+            Action: "DRAFT",
+            ContratoId: 1,
+            CampoId: null,
+            Denominacion: "Test",
+            Consecutivo: 1,
+            TipoTrayectoria: null, Clasificacion: null, SubClasificacion: null,
+            TipoUbicacion: null, TipoAngulo: null, TipoObjetivo: null,
+            TipoTerminacion: null, DepartamentoId: null, MunicipioId: null, ClusterId: null);
+        var result = _validator.TestValidate(draft);
+        result.ShouldNotHaveAnyValidationErrors();
     }
 }

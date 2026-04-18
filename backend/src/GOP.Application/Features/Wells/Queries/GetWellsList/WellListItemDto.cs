@@ -5,8 +5,10 @@ public sealed record WellListItemDto(
     string NombrePozo,
     string Operadora,
     string Contrato,
-    string Campo,
+    string? Campo,
     string Clasificacion,
+    string? SubClasificacion,
     string Estado,
+    string? Uwi,
     DateTime CreatedAt
 );

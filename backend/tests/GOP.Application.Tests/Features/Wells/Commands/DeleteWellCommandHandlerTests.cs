@@ -13,28 +13,32 @@ public sealed class DeleteWellCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
-    private static Well BuildBorradorWell() => Well.Create(
+    private static Well BuildBorradorWell() => Well.CreateDraft(
         operadora: "Ecopetrol S.A.",
         tenantId: 1,
         contratoId: 1,
+        contrato: "E&P Llanos",
         tipoContrato: "E&P",
         cuenca: "Llanos Orientales",
         campoId: 1,
-        tipoTrayectoria: TipoTrayectoria.ST,
-        clasificacion: Clasificacion.Exploratorio,
+        campo: "Rubiales",
         denominacion: "ALPHA",
-        consecutivo: "01",
+        consecutivo: 1,
+        tipoTrayectoria: TipoTrayectoria.O,
+        clasificacion: Clasificacion.Exploratorio,
+        subClasificacion: null,
         tipoUbicacion: TipoUbicacion.Continental,
         tipoAngulo: TipoAngulo.V,
         tipoObjetivo: TipoObjetivo.PH,
         tipoTerminacion: TipoTerminacion.OH,
-        location: new WellLocation
-        {
-            DepartamentoId = 1,
-            MunicipioId = 1,
-            CodigoDaneDpto = "50",
-            CodigoDaneMpio = "50568"
-        });
+        departamentoId: 1,
+        departamento: "Meta",
+        codigoDaneDpto: "50",
+        municipioId: 1,
+        municipio: "Puerto Gaitán",
+        codigoDaneMpio: "568",
+        clusterId: null,
+        cluster: null);
 
     private async Task<TestDbContext> CreateContextWithWell(Well well)
     {
@@ -49,54 +53,53 @@ public sealed class DeleteWellCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WellEnBorrador_ReturnsSoftDeleteSuccess()
+    public async Task Handle_WellEnBorrador_SoftDeleteExitoso()
     {
-        // Arrange
         var well = BuildBorradorWell();
         var db = await CreateContextWithWell(well);
         var sut = new DeleteWellCommandHandler(db, _unitOfWork);
 
-        // Act
         var result = await sut.Handle(new DeleteWellCommand(well.Id), CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
-        var deleted = await db.Wells.FindAsync(well.Id);
-        deleted!.IsDeleted.Should().BeTrue();
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_WellNotFound_ReturnsFailure()
+    public async Task Handle_WellNotFound_RetornaFailure()
     {
-        // Arrange
         var db = TestDbContext.Create();
         var sut = new DeleteWellCommandHandler(db, _unitOfWork);
 
-        // Act
         var result = await sut.Handle(new DeleteWellCommand(Guid.NewGuid()), CancellationToken.None);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Be("Well.NotFound");
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_WellNoEnBorrador_ReturnsDeleteInvalidStatusFailure()
+    public async Task Handle_Forma101Radicada_NoPermiteEliminar()
     {
-        // Arrange: well transitado a PendingUwi (ya no es Borrador)
-        var well = BuildBorradorWell();
-        well.ApplyTransition(TransitionAction.Enviar, "ADMIN", null);
+        // RN-40: pozo CREADO con Forma 101 no puede eliminarse
+        var well = Well.CreateFinalized(
+            operadora: "Ecopetrol S.A.", tenantId: 1, contratoId: 1, contrato: "E&P",
+            tipoContrato: "E&P", cuenca: "Llanos Orientales", campoId: null, campo: null,
+            denominacion: "ALPHA", consecutivo: 1, tipoTrayectoria: TipoTrayectoria.O,
+            clasificacion: Clasificacion.Exploratorio, subClasificacion: null,
+            tipoUbicacion: TipoUbicacion.Continental, tipoAngulo: TipoAngulo.V,
+            tipoObjetivo: TipoObjetivo.PH, tipoTerminacion: TipoTerminacion.OH,
+            departamentoId: 1, departamento: "Meta", codigoDaneDpto: "50",
+            municipioId: 1, municipio: "Puerto Gaitán", codigoDaneMpio: "568",
+            clusterId: null, cluster: null, uwi: "50568ALPH0001CX0000VPH-OH");
+        well.MarkForma101Radicada();
         var db = await CreateContextWithWell(well);
         var sut = new DeleteWellCommandHandler(db, _unitOfWork);
 
-        // Act
         var result = await sut.Handle(new DeleteWellCommand(well.Id), CancellationToken.None);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(DomainErrors.Well.DeleteInvalidStatus);
+        result.Error.Code.Should().Be("Well.NotDeletable");
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

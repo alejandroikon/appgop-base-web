@@ -16,7 +16,7 @@ internal sealed class GetClustersQueryHandler(
             .AsNoTracking()
             .Where(c => c.CampoId == request.CampoId)
             .OrderBy(c => c.Nombre)
-            .Select(c => new ClusterItemDto(c.Id, c.Nombre, c.CampoId))
+            .Select(c => new ClusterItemDto(c.Id, c.Nombre, c.Abreviatura, c.CampoId))
             .ToListAsync(cancellationToken);
 
         return Result.Success(clusters);

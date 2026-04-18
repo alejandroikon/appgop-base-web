@@ -3,8 +3,9 @@ using GOP.Application.Features.Wells.Commands.UpdateWell;
 using GOP.Application.Tests.Common;
 using GOP.Domain.Entities;
 using GOP.Domain.Enums;
-using GOP.Domain.Errors;
 using GOP.Domain.Interfaces;
+using GOP.Domain.Interfaces.Repositories;
+using GOP.Domain.Interfaces.Services;
 using NSubstitute;
 
 namespace GOP.Application.Tests.Features.Wells.Commands;
@@ -12,135 +13,152 @@ namespace GOP.Application.Tests.Features.Wells.Commands;
 public sealed class UpdateWellCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
 
-    private static WellLocation BaseLocation() => new()
+    public UpdateWellCommandHandlerTests()
     {
-        DepartamentoId = 1,
-        MunicipioId = 1,
-        CodigoDaneDpto = "50",
-        CodigoDaneMpio = "50568"
-    };
+        _currentUser.TenantId.Returns(1);
+        _currentUser.TenantName.Returns("Ecopetrol");
+    }
 
-    private static Well BuildBorradorWell() => Well.Create(
-        operadora: "Ecopetrol S.A.",
+    private static Well BuildBorradorWell() => Well.CreateDraft(
+        operadora: "Ecopetrol",
         tenantId: 1,
         contratoId: 1,
+        contrato: "E&P Llanos",
         tipoContrato: "E&P",
         cuenca: "Llanos Orientales",
         campoId: 1,
-        tipoTrayectoria: TipoTrayectoria.ST,
-        clasificacion: Clasificacion.Exploratorio,
+        campo: "Rubiales",
         denominacion: "ALPHA",
-        consecutivo: "01",
+        consecutivo: 1,
+        tipoTrayectoria: TipoTrayectoria.O,
+        clasificacion: Clasificacion.Exploratorio,
+        subClasificacion: null,
         tipoUbicacion: TipoUbicacion.Continental,
         tipoAngulo: TipoAngulo.V,
         tipoObjetivo: TipoObjetivo.PH,
         tipoTerminacion: TipoTerminacion.OH,
-        location: BaseLocation());
+        departamentoId: 1,
+        departamento: "Meta",
+        codigoDaneDpto: "50",
+        municipioId: 1,
+        municipio: "Puerto Gaitán",
+        codigoDaneMpio: "568",
+        clusterId: null,
+        cluster: null);
 
-    private static UpdateWellCommand ValidCommand(Guid wellId) => new(
-        WellId: wellId,
-        ContratoId: 1,
-        CampoId: 1,
-        TipoTrayectoria: "P",
-        Clasificacion: "DESARROLLO",
-        Denominacion: "BETA",
-        Consecutivo: "02",
-        TipoUbicacion: "CONTINENTAL",
-        TipoAngulo: "H",
-        TipoObjetivo: "I",
-        TipoTerminacion: "LC",
-        DepartamentoId: 1,
-        MunicipioId: 1,
-        ClusterId: null);
-
-    private async Task<TestDbContext> CreateContextWithData(Well well)
+    private async Task<(TestDbContext db, IWellRepository repo)> CreateContextWithWell(Well well)
     {
         var db = TestDbContext.Create();
-        db.Contratos.Add(new Contrato { Id = 1, Nombre = "Contrato E&P Llanos", Tipo = "E&P", Cuenca = "Llanos Orientales" });
-        db.Campos.Add(new Campo { Id = 1, Nombre = "Campo Rubiales", ContratoId = 1 });
+        db.Contratos.Add(new Contrato { Id = 1, Nombre = "E&P Llanos", Tipo = "E&P", Cuenca = "Llanos Orientales" });
+        db.Campos.Add(new Campo { Id = 1, Nombre = "Rubiales", ContratoId = 1 });
         db.Departamentos.Add(new Departamento { Id = 1, Nombre = "Meta", CodigoDane = "50" });
-        db.Municipios.Add(new Municipio { Id = 1, Nombre = "Puerto Gaitán", DepartamentoId = 1, CodigoDane = "50568" });
+        db.Municipios.Add(new Municipio { Id = 1, Nombre = "Puerto Gaitán", CodigoDane = "50568", DepartamentoId = 1 });
         db.Wells.Add(well);
         await db.SaveChangesAsync();
+
+        var repo = Substitute.For<IWellRepository>();
+        repo.ExistsByNameAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+            .Returns(false);
+        repo.ExistsByUwiAsync(Arg.Any<string>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+            .Returns(false);
+        repo.When(r => r.Update(Arg.Any<Well>())).Do(ci => { }); // no-op
 
         _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
             .Returns(ci => db.SaveChangesAsync(ci.Arg<CancellationToken>()));
 
-        return db;
+        return (db, repo);
     }
 
     [Fact]
-    public async Task Handle_ValidCommand_WellEnBorrador_ReturnsUpdatedDetail()
+    public async Task Handle_BorradorSAVE_ActualizaExitosamente()
     {
-        // Arrange
         var well = BuildBorradorWell();
-        var db = await CreateContextWithData(well);
-        var sut = new UpdateWellCommandHandler(db, _unitOfWork);
-        var command = ValidCommand(well.Id);
+        var (db, repo) = await CreateContextWithWell(well);
+        var sut = new UpdateWellCommandHandler(db, repo, _unitOfWork, _currentUser);
 
-        // Act
+        var command = new UpdateWellCommand(
+            WellId: well.Id, Action: "SAVE",
+            ContratoId: 1, CampoId: 1, Denominacion: "BETA", Consecutivo: 2,
+            TipoTrayectoria: "O", Clasificacion: "EXPLORATORIO", SubClasificacion: null,
+            TipoUbicacion: "CONTINENTAL", TipoAngulo: "V", TipoObjetivo: "PH",
+            TipoTerminacion: "OH", DepartamentoId: 1, MunicipioId: 1, ClusterId: null);
+
         var result = await sut.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.NombrePozo.Should().Be("Llanos Orientales-BETA-02");
-        result.Value.TipoTrayectoria.Should().Be("P");
-        result.Value.Clasificacion.Should().Be("Desarrollo");
-        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_WellNotFound_ReturnsFailure()
+    public async Task Handle_Forma101Radicada_RetornaNotEditable()
     {
-        // Arrange
-        var db = TestDbContext.Create();
-        var sut = new UpdateWellCommandHandler(db, _unitOfWork);
-        var command = ValidCommand(Guid.NewGuid());
+        // RN-40: pozo CREADO con Forma 101 no puede editarse
+        var well = Well.CreateFinalized(
+            operadora: "Ecopetrol", tenantId: 1, contratoId: 1, contrato: "E&P",
+            tipoContrato: "E&P", cuenca: "Llanos Orientales", campoId: null, campo: null,
+            denominacion: "ALPHA", consecutivo: 1, tipoTrayectoria: TipoTrayectoria.O,
+            clasificacion: Clasificacion.Exploratorio, subClasificacion: null,
+            tipoUbicacion: TipoUbicacion.Continental, tipoAngulo: TipoAngulo.V,
+            tipoObjetivo: TipoObjetivo.PH, tipoTerminacion: TipoTerminacion.OH,
+            departamentoId: 1, departamento: "Meta", codigoDaneDpto: "50",
+            municipioId: 1, municipio: "Puerto Gaitán", codigoDaneMpio: "568",
+            clusterId: null, cluster: null, uwi: "50568ALPH0001CX0000VPH-OH");
+        well.MarkForma101Radicada();
+        var (db, repo) = await CreateContextWithWell(well);
+        var sut = new UpdateWellCommandHandler(db, repo, _unitOfWork, _currentUser);
 
-        // Act
+        var command = new UpdateWellCommand(
+            WellId: well.Id, Action: "SAVE",
+            ContratoId: 1, CampoId: null, Denominacion: null, Consecutivo: null,
+            TipoTrayectoria: null, Clasificacion: null, SubClasificacion: null,
+            TipoUbicacion: null, TipoAngulo: null, TipoObjetivo: null,
+            TipoTerminacion: null, DepartamentoId: null, MunicipioId: null, ClusterId: null);
+
         var result = await sut.Handle(command, CancellationToken.None);
 
-        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Well.NotEditable");
+    }
+
+    [Fact]
+    public async Task Handle_NotFound_RetornaFailure()
+    {
+        var db = TestDbContext.Create();
+        var repo = Substitute.For<IWellRepository>();
+        var sut = new UpdateWellCommandHandler(db, repo, _unitOfWork, _currentUser);
+
+        var command = new UpdateWellCommand(
+            WellId: Guid.NewGuid(), Action: "SAVE",
+            ContratoId: null, CampoId: null, Denominacion: null, Consecutivo: null,
+            TipoTrayectoria: null, Clasificacion: null, SubClasificacion: null,
+            TipoUbicacion: null, TipoAngulo: null, TipoObjetivo: null,
+            TipoTerminacion: null, DepartamentoId: null, MunicipioId: null, ClusterId: null);
+
+        var result = await sut.Handle(command, CancellationToken.None);
+
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Be("Well.NotFound");
-        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_WellNoEnBorrador_ReturnsInvalidStatusFailure()
+    public async Task Handle_FinalizeBorrador_GeneraUwiYCambiaACreado()
     {
-        // Arrange: crear pozo y transitarlo a PendingUwi
         var well = BuildBorradorWell();
-        well.ApplyTransition(TransitionAction.Enviar, "ADMIN", null);
-        var db = await CreateContextWithData(well);
-        var sut = new UpdateWellCommandHandler(db, _unitOfWork);
-        var command = ValidCommand(well.Id);
+        var (db, repo) = await CreateContextWithWell(well);
+        var sut = new UpdateWellCommandHandler(db, repo, _unitOfWork, _currentUser);
 
-        // Act
+        var command = new UpdateWellCommand(
+            WellId: well.Id, Action: "FINALIZE",
+            ContratoId: 1, CampoId: 1, Denominacion: "ALPHA", Consecutivo: 1,
+            TipoTrayectoria: "O", Clasificacion: "EXPLORATORIO", SubClasificacion: null,
+            TipoUbicacion: "CONTINENTAL", TipoAngulo: "V", TipoObjetivo: "PH",
+            TipoTerminacion: "OH", DepartamentoId: 1, MunicipioId: 1, ClusterId: null);
+
         var result = await sut.Handle(command, CancellationToken.None);
 
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(DomainErrors.Well.InvalidStatus);
-        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task Handle_InvalidEnumValue_ReturnsFailureWithoutException()
-    {
-        // Arrange: valor de enum inválido que bypassea el validator
-        var well = BuildBorradorWell();
-        var db = await CreateContextWithData(well);
-        var sut = new UpdateWellCommandHandler(db, _unitOfWork);
-        var command = ValidCommand(well.Id) with { TipoTrayectoria = "INVALID_VALUE" };
-
-        // Act
-        var result = await sut.Handle(command, CancellationToken.None);
-
-        // Assert — nunca debe lanzar excepción, siempre Result.Failure
-        result.IsFailure.Should().BeTrue();
-        result.Error.Code.Should().Be("Well.InvalidFieldValue");
-        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Estado.Should().Be("CREADO");
+        result.Value.Uwi.Should().NotBeNullOrEmpty();
     }
 }

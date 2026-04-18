@@ -70,16 +70,17 @@ public sealed class WellsControllerTests
 
         var body = new
         {
+            action = "DRAFT",      // V2.0: campo requerido
             contratoId = 1,
             campoId = 1,
-            tipoTrayectoria = "ST",
+            tipoTrayectoria = "O",
             clasificacion = "EXPLORATORIO",
             denominacion = "ALPHA",
-            consecutivo = "01",
+            consecutivo = 1,
             tipoUbicacion = "CONTINENTAL",
             tipoAngulo = "V",
             tipoObjetivo = "PH",
-            tipoTerminacion = "CD",
+            tipoTerminacion = "OH",
             departamentoId = 1,
             municipioId = 1,
             clusterId = (int?)null

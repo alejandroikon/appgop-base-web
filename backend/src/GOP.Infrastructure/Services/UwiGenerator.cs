@@ -1,27 +1,18 @@
-using GOP.Application.Common.Interfaces;
 using GOP.Domain.Common;
 using GOP.Domain.Entities;
 using GOP.Domain.Interfaces.Services;
-using GOP.Domain.ValueObjects;
 
 namespace GOP.Infrastructure.Services;
 
-internal sealed class UwiGenerator(IApplicationDbContext dbContext) : IUwiGenerator
+// TODO-ITER-9.3: Este servicio es legacy (V1). La generación de UWI V2.0 se hace directamente
+// en los handlers usando el Value Object Uwi.Generate() del Domain. Mantener solo para que
+// IUwiGenerator compile mientras TransitionWell esté activo.
+internal sealed class UwiGenerator : IUwiGenerator
 {
     public Task<Result<string>> GenerateAsync(Well well, CancellationToken cancellationToken = default)
     {
-        // Los códigos DANE ya están desnormalizados en la entidad Well (se guardaron en CreateWell)
-        var daneDpto = well.Location.CodigoDaneDpto;
-        var daneMpio = well.Location.CodigoDaneMpio;
-        var denominacion = well.Denominacion;
-        var consecutivo = well.Consecutivo;
-        var trayectoria = well.TipoTrayectoria.ToString();
-
-        var uwiResult = Uwi.Create(daneDpto, daneMpio, denominacion, consecutivo, trayectoria);
-
-        if (uwiResult.IsFailure)
-            return Task.FromResult(Result.Failure<string>(uwiResult.Error));
-
-        return Task.FromResult(Result.Success(uwiResult.Value.Value));
+        return Task.FromResult(Result.Failure<string>(new Error(
+            "UwiGenerator.Legacy",
+            "Use el método Uwi.Generate() del Domain directamente en los handlers V2.0.")));
     }
 }
