@@ -5,6 +5,7 @@ import { provideState, provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { provideEffects } from '@ngrx/effects';
 import { authFeature, AuthEffects } from '@core/auth/store';
+import { wellsFeature, WellsEffects } from '@wells/store';
 import { providePrimeNG } from 'primeng/config';
 import { MessageService } from 'primeng/api';
 import Aura from '@primeuix/themes/aura';
@@ -36,6 +37,8 @@ export const appConfig: ApplicationConfig = {
     provideStore(),
     provideState(authFeature),
     provideEffects(AuthEffects),
+    provideState(wellsFeature),
+    provideEffects(WellsEffects),
     provideStoreDevtools({
       maxAge: 25,
       logOnly: !isDevMode(),

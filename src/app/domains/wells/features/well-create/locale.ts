@@ -1,0 +1,111 @@
+export const WELL_CREATE_LOCALE = {
+  titleCreate: 'Crear Nuevo Pozo',
+  titleEdit:   'Editar Pozo',
+
+  sections: {
+    contractInfo:  'Sección 1 — Información General del Contrato',
+    technicalData: 'Sección 2 — Detalles Técnicos del Pozo',
+    location:      'Sección 3 — Ubicación Geográfica',
+    uwi:           'UWI Fiscalizado (PPDM)',
+  },
+
+  fields: {
+    operadora:       'Operadora',
+    contrato:        'Contrato',
+    tipoContrato:    'Tipo de Contrato',
+    cuenca:          'Cuenca',
+    tipoTrayectoria: 'Tipo de Pozo por Trayectoria',
+    clasificacion:   'Clasificación Inicial',
+    subClasificacion: 'Sub-clasificación',
+    campo:           'Campo',
+    denominacion:    'Denominación del Pozo',
+    consecutivo:     'Consecutivo',
+    nombrePozo:      'Nombre del Pozo (generado)',
+    tipoUbicacion:   'Tipo de Pozo por Ubicación',
+    tipoAngulo:      'Tipo de Pozo por Ángulo',
+    tipoObjetivo:    'Tipo de Pozo por Objetivo',
+    tipoTerminacion: 'Tipo de Pozo por Terminación',
+    departamento:    'Departamento',
+    codigoDaneDpto:  'Código DANE Departamento',
+    municipio:       'Municipio',
+    codigoDaneMpio:  'Código DANE Municipio',
+    cluster:         'Cluster-Locación',
+  },
+
+  placeholders: {
+    selectContrato:        'Seleccione un contrato',
+    selectClasificacion:   'Seleccione la clasificación',
+    selectSubClasificacion: 'Seleccione sub-clasificación',
+    selectCampo:           'Seleccione un campo',
+    selectTipoTrayectoria: 'Seleccione el tipo',
+    selectTipoUbicacion:   'Seleccione el tipo',
+    selectTipoAngulo:      'Seleccione el ángulo',
+    selectTipoObjetivo:    'Seleccione el objetivo',
+    selectTipoTerminacion: 'Seleccione la terminación',
+    selectDepartamento:    'Seleccione un departamento',
+    selectMunicipio:       'Seleccione un municipio',
+    selectCluster:         'Ninguno (opcional)',
+    denominacion:          'Ej: CUSIANA RENATA',
+    consecutivo:           'Ej: 1',
+  },
+
+  errors: {
+    required:              'Este campo es requerido.',
+    denominacionPattern:   'Solo se permiten letras, espacios y guiones.',
+    denominacionMaxlength: 'Máximo 50 caracteres.',
+    consecutivoRange:      'Debe ser un número entre 1 y 9999.',
+    nombreDuplicado:       'Ya existe un pozo con este nombre en su operadora.',
+    uwiDuplicado:          'Ya existe un pozo con este UWI en el sistema.',
+    clasificacionAnh:      'La operadora ANH solo puede crear pozos Estratigráficos.',
+    campoRequerido:        'El campo es obligatorio para clasificación Desarrollo.',
+    formularioVacio:       'Debe completar al menos un campo para guardar borrador.',
+    camposIncompletosFinalize: 'Complete todos los campos obligatorios antes de finalizar.',
+  },
+
+  actions: {
+    saveDraft:    'Guardar Borrador',
+    finalize:     'Finalizar Registro',
+    cancel:       'Cancelar',
+    createCluster: 'Crear Cluster',
+  },
+
+  messages: {
+    successSummary:  'Éxito',
+    draftSuccess:    'Borrador guardado exitosamente.',
+    finalizeSuccess: 'Pozo registrado exitosamente.',
+    saveError:       'Ocurrió un error al guardar el pozo.',
+    updateDraft:     'Borrador actualizado exitosamente.',
+  },
+
+  uwi: {
+    title:       'UWI Fiscalizado PPDM',
+    placeholder: 'Complete los campos para generar el UWI',
+    available:   'UWI disponible',
+    duplicate:   'UWI ya en uso',
+    checking:    'Verificando unicidad...',
+    error:       'No se pudo verificar unicidad',
+    components: {
+      dpto:      'Departamento DANE',
+      mpio:      'Municipio DANE',
+      sigla:     'Sigla',
+      numero:    'Número',
+      cluster:   'Cluster',
+      angulo:    'Ángulo',
+      trayect:   'Trayectoria',
+      objetivo:  'Objetivo',
+      terminac:  'Terminación',
+    },
+  },
+
+  warnings: {
+    ohTerminacion: 'La terminación Hoyo Abierto está sujeta a las disposiciones de la Resolución 40537, Artículo 21.',
+    forma101Lock:  'Este pozo tiene Forma 101 radicada y no puede editarse.',
+  },
+
+  labels: {
+    campoOpcional:      'Campo (opcional para esta clasificación)',
+    nombrePozoReadOnly: 'Generado automáticamente',
+    estadoBorrador:     'Se guardará como: Borrador',
+    estadoCreado:       'Se registrará como: Creado',
+  },
+} as const;

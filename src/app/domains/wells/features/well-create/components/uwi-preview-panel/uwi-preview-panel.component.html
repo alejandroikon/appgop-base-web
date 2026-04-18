@@ -1,0 +1,91 @@
+<div
+  class="flex flex-col gap-3 p-4 rounded-lg border border-border bg-surface-alt"
+  data-testid="uwi-preview-panel"
+>
+  <!-- Título del panel -->
+  <div class="flex items-center justify-between flex-wrap gap-2">
+    <span class="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+      {{ locale.title }}
+    </span>
+
+    @if (isChecking()) {
+      <div class="flex items-center gap-2">
+        <p-progressSpinner styleClass="w-4 h-4" strokeWidth="4" />
+        <span class="text-xs text-text-secondary">{{ locale.checking }}</span>
+      </div>
+    } @else if (isUnique() === true) {
+      <p-tag
+        [value]="locale.available"
+        severity="success"
+        data-testid="uwi-badge-available"
+      />
+    } @else if (isUnique() === false) {
+      <p-tag
+        [value]="locale.duplicate"
+        severity="danger"
+        data-testid="uwi-badge-duplicate"
+      />
+    }
+  </div>
+
+  <!-- UWI principal — monoespaciado, destacado -->
+  @if (uwi()) {
+    <div
+      class="font-mono text-lg font-bold text-primary tracking-widest py-2 px-3 rounded bg-primary-light border border-primary-light"
+      data-testid="uwi-value"
+    >
+      {{ uwi() }}
+    </div>
+
+    <!-- Desglose de componentes -->
+    @if (components()) {
+      <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-1" data-testid="uwi-components">
+        <div class="flex flex-col items-center">
+          <span class="font-mono text-sm font-semibold text-text-primary">{{ components()!.dptoCode }}</span>
+          <span class="text-xs text-text-secondary">{{ locale.components.dpto }}</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="font-mono text-sm font-semibold text-text-primary">{{ components()!.mpioCode }}</span>
+          <span class="text-xs text-text-secondary">{{ locale.components.mpio }}</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="font-mono text-sm font-semibold text-text-primary">{{ components()!.sigla }}</span>
+          <span class="text-xs text-text-secondary">{{ locale.components.sigla }}</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="font-mono text-sm font-semibold text-text-primary">{{ components()!.numero }}</span>
+          <span class="text-xs text-text-secondary">{{ locale.components.numero }}</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="font-mono text-sm font-semibold text-text-primary">{{ components()!.clusterCode }}</span>
+          <span class="text-xs text-text-secondary">{{ locale.components.cluster }}</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="font-mono text-sm font-semibold text-text-primary">{{ components()!.anguloCode }}</span>
+          <span class="text-xs text-text-secondary">{{ locale.components.angulo }}</span>
+        </div>
+        @if (components()!.trayectoriaCode) {
+          <div class="flex flex-col items-center">
+            <span class="font-mono text-sm font-semibold text-text-primary">{{ components()!.trayectoriaCode }}</span>
+            <span class="text-xs text-text-secondary">{{ locale.components.trayect }}</span>
+          </div>
+        }
+        <div class="flex flex-col items-center">
+          <span class="font-mono text-sm font-semibold text-text-primary">{{ components()!.objetivoCode }}</span>
+          <span class="text-xs text-text-secondary">{{ locale.components.objetivo }}</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="font-mono text-sm font-semibold text-text-primary">-{{ components()!.terminacionCode }}</span>
+          <span class="text-xs text-text-secondary">{{ locale.components.terminac }}</span>
+        </div>
+      </div>
+    }
+  } @else {
+    <span
+      class="text-sm text-text-secondary italic"
+      data-testid="uwi-placeholder"
+    >
+      {{ locale.placeholder }}
+    </span>
+  }
+</div>
