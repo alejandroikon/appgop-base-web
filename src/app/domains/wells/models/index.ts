@@ -1,10 +1,11 @@
-// Barrel export: punto único de entrada para todos los modelos del dominio wells
+// Barrel export V2.0: punto único de entrada para todos los modelos del dominio wells
 
 // Enums y constantes de opciones
 export type {
   WellStatus,
   TipoTrayectoria,
   Clasificacion,
+  SubClasificacion,
   TipoUbicacion,
   TipoAngulo,
   TipoObjetivo,
@@ -13,6 +14,7 @@ export type {
 export {
   TIPO_TRAYECTORIA_OPTIONS,
   CLASIFICACION_OPTIONS,
+  SUB_CLASIFICACION_OPTIONS,
   TIPO_UBICACION_OPTIONS,
   TIPO_ANGULO_OPTIONS,
   TIPO_OBJETIVO_OPTIONS,
@@ -23,10 +25,12 @@ export {
 // DTOs de pozos
 export type {
   WellListItemDTO,
-  WellLocationDTO,
   WellDetailDTO,
   CreateWellRequestDTO,
   UpdateWellRequestDTO,
+  UwiPreviewResponseDTO,
+  UwiPreviewComponentsDTO,
+  WellNamePreviewResponseDTO,
   PagedResponseDTO,
 } from './well.dto';
 
@@ -37,23 +41,12 @@ export type {
   DepartamentoItemDTO,
   MunicipioItemDTO,
   ClusterItemDTO,
+  CreateClusterRequestDTO,
 } from './catalog.dto';
 
 // Modelos de dominio
-export type { WellListItem, WellLocation, Well, WellsQueryParams } from './well.model';
+export type { WellListItem, Well, WellsQueryParams } from './well.model';
 export type { Contrato, Campo, Departamento, Municipio, Cluster } from './catalog.model';
-
-// DTO de preview de nombre (feature 006)
-export type { WellNamePreviewDTO } from './well-name-preview.dto';
 
 // Mappers de pozos
 export { mapWellListItemDTOToModel, mapWellDetailDTOToModel } from './well.mapper';
-
-// Modelos de transición de estado (feature 007)
-export type { TransitionAction, TransitionResult, TransitionHistoryItem } from './well-transition.model';
-
-// DTOs de transición de estado
-export type { TransitionRequestDTO, TransitionResultDTO, TransitionHistoryItemDTO } from './well-transition.dto';
-
-// Mappers de transición de estado
-export { mapTransitionResultDTOToModel, mapTransitionHistoryItemDTOToModel } from './well-transition.mapper';

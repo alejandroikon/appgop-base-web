@@ -13,8 +13,7 @@ export const API = {
     base:        `${hosts.gopApi}/api/v1/wells`,
     byId:        (id: string) => `${hosts.gopApi}/api/v1/wells/${id}`,
     previewName: `${hosts.gopApi}/api/v1/wells/preview-name`,
-    transition:  (id: string) => `${hosts.gopApi}/api/v1/wells/${id}/transition`,
-    history:     (id: string) => `${hosts.gopApi}/api/v1/wells/${id}/history`,
+    previewUwi:  `${hosts.gopApi}/api/v1/wells/preview-uwi`,
   },
   catalogs: {
     contratos:     `${hosts.gopApi}/api/v1/catalogs/contratos`,

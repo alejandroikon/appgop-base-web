@@ -3,11 +3,12 @@ import { Router, RouterLink } from '@angular/router';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { WellsApiService } from '@wells/services';
-import type { Contrato, WellListItem, WellsQueryParams } from '@wells/models';
+import type { Contrato, WellListItem, WellsQueryParams, WellStatus } from '@wells/models';
+import { WELL_STATUS_OPTIONS } from '@wells/models';
 import { WELL_MANAGE_LOCALE } from './locale';
 import { WellStatusBadgeComponent } from '../../components/well-status-badge/well-status-badge.component';
 
-// UI imports — PrimeNG 21 (componentes standalone, no módulos)
+// UI imports — PrimeNG 21 (componentes standalone)
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -44,12 +45,17 @@ import { InputIconModule } from 'primeng/inputicon';
   ],
 })
 export class WellManageComponent implements OnInit {
-  private readonly wellsApi     = inject(WellsApiService);
-  private readonly router       = inject(Router);
-  private readonly messageService    = inject(MessageService);
-  private readonly confirmationService = inject(ConfirmationService);
+  private readonly wellsApi             = inject(WellsApiService);
+  private readonly router               = inject(Router);
+  private readonly messageService       = inject(MessageService);
+  private readonly confirmationService  = inject(ConfirmationService);
 
   protected readonly locale = WELL_MANAGE_LOCALE;
+
+  // ─── Opciones de filtro de estado ─────────────────────────────────────────
+  protected readonly estadoOpts = [
+    ...WELL_STATUS_OPTIONS,
+  ];
 
   // ─── Estado de UI ─────────────────────────────────────────────────────────
   readonly wells        = signal<WellListItem[]>([]);
@@ -58,12 +64,10 @@ export class WellManageComponent implements OnInit {
   readonly filters      = signal<WellsQueryParams>({ page: 1, pageSize: 20 });
   readonly contratos    = signal<Contrato[]>([]);
 
-  // Control de búsqueda con debounce
   protected searchTerm = '';
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
-
-  // Contrato seleccionado en el dropdown de filtro
   protected selectedContratoId: number | null = null;
+  protected selectedEstado: WellStatus | null = null;
 
   ngOnInit(): void {
     this.loadContratos();
@@ -71,9 +75,7 @@ export class WellManageComponent implements OnInit {
   }
 
   private loadContratos(): void {
-    this.wellsApi.getContratos().subscribe({
-      next: (data) => this.contratos.set(data),
-    });
+    this.wellsApi.getContratos().subscribe({ next: (data) => this.contratos.set(data) });
   }
 
   loadWells(): void {
@@ -111,6 +113,11 @@ export class WellManageComponent implements OnInit {
     this.loadWells();
   }
 
+  onEstadoFilterChange(estado: WellStatus | null): void {
+    this.filters.update((f) => ({ ...f, estado: estado ?? undefined, page: 1 }));
+    this.loadWells();
+  }
+
   onCreate(): void {
     this.router.navigate(['/wells/create']);
   }
@@ -122,16 +129,12 @@ export class WellManageComponent implements OnInit {
   onDelete(well: WellListItem): void {
     this.confirmationService.confirm({
       message: this.locale.messages.deleteConfirm,
-      header: this.locale.actions.delete,
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
+      header:  this.locale.actions.delete,
+      icon:    'pi pi-exclamation-triangle',
+      accept:  () => {
         this.wellsApi.deleteWell(well.id).subscribe({
           next: () => {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Eliminado',
-              detail: this.locale.messages.deleteSuccess,
-            });
+            this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: this.locale.messages.deleteSuccess });
             this.loadWells();
           },
         });
@@ -139,31 +142,11 @@ export class WellManageComponent implements OnInit {
     });
   }
 
-  getEstadoSeverity(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
-    const map: Record<string, 'success' | 'info' | 'warn' | 'danger' | 'secondary'> = {
-      BORRADOR:     'secondary',
-      PENDING_UWI:  'warn',
-      READY_FISCAL: 'info',
-      FISCALIZADO:  'success',
-    };
-    return map[estado] ?? 'secondary';
-  }
-
-  getEstadoLabel(estado: string): string {
-    const map: Record<string, string> = {
-      BORRADOR:     'Borrador',
-      PENDING_UWI:  'Pendiente UWI',
-      READY_FISCAL: 'Listo Fiscal',
-      FISCALIZADO:  'Fiscalizado',
-    };
-    return map[estado] ?? estado;
-  }
-
   formatDate(isoDate: string): string {
     return new Date(isoDate).toLocaleDateString('es-CO', {
-      day: '2-digit',
+      day:   '2-digit',
       month: '2-digit',
-      year: 'numeric',
+      year:  'numeric',
     });
   }
 }

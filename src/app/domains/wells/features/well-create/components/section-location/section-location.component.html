@@ -1,0 +1,102 @@
+<div [formGroup]="formGroup()" class="flex flex-col gap-6">
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <!-- Departamento -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="departamentoId">
+        {{ locale.fields.departamento }} <span class="text-error">*</span>
+      </label>
+      <p-select
+        inputId="departamentoId"
+        formControlName="departamentoId"
+        [options]="departamentos()"
+        optionLabel="nombre"
+        optionValue="id"
+        [placeholder]="locale.placeholders.selectDepartamento"
+        styleClass="w-full"
+        (onChange)="departamentoChange.emit($event.value)"
+        data-testid="select-departamentoId"
+      />
+      @if (isFieldInvalid('departamentoId')) {
+        <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+      }
+    </div>
+
+    <!-- Código DANE Departamento (read-only, auto) -->
+    @if (selectedDeptoDane()) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-text-primary">
+          {{ locale.fields.codigoDaneDpto }}
+        </label>
+        <span
+          class="font-mono text-sm text-text-primary py-2 px-3 rounded border border-border bg-surface-alt"
+          data-testid="display-codigoDaneDpto"
+        >
+          {{ selectedDeptoDane() }}
+        </span>
+      </div>
+    }
+
+    <!-- Municipio -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="municipioId">
+        {{ locale.fields.municipio }} <span class="text-error">*</span>
+      </label>
+      <p-select
+        inputId="municipioId"
+        formControlName="municipioId"
+        [options]="municipios()"
+        optionLabel="nombre"
+        optionValue="id"
+        [placeholder]="locale.placeholders.selectMunicipio"
+        [disabled]="municipios().length === 0"
+        styleClass="w-full"
+        data-testid="select-municipioId"
+      />
+      @if (isFieldInvalid('municipioId')) {
+        <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+      }
+    </div>
+
+    <!-- Código DANE Municipio (read-only, auto) -->
+    @if (selectedMpioCode()) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-text-primary">
+          {{ locale.fields.codigoDaneMpio }}
+        </label>
+        <span
+          class="font-mono text-sm text-text-primary py-2 px-3 rounded border border-border bg-surface-alt"
+          data-testid="display-codigoDaneMpio"
+        >
+          {{ selectedMpioCode() }}
+        </span>
+      </div>
+    }
+
+    <!-- Cluster-Locación -->
+    <div class="flex flex-col gap-1 md:col-span-2">
+      <label class="text-sm font-medium text-text-primary" for="clusterId">
+        {{ locale.fields.cluster }} <span class="text-error">*</span>
+      </label>
+      <div class="flex items-center gap-2">
+        <p-select
+          inputId="clusterId"
+          formControlName="clusterId"
+          [options]="clusters()"
+          optionLabel="nombre"
+          optionValue="id"
+          [placeholder]="locale.placeholders.selectCluster"
+          [disabled]="clusters().length === 0"
+          [showClear]="true"
+          styleClass="flex-1"
+          data-testid="select-clusterId"
+        />
+      </div>
+      @if (isFieldInvalid('clusterId')) {
+        <p-message severity="error" [text]="locale.errors.required" styleClass="text-xs" />
+      }
+    </div>
+
+  </div>
+</div>

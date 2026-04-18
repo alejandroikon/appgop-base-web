@@ -1,0 +1,101 @@
+<div [formGroup]="formGroup()" class="flex flex-col gap-6">
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <!-- Operadora (read-only, del JWT) -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary">
+        {{ locale.fields.operadora }}
+      </label>
+      <span
+        class="text-sm text-text-primary py-2 px-3 rounded border border-border bg-surface-alt"
+        data-testid="display-operadora"
+      >
+        {{ operadora() || '—' }}
+      </span>
+    </div>
+
+    <!-- Contrato -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="contratoId">
+        {{ locale.fields.contrato }} <span class="text-error">*</span>
+      </label>
+      <p-select
+        inputId="contratoId"
+        formControlName="contratoId"
+        [options]="contratos()"
+        optionLabel="nombre"
+        optionValue="id"
+        [placeholder]="locale.placeholders.selectContrato"
+        styleClass="w-full"
+        (onChange)="contratoChange.emit($event.value)"
+        data-testid="select-contratoId"
+      />
+      @if (isFieldInvalid('contratoId')) {
+        <p-message
+          severity="error"
+          [text]="locale.errors.required"
+          styleClass="text-xs"
+        />
+      }
+    </div>
+
+    <!-- Tipo de Contrato (read-only, derivado del contrato) -->
+    @if (tipoContrato()) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-text-primary">
+          {{ locale.fields.tipoContrato }}
+        </label>
+        <span
+          class="text-sm text-text-primary py-2 px-3 rounded border border-border bg-surface-alt"
+          data-testid="display-tipoContrato"
+        >
+          {{ tipoContrato() }}
+        </span>
+      </div>
+    }
+
+    <!-- Cuenca (read-only, derivada del contrato) -->
+    @if (cuenca()) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-text-primary">
+          {{ locale.fields.cuenca }}
+        </label>
+        <span
+          class="text-sm text-text-primary py-2 px-3 rounded border border-border bg-surface-alt"
+          data-testid="display-cuenca"
+        >
+          {{ cuenca() }}
+        </span>
+      </div>
+    }
+
+    <!-- Campo -->
+    <div class="flex flex-col gap-1 md:col-span-2">
+      <label class="text-sm font-medium text-text-primary" for="campoId">
+        {{ locale.fields.campo }}
+      </label>
+      <p-select
+        inputId="campoId"
+        formControlName="campoId"
+        [options]="campos()"
+        optionLabel="nombre"
+        optionValue="id"
+        [placeholder]="locale.placeholders.selectCampo"
+        [disabled]="campos().length === 0"
+        [showClear]="true"
+        styleClass="w-full"
+        (onChange)="campoChange.emit($event.value)"
+        data-testid="select-campoId"
+      />
+      @if (isFieldInvalid('campoId')) {
+        <p-message
+          severity="error"
+          [text]="locale.errors.campoRequerido"
+          styleClass="text-xs"
+        />
+      }
+    </div>
+
+  </div>
+</div>

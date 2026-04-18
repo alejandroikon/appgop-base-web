@@ -14,58 +14,71 @@
   >
     <!-- ─── Header: Nombre, Estado, UWI, Acciones ─── -->
     <div class="flex flex-col gap-3">
-      <!-- Navegación -->
       <a
         [routerLink]="['/wells/manage']"
         class="flex items-center gap-1 text-sm text-text-secondary hover:text-primary transition-colors w-fit"
         data-testid="btn-back"
       >
         <i class="pi pi-arrow-left"></i>
-        {{ locale.actions['back'] }}
+        {{ locale.actions.back }}
       </a>
 
       <div class="flex flex-wrap items-start justify-between gap-4">
-        <!-- Título y badge de estado -->
         <div class="flex flex-col gap-2">
           <h1
             class="text-2xl font-semibold text-text-primary"
             data-testid="well-detail-name"
           >
-            {{ well()!.nombrePozo }}
+            {{ well()!.nombrePozo ?? well()!.denominacion ?? '—' }}
           </h1>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 flex-wrap">
             <app-well-status-badge
               [estado]="well()!.estado"
               data-testid="well-detail-status-badge"
             />
-            <span
-              class="text-sm text-text-secondary"
-              data-testid="well-detail-uwi"
-            >
-              {{ locale.uwi.label }}:
-              <strong>{{ well()!.uwi ?? locale.uwi.pending }}</strong>
-            </span>
+            @if (well()!.uwi) {
+              <span
+                class="font-mono text-sm bg-surface-alt border border-border px-3 py-1 rounded"
+                data-testid="well-detail-uwi"
+              >
+                {{ locale.uwi.label }}: <strong>{{ well()!.uwi }}</strong>
+              </span>
+            } @else {
+              <span class="text-sm text-text-secondary italic" data-testid="well-detail-uwi-pending">
+                {{ locale.uwi.pending }}
+              </span>
+            }
+            @if (well()!.forma101Radicada) {
+              <p-tag
+                [value]="locale.labels.forma101Radicada"
+                severity="warn"
+                data-testid="tag-forma101"
+              />
+            }
           </div>
         </div>
 
-        <!-- Acciones contextuales -->
         <div class="flex flex-wrap gap-2 items-center">
-          @if (well()!.estado === 'BORRADOR' && currentUser()?.role !== 'AUDITOR') {
+          @if (!well()!.forma101Radicada && currentUser()?.role !== 'AUDITOR') {
             <p-button
-              [label]="locale.actions['edit']"
+              [label]="locale.actions.edit"
               icon="pi pi-pencil"
               severity="secondary"
               [outlined]="true"
-              [routerLink]="['/wells', well()!.id, 'edit']"
+              (onClick)="onEdit()"
               data-testid="btn-edit-well"
             />
           }
-          <app-well-transition-actions
-            [estado]="well()!.estado"
-            [userRole]="currentUser()?.role ?? 'AUDITOR'"
-            [isLoading]="isTransitioning()"
-            (transition)="onTransitionRequested($event)"
-          />
+          @if (!well()!.forma101Radicada && (currentUser()?.role === 'OPERADOR' || currentUser()?.role === 'ADMIN')) {
+            <p-button
+              [label]="locale.actions.delete"
+              icon="pi pi-trash"
+              severity="danger"
+              [outlined]="true"
+              (onClick)="onDelete()"
+              data-testid="btn-delete-well"
+            />
+          }
         </div>
       </div>
     </div>
@@ -78,28 +91,34 @@
       >
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.operadora }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.operadora }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.operadora || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.contrato }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.contrato }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.contrato || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.tipoContrato }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoContrato }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoContrato || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.cuenca }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.cuenca }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.cuenca || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.campo }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.campo }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.campo || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.clasificacion }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.clasificacion }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.clasificacion || '—' }}</p>
         </div>
+        @if (well()!.subClasificacion) {
+          <div>
+            <p class="text-xs text-text-secondary">{{ locale.labels.subClasificacion }}</p>
+            <p class="text-sm font-medium text-text-primary">{{ well()!.subClasificacion }}</p>
+          </div>
+        }
       </div>
     </p-card>
 
@@ -111,31 +130,31 @@
       >
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.denominacion }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.denominacion }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.denominacion || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.consecutivo }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.consecutivo }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.consecutivo ?? '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.tipoTrayectoria }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoTrayectoria }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoTrayectoria || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.tipoUbicacion }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoUbicacion }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoUbicacion || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.tipoAngulo }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoAngulo }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoAngulo || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.tipoObjetivo }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoObjetivo }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoObjetivo || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.tipoTerminacion }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoTerminacion }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.tipoTerminacion || '—' }}</p>
         </div>
       </div>
     </p-card>
@@ -148,37 +167,18 @@
       >
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.departamento }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.ubicacion.departamento }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.departamento || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.municipio }}</p>
-          <p class="text-sm font-medium text-text-primary">{{ well()!.ubicacion.municipio }}</p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.municipio || '—' }}</p>
         </div>
         <div>
           <p class="text-xs text-text-secondary">{{ locale.labels.cluster }}</p>
-          <p class="text-sm font-medium text-text-primary">
-            {{ well()!.ubicacion.cluster ?? locale.labels.noData }}
-          </p>
+          <p class="text-sm font-medium text-text-primary">{{ well()!.cluster || locale.labels.noData }}</p>
         </div>
       </div>
     </p-card>
 
-    <!-- ─── Sección: Historial de Transiciones ─── -->
-    <p-card [header]="locale.sections.history">
-      <app-well-history-timeline
-        [history]="history()"
-        [isLoading]="isLoadingHistory()"
-        data-testid="section-history"
-      />
-    </p-card>
   </div>
 }
-
-<!-- Diálogo de confirmación de transición -->
-<app-transition-confirm-dialog
-  [visible]="dialogVisible()"
-  [action]="dialogAction()"
-  [isLoading]="isTransitioning()"
-  (confirm)="onTransitionConfirmed($event)"
-  (cancel)="onDialogCancel()"
-/>

@@ -1,0 +1,138 @@
+<p-toast />
+
+@if (isLoading()) {
+  <div class="flex items-center justify-center min-h-64" data-testid="well-create-loading">
+    <p-progressSpinner strokeWidth="4" />
+  </div>
+} @else {
+  <div class="flex flex-col gap-8 pb-24" data-testid="well-create-form">
+
+    <!-- Encabezado -->
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-semibold text-text-primary">
+        {{ isEditMode() ? locale.titleEdit : locale.titleCreate }}
+      </h1>
+    </div>
+
+    <!-- ─── Sección 1: Información del Contrato ───────────────────────────── -->
+    <section class="flex flex-col gap-4" data-testid="section-contract-info">
+      <h2 class="text-base font-semibold text-text-primary border-b border-border pb-2">
+        {{ locale.sections.contractInfo }}
+      </h2>
+      <app-section-contract-info
+        [formGroup]="wellForm"
+        [contratos]="contratos()"
+        [campos]="campos()"
+        [operadora]="currentUser()?.tenantName ?? ''"
+        [cuenca]="cuencaDisplay()"
+        [tipoContrato]="tipoContratoDisplay()"
+        [isAnh]="isAnh()"
+        (contratoChange)="onContratoChanged($event)"
+        (campoChange)="onCampoChanged($event)"
+      />
+    </section>
+
+    <!-- ─── Sección 2: Datos Técnicos ─────────────────────────────────────── -->
+    <section class="flex flex-col gap-4" data-testid="section-technical-data">
+      <h2 class="text-base font-semibold text-text-primary border-b border-border pb-2">
+        {{ locale.sections.technicalData }}
+      </h2>
+      <app-section-technical-data
+        [formGroup]="wellForm"
+        [isAnh]="isAnh()"
+        [ubicacionDefault]="ubicacionDefault()"
+        (clasificacionChange)="onClasificacionChanged($event)"
+      />
+
+      <!-- Nombre del pozo calculado (RN-16..22) -->
+      @if (wellNamePreview()) {
+        <div
+          class="flex items-center gap-3 p-3 rounded-lg border border-border bg-surface-alt"
+          data-testid="well-name-preview"
+        >
+          <span class="text-xs text-text-secondary font-semibold uppercase tracking-wide">
+            {{ locale.fields.nombrePozo }}
+          </span>
+          <span class="text-base font-semibold text-primary" data-testid="well-name-value">
+            {{ wellNamePreview() }}
+          </span>
+        </div>
+      }
+    </section>
+
+    <!-- ─── Sección 3: Ubicación Geográfica ───────────────────────────────── -->
+    <section class="flex flex-col gap-4" data-testid="section-location">
+      <h2 class="text-base font-semibold text-text-primary border-b border-border pb-2">
+        {{ locale.sections.location }}
+      </h2>
+      <app-section-location
+        [formGroup]="wellForm"
+        [departamentos]="departamentos()"
+        [municipios]="municipios()"
+        [clusters]="clusters()"
+        (departamentoChange)="onDepartamentoChanged($event)"
+      />
+    </section>
+
+    <!-- ─── Panel UWI (sticky inferior) ──────────────────────────────────── -->
+    <section class="flex flex-col gap-2" data-testid="section-uwi">
+      <h2 class="text-base font-semibold text-text-primary border-b border-border pb-2">
+        {{ locale.sections.uwi }}
+      </h2>
+      <app-uwi-preview-panel
+        [uwi]="uwiPreview()"
+        [components]="uwiComponents()"
+        [isUnique]="uwiIsUnique()"
+        [isChecking]="uwiChecking()"
+      />
+    </section>
+
+  </div>
+
+  <!-- ─── Barra de acciones fija ────────────────────────────────────────── -->
+  <div
+    class="fixed bottom-0 left-0 right-0 z-10 bg-surface border-t border-border px-6 py-3 flex items-center justify-between gap-3"
+    data-testid="action-bar"
+  >
+    <p-button
+      type="button"
+      [label]="locale.actions.cancel"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="onCancel()"
+      data-testid="btn-cancel"
+    />
+
+    <div class="flex items-center gap-3">
+      <!-- Guardar Borrador -->
+      @if (!isEditMode()) {
+        <p-button
+          type="button"
+          [label]="locale.actions.saveDraft"
+          severity="secondary"
+          [loading]="isSaving() || false"
+          (onClick)="onSaveDraft()"
+          data-testid="btn-save-draft"
+        />
+      } @else {
+        <p-button
+          type="button"
+          [label]="locale.actions.saveDraft"
+          severity="secondary"
+          [loading]="isSaving() || false"
+          (onClick)="onSaveDraftEdit()"
+          data-testid="btn-save-draft-edit"
+        />
+      }
+
+      <!-- Finalizar Registro -->
+      <p-button
+        type="button"
+        [label]="locale.actions.finalize"
+        [loading]="isSaving() || false"
+        (onClick)="onFinalize()"
+        data-testid="btn-finalize"
+      />
+    </div>
+  </div>
+}

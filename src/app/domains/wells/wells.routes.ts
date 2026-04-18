@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from '@core/guards/role.guard';
 
 export const wellsRoutes: Routes = [
   {
@@ -16,12 +17,12 @@ export const wellsRoutes: Routes = [
   {
     path: 'create',
     loadComponent: () =>
-      import('./features/well-form/well-form.component').then(
-        (m) => m.WellFormComponent,
+      import('./features/well-create/well-create.component').then(
+        (m) => m.WellCreateComponent,
       ),
+    canActivate: [roleGuard(['OPERADOR', 'ADMIN'])],
   },
   {
-    // Ruta de detalle — debe ir ANTES de :id/edit para que Angular resuelva correctamente
     path: ':id',
     loadComponent: () =>
       import('./features/well-detail/well-detail.component').then(
@@ -31,8 +32,9 @@ export const wellsRoutes: Routes = [
   {
     path: ':id/edit',
     loadComponent: () =>
-      import('./features/well-form/well-form.component').then(
-        (m) => m.WellFormComponent,
+      import('./features/well-create/well-create.component').then(
+        (m) => m.WellCreateComponent,
       ),
+    canActivate: [roleGuard(['OPERADOR', 'SUPERVISOR', 'ADMIN'])],
   },
 ];

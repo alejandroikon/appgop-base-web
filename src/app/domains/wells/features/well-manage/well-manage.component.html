@@ -39,6 +39,18 @@
       styleClass="min-w-56"
       data-testid="dropdown-filter-contrato"
     />
+
+    <p-select
+      [options]="estadoOpts"
+      [(ngModel)]="selectedEstado"
+      optionLabel="label"
+      optionValue="value"
+      [placeholder]="locale.filters.allEstados"
+      [showClear]="true"
+      (onChange)="onEstadoFilterChange($event.value)"
+      styleClass="min-w-44"
+      data-testid="dropdown-filter-estado"
+    />
   </div>
 
   <!-- Tabla principal -->
@@ -73,11 +85,15 @@
         </th>
         <th>{{ locale.columns.campo }}</th>
         <th>{{ locale.columns.clasificacion }}</th>
+        <th>{{ locale.columns.subClasificacion }}</th>
+        <th pSortableColumn="uwi">
+          {{ locale.columns.uwi }}
+          <p-sortIcon field="uwi" />
+        </th>
         <th pSortableColumn="estado">
           {{ locale.columns.estado }}
           <p-sortIcon field="estado" />
         </th>
-        <th>UWI</th>
         <th pSortableColumn="createdAt">
           {{ locale.columns.createdAt }}
           <p-sortIcon field="createdAt" />
@@ -97,18 +113,24 @@
         </td>
         <td>{{ well.operadora }}</td>
         <td>{{ well.contrato }}</td>
-        <td>{{ well.campo }}</td>
+        <td>{{ well.campo ?? '—' }}</td>
         <td>{{ well.clasificacion }}</td>
+        <td>{{ well.subClasificacion ?? '—' }}</td>
+        <td>
+          <span
+            class="font-mono text-xs"
+            [attr.data-testid]="'uwi-' + well.id"
+          >
+            {{ well.uwi ?? '—' }}
+          </span>
+        </td>
         <td>
           <app-well-status-badge
             [estado]="well.estado"
             [attr.data-testid]="'badge-estado-' + well.id"
           />
         </td>
-        <td class="text-sm text-text-secondary">
-          {{ well.uwi ?? '-' }}
-        </td>
-        <td>{{ formatDate(well.createdAt) }}</td>
+        <td class="text-sm text-text-secondary">{{ formatDate(well.createdAt) }}</td>
         <td>
           <div class="flex gap-1 justify-center">
             <p-button
@@ -121,7 +143,7 @@
               [attr.data-testid]="'btn-view-' + well.id"
               [routerLink]="['/wells', well.id]"
             />
-            @if (well.estado === 'BORRADOR') {
+            @if (true) {
               <p-button
                 icon="pi pi-pencil"
                 [rounded]="true"
@@ -150,7 +172,7 @@
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="9" class="text-center py-8 text-text-secondary">
+        <td colspan="10" class="text-center py-8 text-text-secondary">
           <i class="pi pi-inbox text-4xl block mb-2"></i>
           {{ locale.messages.empty }}
         </td>
@@ -160,7 +182,7 @@
     <ng-template pTemplate="loadingbody">
       @for (row of [1, 2, 3, 4, 5]; track row) {
         <tr>
-          @for (col of [1, 2, 3, 4, 5, 6, 7, 8, 9]; track col) {
+          @for (col of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track col) {
             <td><p-skeleton height="1.5rem" /></td>
           }
         </tr>
