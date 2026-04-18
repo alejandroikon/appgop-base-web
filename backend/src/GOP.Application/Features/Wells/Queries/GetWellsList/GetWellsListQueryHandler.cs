@@ -16,21 +16,18 @@ internal sealed class GetWellsListQueryHandler(
     private static readonly HashSet<string> AllowedSortFields =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            "nombrePozo", "operadora", "contrato", "createdAt"
+            "nombrePozo", "operadora", "contrato", "estado", "createdAt", "uwi"
         };
 
     public async Task<Result<PagedList<WellListItemDto>>> Handle(
         GetWellsListQuery request, CancellationToken cancellationToken)
     {
-        // Multi-tenant: ADMIN y AUDITOR ven todos los pozos, los demás solo los de su tenant
         var isAdminOrAuditor = currentUser.IsInRole("ADMIN") || currentUser.IsInRole("AUDITOR");
 
         var query = dbContext.Wells.AsNoTracking();
-
         if (isAdminOrAuditor)
             query = query.IgnoreQueryFilters();
 
-        // Filtros opcionales
         if (request.ContratoId.HasValue)
             query = query.Where(w => w.ContratoId == request.ContratoId.Value);
 
@@ -45,15 +42,15 @@ internal sealed class GetWellsListQueryHandler(
             var search = request.Search.Trim();
             query = query.Where(w =>
                 w.NombrePozo.Contains(search) ||
-                w.Denominacion.Contains(search));
+                w.Denominacion.Contains(search) ||
+                (w.Uwi != null && w.Uwi.Contains(search)) ||
+                w.Operadora.Contains(search));
         }
 
-        // Contar total antes de paginar
         var totalCount = await query.CountAsync(cancellationToken);
 
-        // Ordenamiento (whitelist para evitar inyección de nombres de columna)
-        var sortBy = request.SortBy;
         var sortDir = request.SortDir?.ToLowerInvariant() == "desc" ? "desc" : "asc";
+        var sortBy = request.SortBy;
 
         if (!string.IsNullOrWhiteSpace(sortBy) && AllowedSortFields.Contains(sortBy))
         {
@@ -63,6 +60,8 @@ internal sealed class GetWellsListQueryHandler(
                 ("nombrepozo", _) => query.OrderByDescending(w => w.NombrePozo),
                 ("operadora", "asc") => query.OrderBy(w => w.Operadora),
                 ("operadora", _) => query.OrderByDescending(w => w.Operadora),
+                ("estado", "asc") => query.OrderBy(w => w.Estado),
+                ("estado", _) => query.OrderByDescending(w => w.Estado),
                 ("createdat", "asc") => query.OrderBy(w => w.CreatedAt),
                 ("createdat", _) => query.OrderByDescending(w => w.CreatedAt),
                 _ => query.OrderBy(w => w.NombrePozo)
@@ -73,37 +72,24 @@ internal sealed class GetWellsListQueryHandler(
             query = query.OrderByDescending(w => w.CreatedAt);
         }
 
-        // Paginación
         var page = request.Page < 1 ? 1 : request.Page;
-        var pageSize = request.PageSize < 1 ? 20 : (request.PageSize > 100 ? 100 : request.PageSize);
+        var pageSize = request.PageSize < 1 ? 20 : Math.Min(request.PageSize, 100);
 
         var wells = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        // Resolver nombres de catálogos para los pozos de la página
-        var contratoIds = wells.Select(w => w.ContratoId).Distinct().ToList();
-        var campoIds = wells.Select(w => w.CampoId).Distinct().ToList();
-
-        var contratos = await dbContext.Contratos
-            .AsNoTracking()
-            .Where(c => contratoIds.Contains(c.Id))
-            .ToDictionaryAsync(c => c.Id, c => c.Nombre, cancellationToken);
-
-        var campos = await dbContext.Campos
-            .AsNoTracking()
-            .Where(c => campoIds.Contains(c.Id))
-            .ToDictionaryAsync(c => c.Id, c => c.Nombre, cancellationToken);
-
         var items = wells.Select(w => new WellListItemDto(
             Id: w.Id,
             NombrePozo: w.NombrePozo,
             Operadora: w.Operadora,
-            Contrato: contratos.TryGetValue(w.ContratoId, out var cn) ? cn : string.Empty,
-            Campo: campos.TryGetValue(w.CampoId, out var camp) ? camp : string.Empty,
-            Clasificacion: w.Clasificacion.ToString(),
-            Estado: w.Estado.ToString(),
+            Contrato: w.Contrato,
+            Campo: w.Campo,
+            Clasificacion: w.Clasificacion.ToString().ToUpperInvariant(),
+            SubClasificacion: w.SubClasificacion?.ToString(),
+            Estado: w.Estado.ToString().ToUpperInvariant(),
+            Uwi: w.Uwi,
             CreatedAt: w.CreatedAt
         )).ToList();
 

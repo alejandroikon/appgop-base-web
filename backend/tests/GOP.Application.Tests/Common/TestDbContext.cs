@@ -22,17 +22,17 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Configuración mínima para tests: enums como string, owned entity
         modelBuilder.Entity<Well>(w =>
         {
             w.Property(x => x.TipoTrayectoria).HasConversion<string>();
             w.Property(x => x.Clasificacion).HasConversion<string>();
+            w.Property(x => x.SubClasificacion).HasConversion<string?>();
             w.Property(x => x.TipoUbicacion).HasConversion<string>();
             w.Property(x => x.TipoAngulo).HasConversion<string>();
             w.Property(x => x.TipoObjetivo).HasConversion<string>();
             w.Property(x => x.TipoTerminacion).HasConversion<string>();
             w.Property(x => x.Estado).HasConversion<string>();
-            w.OwnsOne(x => x.Location);
+            // Soft delete — no query filter in-memory para tests (más simple)
         });
 
         modelBuilder.Entity<WellTransitionHistory>(h =>

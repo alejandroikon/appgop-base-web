@@ -17,12 +17,16 @@ internal sealed class ClusterConfiguration : IEntityTypeConfiguration<Cluster>
             .IsRequired()
             .HasMaxLength(200);
 
-        // Seed data (4 clusters)
+        builder.Property(c => c.Abreviatura)
+            .IsRequired()
+            .HasMaxLength(2);
+
+        // Seed data (actualizado con abreviatura)
         builder.HasData(
-            new Cluster { Id = 1, Nombre = "Cluster Norte", CampoId = 1 },
-            new Cluster { Id = 2, Nombre = "Cluster Sur", CampoId = 1 },
-            new Cluster { Id = 3, Nombre = "Cluster Este", CampoId = 3 },
-            new Cluster { Id = 4, Nombre = "Cluster Oeste", CampoId = 3 }
+            new Cluster { Id = 1, Nombre = "Cluster Norte", Abreviatura = "CN", CampoId = 1 },
+            new Cluster { Id = 2, Nombre = "Cluster Sur",   Abreviatura = "CS", CampoId = 1 },
+            new Cluster { Id = 3, Nombre = "Cluster Este",  Abreviatura = "CE", CampoId = 3 },
+            new Cluster { Id = 4, Nombre = "Cluster Oeste", Abreviatura = "CO", CampoId = 3 }
         );
     }
 }

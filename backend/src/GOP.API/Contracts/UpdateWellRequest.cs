@@ -1,21 +1,24 @@
 namespace GOP.API.Contracts;
 
 /// <summary>
-/// DTO de body para PUT /api/v1/wells/{id}.
-/// Desacopla el Id del path del body y mantiene la regla "un archivo = una clase".
+/// DTO de body para PUT /api/v1/wells/{id}. V2.0 — acción SAVE|FINALIZE.
 /// </summary>
 public sealed record UpdateWellRequest(
-    int ContratoId,
-    int CampoId,
-    string TipoTrayectoria,
-    string Clasificacion,
-    string Denominacion,
-    string Consecutivo,
-    string TipoUbicacion,
-    string TipoAngulo,
-    string TipoObjetivo,
-    string TipoTerminacion,
-    int DepartamentoId,
-    int MunicipioId,
-    int? ClusterId
+    string Action,          // SAVE | FINALIZE
+    int? ContratoId,
+    int? CampoId,
+    string? Denominacion,
+    int? Consecutivo,
+    string? TipoTrayectoria,
+    string? Clasificacion,
+    string? SubClasificacion,
+    string? TipoUbicacion,
+    string? TipoAngulo,
+    string? TipoObjetivo,
+    string? TipoTerminacion,
+    int? DepartamentoId,
+    int? MunicipioId,
+    int? ClusterId,
+    int ClusterNumero = 0,
+    int TrayectoriaConsecutivo = 1
 );

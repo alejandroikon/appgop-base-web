@@ -1,6 +1,5 @@
 using GOP.Application.Common.Interfaces;
 using GOP.Domain.Common;
-using GOP.Domain.Enums;
 using GOP.Domain.Errors;
 using GOP.Domain.Interfaces;
 using MediatR;
@@ -16,22 +15,18 @@ internal sealed class DeleteWellCommandHandler(
     public async Task<Result> Handle(
         DeleteWellCommand request, CancellationToken cancellationToken)
     {
-        // 1. Buscar el pozo
         var well = await dbContext.Wells
             .FirstOrDefaultAsync(w => w.Id == request.WellId, cancellationToken);
 
         if (well is null)
             return Result.Failure(DomainErrors.Well.NotFoundById(request.WellId));
 
-        // 2. Verificar que está en estado Borrador
-        if (well.Estado != WellStatus.Borrador)
-            return Result.Failure(DomainErrors.Well.DeleteInvalidStatus);
-
-        // 3. Soft delete
-        well.IsDeleted = true;
+        // RN-40: Guard — usa IsDeletable del dominio
+        var deleteResult = well.SoftDelete();
+        if (deleteResult.IsFailure)
+            return deleteResult;
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-
         return Result.Success();
     }
 }
