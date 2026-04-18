@@ -1,0 +1,1234 @@
+openapi: 3.1.0
+
+info:
+  title: "GOP 360° — RQF_GOP_01 Creación de Pozo Nuevo V2.0"
+  version: "1.0.0"
+  description: |
+    Contrato OpenAPI para la feature Creación de Pozo Nuevo (V2.0 Definitivo).
+    Referencia: docs/features/creacion-pozo/spec.md
+    Algoritmo UWI: docs/features/creacion-pozo/uwi-algorithm.md
+
+servers:
+  - url: /api/v1
+    description: Base path versionado
+
+security:
+  - bearerAuth: []
+
+paths:
+  /wells:
+    get:
+      operationId: listWells
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      summary: Listar pozos con paginación y filtros
+      description: |
+        Retorna lista paginada de pozos. Filtro multi-tenant automático por JWT.
+        ADMIN y AUDITOR ven todos los tenants. OPERADOR y SUPERVISOR ven solo su tenant.
+        Referencia: spec.md HU-12
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortDirParam'
+        - name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [BORRADOR, CREADO]
+          description: Filtrar por estado del pozo
+        - name: contratoId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filtrar por contrato
+      responses:
+        '200':
+          description: Lista paginada de pozos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PagedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WellListItem'
+              example:
+                items:
+                  - id: "550e8400-e29b-41d4-a716-446655440000"
+                    nombrePozo: "RUBIALES-CUSIANA RENATA-1"
+                    operadora: "Ecopetrol S.A."
+                    contrato: "E&P Llanos"
+                    campo: "Rubiales"
+                    clasificacion: "EXPLORATORIO"
+                    subClasificacion: "A3"
+                    estado: "CREADO"
+                    uwi: "50568CURE0001LA0000VPH-OH"
+                    createdAt: "2026-04-18T10:00:00Z"
+                total: 1
+                page: 1
+                pageSize: 20
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      operationId: createWell
+      x-roles: [ADMIN, OPERADOR]
+      summary: Crear un nuevo pozo (borrador o finalizado)
+      description: |
+        Crea un pozo nuevo. Si action=DRAFT, persiste datos parciales sin UWI.
+        Si action=FINALIZE, valida todos los campos, genera UWI y verifica unicidad.
+        Referencia: spec.md HU-08, HU-09
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWellRequest'
+      responses:
+        '201':
+          description: Pozo creado exitosamente
+          headers:
+            Location:
+              schema:
+                type: string
+              example: "/api/v1/wells/550e8400-e29b-41d4-a716-446655440000"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Conflicto — UWI o nombre de pozo duplicado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Conflict"
+                status: 409
+                detail: "Ya existe un pozo con el UWI 50568CURE0001LA0000VPH-OH."
+                instance: "/api/v1/wells"
+        '422':
+          description: Error de validación
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Validation Failed"
+                status: 422
+                detail: "Uno o más campos contienen errores de validación."
+                instance: "/api/v1/wells"
+                errors:
+                  denominacion: ["Solo se permiten letras, espacios y guiones."]
+                  consecutivo: ["El consecutivo debe estar entre 1 y 9999."]
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /wells/{wellId}:
+    get:
+      operationId: getWell
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      summary: Obtener detalle de un pozo por ID
+      description: |
+        Retorna todos los campos del pozo incluyendo UWI si existe.
+        Referencia: spec.md HU-12 E-12.3
+      parameters:
+        - $ref: '#/components/parameters/WellIdParam'
+      responses:
+        '200':
+          description: Detalle del pozo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Pozo no encontrado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Resource Not Found"
+                status: 404
+                detail: "No se encontró un pozo con el ID proporcionado."
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      operationId: updateWell
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR]
+      summary: Actualizar un pozo existente
+      description: |
+        Actualiza un pozo. Solo permitido si: (1) estado BORRADOR, o (2) estado CREADO
+        sin Forma 101 radicada. Si action=FINALIZE en un borrador, lo finaliza.
+        Referencia: spec.md HU-10
+      parameters:
+        - $ref: '#/components/parameters/WellIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWellRequest'
+      responses:
+        '200':
+          description: Pozo actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Pozo no encontrado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflicto — UWI o nombre duplicado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Error de validación o pozo bloqueado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: "https://tools.ietf.org/html/rfc7807"
+                title: "Validation Failed"
+                status: 422
+                detail: "Este pozo no puede editarse porque tiene Forma 101 radicada."
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      operationId: deleteWell
+      x-roles: [ADMIN, OPERADOR]
+      summary: Eliminar (soft delete) un pozo
+      description: |
+        Soft delete. Solo OPERADOR (creador) y ADMIN. Bloqueado si Forma 101 radicada.
+        Referencia: spec.md HU-11
+      parameters:
+        - $ref: '#/components/parameters/WellIdParam'
+      responses:
+        '204':
+          description: Pozo eliminado exitosamente
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Pozo no encontrado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Pozo no puede eliminarse (Forma 101 radicada)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /wells/preview-uwi:
+    get:
+      operationId: previewUwi
+      x-roles: [ADMIN, OPERADOR]
+      summary: Preview del UWI basado en campos del formulario
+      description: |
+        Calcula el UWI según algoritmo PPDM y verifica unicidad.
+        Usado para validación en tiempo real del formulario.
+        Referencia: spec.md HU-07
+      parameters:
+        - name: codigoDaneDpto
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 2
+          example: "50"
+        - name: codigoDaneMpio
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 3
+          example: "568"
+        - name: denominacion
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 50
+          example: "Cusiana Renata"
+        - name: consecutivo
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9999
+          example: 1
+        - name: clusterNombre
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+          example: "Locación A"
+        - name: tipoAngulo
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [H, V, D]
+          example: "V"
+        - name: tipoTrayectoria
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ST, P, PR, ML, G, O]
+          example: "O"
+        - name: tipoObjetivo
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [PH, I, M, D, C, GT, O]
+          example: "PH"
+        - name: tipoTerminacion
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [CD, LC, LR, GP, CC, OH, O]
+          example: "OH"
+        - name: isAnh
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Si la operadora es ANH, aplica excepción de sigla (RN-30)"
+        - name: excludeWellId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: "ID de pozo a excluir de la validación de unicidad (para edición)"
+      responses:
+        '200':
+          description: Preview del UWI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UwiPreviewResponse'
+              example:
+                uwi: "50568CURE0001LA0000VPH-OH"
+                isUnique: true
+                components:
+                  dptoCode: "50"
+                  mpioCode: "568"
+                  sigla: "CURE"
+                  numero: "0001"
+                  clusterCode: "LA0000"
+                  anguloCode: "V"
+                  trayectoriaCode: ""
+                  objetivoCode: "PH"
+                  terminacionCode: "OH"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Parámetros inválidos
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /wells/preview-name:
+    get:
+      operationId: previewWellName
+      x-roles: [ADMIN, OPERADOR]
+      summary: Preview del nombre del pozo y verificación de unicidad
+      description: |
+        Calcula el nombre del pozo y verifica que no exista otro con el mismo nombre
+        en la misma operadora. Referencia: spec.md HU-04
+      parameters:
+        - name: contratoId
+          in: query
+          required: true
+          schema:
+            type: integer
+          example: 1
+        - name: campoId
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 1
+        - name: denominacion
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 50
+          example: "Cusiana Renata"
+        - name: consecutivo
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9999
+          example: 1
+        - name: excludeWellId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Preview del nombre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellNamePreviewResponse'
+              example:
+                nombrePozo: "RUBIALES-CUSIANA RENATA-1"
+                isUnique: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Parámetros inválidos
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /catalogs/contratos:
+    get:
+      operationId: listContratos
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      summary: Listar contratos de la operadora
+      description: Filtrado automático por tenant del JWT. ADMIN ve todos.
+      responses:
+        '200':
+          description: Lista de contratos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContratoItem'
+              example:
+                - id: 1
+                  nombre: "E&P Llanos"
+                  tipo: "E&P"
+                  cuenca: "Llanos Orientales"
+                  ubicacionDefault: "CONTINENTAL"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /catalogs/campos:
+    get:
+      operationId: listCampos
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      summary: Listar campos por contrato
+      parameters:
+        - name: contratoId
+          in: query
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Lista de campos del contrato
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CampoItem'
+              example:
+                - id: 1
+                  nombre: "Rubiales"
+                  contratoId: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /catalogs/departamentos:
+    get:
+      operationId: listDepartamentos
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      summary: Listar departamentos
+      responses:
+        '200':
+          description: Lista de departamentos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DepartamentoItem'
+              example:
+                - id: 1
+                  nombre: "Meta"
+                  codigoDane: "50"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /catalogs/municipios:
+    get:
+      operationId: listMunicipios
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      summary: Listar municipios por departamento
+      parameters:
+        - name: departamentoId
+          in: query
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Lista de municipios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MunicipioItem'
+              example:
+                - id: 1
+                  nombre: "Puerto Gaitán"
+                  departamentoId: 1
+                  codigoDane: "50568"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /catalogs/clusters:
+    get:
+      operationId: listClusters
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      summary: Listar clusters por campo
+      parameters:
+        - name: campoId
+          in: query
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Lista de clusters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClusterItem'
+              example:
+                - id: 1
+                  nombre: "Locación A"
+                  abreviatura: "LA"
+                  campoId: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      operationId: createCluster
+      x-roles: [ADMIN, OPERADOR]
+      summary: Crear un nuevo cluster
+      description: |
+        Permite al operador crear un cluster nuevo si no existe en el catálogo.
+        Referencia: spec.md Sección 3.3, campo Cluster-Locación.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClusterRequest'
+      responses:
+        '201':
+          description: Cluster creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Cluster duplicado en el campo
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Error de validación
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Token JWT obtenido en /api/v1/auth/login"
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: "Número de página (1-indexed)"
+
+    PageSizeParam:
+      name: pageSize
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: "Elementos por página (máximo 100)"
+
+    SearchParam:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+        maxLength: 200
+      description: "Texto libre de búsqueda (nombre, UWI, operadora)"
+
+    SortByParam:
+      name: sortBy
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [nombrePozo, operadora, contrato, estado, createdAt, uwi]
+      description: "Campo de ordenamiento"
+
+    SortDirParam:
+      name: sortDir
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+      description: "Dirección de ordenamiento"
+
+    WellIdParam:
+      name: wellId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: "ID del pozo"
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+  schemas:
+    # ─── Well Schemas ───────────────────────────────────────────
+
+    WellListItem:
+      type: object
+      required: [id, nombrePozo, operadora, contrato, clasificacion, estado, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        nombrePozo:
+          type: string
+          maxLength: 200
+          example: "RUBIALES-CUSIANA RENATA-1"
+        operadora:
+          type: string
+          example: "Ecopetrol S.A."
+        contrato:
+          type: string
+          example: "E&P Llanos"
+        campo:
+          type: ["string", "null"]
+          example: "Rubiales"
+        clasificacion:
+          type: string
+          enum: [EXPLORATORIO, DESARROLLO, ESTRATIGRAFICO]
+          example: "EXPLORATORIO"
+        subClasificacion:
+          type: ["string", "null"]
+          enum: [A3, A2a, A2b, A2c, A1, null]
+          example: "A3"
+        estado:
+          type: string
+          enum: [BORRADOR, CREADO]
+          example: "CREADO"
+        uwi:
+          type: ["string", "null"]
+          maxLength: 50
+          example: "50568CURE0001LA0000VPH-OH"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-04-18T10:00:00Z"
+
+    WellDetail:
+      type: object
+      required: [id, operadora, estado, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        operadora:
+          type: string
+          example: "Ecopetrol S.A."
+        contratoId:
+          type: ["integer", "null"]
+          example: 1
+        contrato:
+          type: ["string", "null"]
+          example: "E&P Llanos"
+        tipoContrato:
+          type: ["string", "null"]
+          example: "E&P"
+        cuenca:
+          type: ["string", "null"]
+          example: "Llanos Orientales"
+        campoId:
+          type: ["integer", "null"]
+          example: 1
+        campo:
+          type: ["string", "null"]
+          example: "Rubiales"
+        denominacion:
+          type: ["string", "null"]
+          maxLength: 50
+          example: "CUSIANA RENATA"
+        consecutivo:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 9999
+          example: 1
+        nombrePozo:
+          type: ["string", "null"]
+          maxLength: 200
+          example: "RUBIALES-CUSIANA RENATA-1"
+        tipoTrayectoria:
+          type: ["string", "null"]
+          enum: [ST, P, PR, ML, G, O, null]
+          example: "O"
+        clasificacion:
+          type: ["string", "null"]
+          enum: [EXPLORATORIO, DESARROLLO, ESTRATIGRAFICO, null]
+          example: "EXPLORATORIO"
+        subClasificacion:
+          type: ["string", "null"]
+          enum: [A3, A2a, A2b, A2c, A1, null]
+          example: "A3"
+        tipoUbicacion:
+          type: ["string", "null"]
+          enum: [CONTINENTAL, COSTA_FUERA, null]
+          example: "CONTINENTAL"
+        tipoAngulo:
+          type: ["string", "null"]
+          enum: [H, V, D, null]
+          example: "V"
+        tipoObjetivo:
+          type: ["string", "null"]
+          enum: [PH, I, M, D, C, GT, O, null]
+          example: "PH"
+        tipoTerminacion:
+          type: ["string", "null"]
+          enum: [CD, LC, LR, GP, CC, OH, O, null]
+          example: "OH"
+        estado:
+          type: string
+          enum: [BORRADOR, CREADO]
+          example: "CREADO"
+        uwi:
+          type: ["string", "null"]
+          maxLength: 50
+          example: "50568CURE0001LA0000VPH-OH"
+        departamentoId:
+          type: ["integer", "null"]
+          example: 1
+        departamento:
+          type: ["string", "null"]
+          example: "Meta"
+        codigoDaneDpto:
+          type: ["string", "null"]
+          minLength: 2
+          maxLength: 2
+          example: "50"
+        municipioId:
+          type: ["integer", "null"]
+          example: 1
+        municipio:
+          type: ["string", "null"]
+          example: "Puerto Gaitán"
+        codigoDaneMpio:
+          type: ["string", "null"]
+          minLength: 3
+          maxLength: 3
+          example: "568"
+        clusterId:
+          type: ["integer", "null"]
+          example: 1
+        cluster:
+          type: ["string", "null"]
+          example: "Locación A"
+        forma101Radicada:
+          type: boolean
+          example: false
+          description: "Indica si la Forma 101 ha sido radicada (bloquea edición/eliminación)"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-04-18T10:00:00Z"
+        lastModifiedAt:
+          type: ["string", "null"]
+          format: date-time
+          example: null
+
+    CreateWellRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [DRAFT, FINALIZE]
+          description: "DRAFT = borrador parcial. FINALIZE = registro completo con UWI."
+          example: "FINALIZE"
+        contratoId:
+          type: ["integer", "null"]
+          example: 1
+        campoId:
+          type: ["integer", "null"]
+          example: 1
+        denominacion:
+          type: ["string", "null"]
+          maxLength: 50
+          example: "Cusiana Renata"
+        consecutivo:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 9999
+          example: 1
+        tipoTrayectoria:
+          type: ["string", "null"]
+          enum: [ST, P, PR, ML, G, O, null]
+          example: "O"
+        clasificacion:
+          type: ["string", "null"]
+          enum: [EXPLORATORIO, DESARROLLO, ESTRATIGRAFICO, null]
+          example: "EXPLORATORIO"
+        subClasificacion:
+          type: ["string", "null"]
+          enum: [A3, A2a, A2b, A2c, A1, null]
+          example: "A3"
+        tipoUbicacion:
+          type: ["string", "null"]
+          enum: [CONTINENTAL, COSTA_FUERA, null]
+          example: "CONTINENTAL"
+        tipoAngulo:
+          type: ["string", "null"]
+          enum: [H, V, D, null]
+          example: "V"
+        tipoObjetivo:
+          type: ["string", "null"]
+          enum: [PH, I, M, D, C, GT, O, null]
+          example: "PH"
+        tipoTerminacion:
+          type: ["string", "null"]
+          enum: [CD, LC, LR, GP, CC, OH, O, null]
+          example: "OH"
+        departamentoId:
+          type: ["integer", "null"]
+          example: 1
+        municipioId:
+          type: ["integer", "null"]
+          example: 1
+        clusterId:
+          type: ["integer", "null"]
+          example: 1
+
+    UpdateWellRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [SAVE, FINALIZE]
+          description: "SAVE = guardar cambios. FINALIZE = finalizar borrador."
+          example: "SAVE"
+        contratoId:
+          type: ["integer", "null"]
+          example: 1
+        campoId:
+          type: ["integer", "null"]
+          example: 1
+        denominacion:
+          type: ["string", "null"]
+          maxLength: 50
+          example: "Cusiana Renata"
+        consecutivo:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 9999
+          example: 1
+        tipoTrayectoria:
+          type: ["string", "null"]
+          enum: [ST, P, PR, ML, G, O, null]
+          example: "O"
+        clasificacion:
+          type: ["string", "null"]
+          enum: [EXPLORATORIO, DESARROLLO, ESTRATIGRAFICO, null]
+          example: "EXPLORATORIO"
+        subClasificacion:
+          type: ["string", "null"]
+          enum: [A3, A2a, A2b, A2c, A1, null]
+          example: "A3"
+        tipoUbicacion:
+          type: ["string", "null"]
+          enum: [CONTINENTAL, COSTA_FUERA, null]
+          example: "CONTINENTAL"
+        tipoAngulo:
+          type: ["string", "null"]
+          enum: [H, V, D, null]
+          example: "V"
+        tipoObjetivo:
+          type: ["string", "null"]
+          enum: [PH, I, M, D, C, GT, O, null]
+          example: "PH"
+        tipoTerminacion:
+          type: ["string", "null"]
+          enum: [CD, LC, LR, GP, CC, OH, O, null]
+          example: "OH"
+        departamentoId:
+          type: ["integer", "null"]
+          example: 1
+        municipioId:
+          type: ["integer", "null"]
+          example: 1
+        clusterId:
+          type: ["integer", "null"]
+          example: 1
+
+    # ─── UWI Preview ────────────────────────────────────────────
+
+    UwiPreviewResponse:
+      type: object
+      required: [uwi, isUnique, components]
+      properties:
+        uwi:
+          type: string
+          maxLength: 50
+          example: "50568CURE0001LA0000VPH-OH"
+        isUnique:
+          type: boolean
+          example: true
+        components:
+          type: object
+          properties:
+            dptoCode:
+              type: string
+              example: "50"
+            mpioCode:
+              type: string
+              example: "568"
+            sigla:
+              type: string
+              example: "CURE"
+            numero:
+              type: string
+              example: "0001"
+            clusterCode:
+              type: string
+              example: "LA0000"
+            anguloCode:
+              type: string
+              example: "V"
+            trayectoriaCode:
+              type: string
+              example: ""
+            objetivoCode:
+              type: string
+              example: "PH"
+            terminacionCode:
+              type: string
+              example: "OH"
+
+    WellNamePreviewResponse:
+      type: object
+      required: [nombrePozo, isUnique]
+      properties:
+        nombrePozo:
+          type: string
+          maxLength: 200
+          example: "RUBIALES-CUSIANA RENATA-1"
+        isUnique:
+          type: boolean
+          example: true
+
+    # ─── Catalogs ───────────────────────────────────────────────
+
+    ContratoItem:
+      type: object
+      required: [id, nombre, tipo, cuenca]
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          maxLength: 200
+          example: "E&P Llanos"
+        tipo:
+          type: string
+          maxLength: 50
+          example: "E&P"
+        cuenca:
+          type: string
+          maxLength: 200
+          example: "Llanos Orientales"
+        ubicacionDefault:
+          type: string
+          enum: [CONTINENTAL, COSTA_FUERA]
+          example: "CONTINENTAL"
+
+    CampoItem:
+      type: object
+      required: [id, nombre, contratoId]
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          maxLength: 200
+          example: "Rubiales"
+        contratoId:
+          type: integer
+          example: 1
+
+    DepartamentoItem:
+      type: object
+      required: [id, nombre, codigoDane]
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          maxLength: 100
+          example: "Meta"
+        codigoDane:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: "50"
+
+    MunicipioItem:
+      type: object
+      required: [id, nombre, departamentoId, codigoDane]
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          maxLength: 100
+          example: "Puerto Gaitán"
+        departamentoId:
+          type: integer
+          example: 1
+        codigoDane:
+          type: string
+          minLength: 5
+          maxLength: 5
+          example: "50568"
+
+    ClusterItem:
+      type: object
+      required: [id, nombre, campoId]
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          maxLength: 100
+          example: "Locación A"
+        abreviatura:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: "LA"
+        campoId:
+          type: integer
+          example: 1
+
+    CreateClusterRequest:
+      type: object
+      required: [nombre, campoId]
+      properties:
+        nombre:
+          type: string
+          maxLength: 100
+          example: "Locación B"
+        campoId:
+          type: integer
+          example: 1
+
+    # ─── Shared ─────────────────────────────────────────────────
+
+    PagedResponse:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: {}
+        total:
+          type: integer
+          minimum: 0
+          example: 150
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+          format: uri
+          example: "https://tools.ietf.org/html/rfc7807"
+        title:
+          type: string
+          example: "Validation Failed"
+        status:
+          type: integer
+          example: 422
+        detail:
+          type: string
+          example: "Uno o más campos contienen errores de validación."
+        instance:
+          type: string
+          example: "/api/v1/wells"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        traceId:
+          type: string
+          example: "00-abc123def456-01"
+
+  responses:
+    Unauthorized:
+      description: Token JWT ausente, expirado o inválido
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://tools.ietf.org/html/rfc7807"
+            title: "Unauthorized"
+            status: 401
+            detail: "Token de autenticación requerido."
+
+    Forbidden:
+      description: El usuario no tiene el rol requerido
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://tools.ietf.org/html/rfc7807"
+            title: "Forbidden"
+            status: 403
+            detail: "No tiene permisos para realizar esta acción."
+
+    InternalServerError:
+      description: Error interno del servidor
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://tools.ietf.org/html/rfc7807"
+            title: "Internal Server Error"
+            status: 500
+            detail: "Error interno del servidor."
