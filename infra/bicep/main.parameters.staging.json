@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": "staging"
+    },
+    "location": {
+      "value": "eastus2"
+    },
+    "sqlAdminLogin": {
+      "value": "gopadmin"
+    },
+    "sqlAdminPassword": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/SUBSCRIPTION_ID/resourceGroups/rg-gop360-staging/providers/Microsoft.KeyVault/vaults/kv-gop360-staging"
+        },
+        "secretName": "SqlAdminPassword"
+      }
+    },
+    "devIpAddress": {
+      "value": ""
+    },
+    "dockerImageTag": {
+      "value": "latest"
+    },
+    "tags": {
+      "value": {
+        "project": "GOP360",
+        "environment": "staging",
+        "managedBy": "bicep",
+        "owner": "IKLABS-Interkont",
+        "costCenter": "staging-infra"
+      }
+    }
+  }
+}

@@ -464,7 +464,31 @@ Proyecto confidencial desarrollado para la Agencia Nacional de Hidrocarburos (AN
 
 ---
 
-**Actualizado:** 2026-04-17  
+**Actualizado:** 2026-04-20  
 **Rama:** `gop-base-web`  
-**Versión:** 1.0 (Post-QA, pre-correcciones P0)
+**Versión:** 1.0-staging (Iter 9.5 — Infraestructura Azure Lean)
+
+---
+
+## 🚀 Deployment — Azure Staging (Iter 9.5)
+
+El backend corre en **Azure App Service** (Linux container) con **Azure SQL Database Serverless**.
+El frontend sigue en **Netlify** apuntando al backend Azure vía `NG_APP_API_URL`.
+
+**Costo:** ≤ $25/mes · **Región:** `eastus2` · **CI/CD:** GitHub Actions (auto en push a `gop-base-web`)
+
+```bash
+# Provisionar infraestructura (primera vez, ~15 min)
+./infra/bicep/deploy.sh
+
+# Build y push imagen Docker
+cd backend
+docker build -t acrgop360staging.azurecr.io/gop-api:latest .
+docker push acrgop360staging.azurecr.io/gop-api:latest
+
+# Health check
+curl https://app-gop360-staging-api.azurewebsites.net/health
+```
+
+📄 **Guía completa:** [`docs/deployment/azure-staging.md`](./docs/deployment/azure-staging.md)
 

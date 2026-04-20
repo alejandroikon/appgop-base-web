@@ -22,4 +22,11 @@
     <PackageReference Include="Serilog.Sinks.File" Version="6.*" />
   </ItemGroup>
 
+  <!-- T-INFRA-17/18: Copy DANE seed data JSON files to output directory -->
+  <ItemGroup>
+    <Content Include="Persistence\DaneData\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

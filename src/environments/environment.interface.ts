@@ -1,5 +1,5 @@
 export interface AppEnvironment {
-  name: 'development' | 'qa' | 'production';
+  name: 'development' | 'staging' | 'qa' | 'production';
   production: boolean;
   hosts: {
     gopApi: string; // API principal del sistema GOP

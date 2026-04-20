@@ -1,0 +1,40 @@
+# T-INFRA-11: Docker ignore — exclude dev artifacts from image context
+
+# Build output
+**/bin/
+**/obj/
+
+# Local settings (secrets must come from Key Vault)
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/*.user
+
+# Tests (not needed in production image)
+tests/
+
+# Docker files
+**/Dockerfile*
+**/.dockerignore
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.vs/
+*.suo
+*.user
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Coverage
+coverage/
+TestResults/
+
+# Docker compose (dev only)
+docker-compose*.yml

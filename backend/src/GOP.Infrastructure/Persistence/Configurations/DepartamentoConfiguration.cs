@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace GOP.Infrastructure.Persistence.Configurations;
 
+// T-INFRA-20: HasData mínimo removido — datos completos DANE via DbSeeder (1123 municipios)
+// El seeder carga departamentos.json y municipios.json idempotentemente en cada startup
 internal sealed class DepartamentoConfiguration : IEntityTypeConfiguration<Departamento>
 {
     public void Configure(EntityTypeBuilder<Departamento> builder)
@@ -26,11 +28,6 @@ internal sealed class DepartamentoConfiguration : IEntityTypeConfiguration<Depar
             .HasForeignKey(m => m.DepartamentoId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Seed data
-        builder.HasData(
-            new Departamento { Id = 1, Nombre = "Meta", CodigoDane = "50" },
-            new Departamento { Id = 2, Nombre = "Casanare", CodigoDane = "85" },
-            new Departamento { Id = 3, Nombre = "Santander", CodigoDane = "68" }
-        );
+        // HasData vacío — seed real en DbSeeder con datos DANE completos
     }
 }
