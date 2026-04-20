@@ -1,4 +1,39 @@
+# T-INFRA-27: Netlify configuration
+# Staging context builds with staging env and points to Azure App Service BE
+# RN-INFRA-08: NG_APP_API_URL env var injected per context
+
+# ── Production (main branch) ─────────────────────────────────────────────────
+[build]
+  command = "npm run build"
+  publish = "dist/myapp/browser"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# ── Staging (gop-base-web branch) ────────────────────────────────────────────
+[context.branch-deploy]
+  command = "npm run build -- --configuration=staging"
+
+[context.branch-deploy.environment]
+  NODE_VERSION = "20"
+  NG_APP_API_URL = "https://app-gop360-staging-api.azurewebsites.net"
+  ANGULAR_ENV = "staging"
+
+# ── Deploy Preview (PRs) ──────────────────────────────────────────────────────
+[context.deploy-preview]
+  command = "npm run build -- --configuration=staging"
+
+[context.deploy-preview.environment]
+  NODE_VERSION = "20"
+  NG_APP_API_URL = "https://app-gop360-staging-api.azurewebsites.net"
+  ANGULAR_ENV = "staging"
+
+# ── Headers ───────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

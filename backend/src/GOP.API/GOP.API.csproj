@@ -16,10 +16,16 @@
     <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="9.*" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.*" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.*" />
+    <PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="4.*" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.*">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+    <!-- T-INFRA-13: Key Vault + Managed Identity (RN-INFRA-01, RN-SEC-07) -->
+    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.*" />
+    <PackageReference Include="Azure.Identity" Version="1.*" />
+    <!-- T-INFRA-15: Application Insights (CA-08) -->
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.*" />
   </ItemGroup>
 
 </Project>

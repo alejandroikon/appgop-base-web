@@ -48,6 +48,9 @@ public static class DependencyInjection
         services.Configure<JwtTokenOptions>(
             configuration.GetSection(JwtSettings.SectionName));
 
+        // T-INFRA-23: DbSeeder para datos DANE DIVIPOLA (idempotente)
+        services.AddScoped<DbSeeder>();
+
         // Repositorios
         services.AddScoped<IWellRepository, WellRepository>();
 
