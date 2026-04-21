@@ -2,51 +2,69 @@ using GOP.Application.Common.Interfaces;
 using GOP.Application.Features.Auth.Dtos;
 using GOP.Domain.Common;
 using GOP.Domain.Errors;
+using GOP.Domain.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Options;
+using DomainRefreshToken = GOP.Domain.Entities.RefreshToken;
 
 namespace GOP.Application.Features.Auth.Commands.RefreshToken;
 
 internal sealed class RefreshTokenCommandHandler(
-    IRefreshTokenStore refreshTokenStore,
-    IUserSeedStore userStore,
+    IRefreshTokenRepository rtRepo,
+    IUserRepository userRepo,
+    IUserClaimsResolver claimsResolver,
     IJwtTokenService jwtTokenService,
-    IOptions<JwtTokenOptions> jwtOptions
+    IOptions<JwtTokenOptions> jwtOptions,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<RefreshTokenCommand, Result<TokenResponseDto>>
 {
-    public Task<Result<TokenResponseDto>> Handle(
+    public async Task<Result<TokenResponseDto>> Handle(
         RefreshTokenCommand request,
         CancellationToken cancellationToken)
     {
-        var entry = refreshTokenStore.TryConsume(request.RefreshToken);
+        // 1. Buscar el refresh token con tracking (necesario para mutar vía Revoke)
+        var oldRt = await rtRepo.GetByTokenAsync(request.RefreshToken, cancellationToken);
 
-        if (entry is null)
-            return Task.FromResult(Result.Failure<TokenResponseDto>(DomainErrors.Auth.InvalidRefreshToken));
+        // 2. Null → inválido
+        if (oldRt is null)
+            return Result.Failure<TokenResponseDto>(DomainErrors.Auth.InvalidRefreshToken);
 
-        if (entry.IsUsed || entry.ExpiresAt < DateTime.UtcNow)
+        // 3. Verificar si está activo; distinguir revocado vs expirado
+        if (!oldRt.IsActive)
         {
-            var domainError = entry.IsUsed
+            var domainError = oldRt.RevokedAt is not null
                 ? DomainErrors.Auth.InvalidRefreshToken
                 : DomainErrors.Auth.TokenExpired;
-            return Task.FromResult(Result.Failure<TokenResponseDto>(domainError));
+            return Result.Failure<TokenResponseDto>(domainError);
         }
 
-        var user = userStore.GetById(entry.UserId);
-        if (user is null)
-            return Task.FromResult(Result.Failure<TokenResponseDto>(DomainErrors.Auth.InvalidRefreshToken));
+        // 4-5. Buscar usuario y verificar que esté activo
+        var user = await userRepo.GetByIdAsync(oldRt.UserId, cancellationToken);
+        if (user is null || !user.IsActive)
+            return Result.Failure<TokenResponseDto>(DomainErrors.Auth.InvalidRefreshToken);
 
-        var newAccessToken = jwtTokenService.GenerateAccessToken(user);
-        var newRefreshToken = jwtTokenService.GenerateRefreshToken();
+        // 6. Resolver claims de perfil
+        var profile = claimsResolver.BuildProfile(user);
 
-        var expiresAt = DateTime.UtcNow.AddDays(jwtOptions.Value.RefreshTokenExpirationDays);
-        refreshTokenStore.Store(newRefreshToken, user.Id, expiresAt);
+        // 7-8. Generar nuevo par de tokens
+        var newAccessToken = jwtTokenService.GenerateAccessToken(profile);
+        var newRefreshTokenStr = jwtTokenService.GenerateRefreshToken();
 
-        var response = new TokenResponseDto(
+        var newExpiresAt = DateTime.UtcNow.AddDays(jwtOptions.Value.RefreshTokenExpirationDays);
+        var newRt = DomainRefreshToken.Create(user.Id, newRefreshTokenStr, newExpiresAt);
+        await rtRepo.AddAsync(newRt, cancellationToken);
+
+        // 9. Revocar el token viejo (entidad trackeada → SaveChanges lo persiste)
+        oldRt.Revoke(replacedByToken: newRt.Token);
+
+        // 10. Persistir ambos cambios en una única transacción
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // 11. Retornar
+        return Result.Success(new TokenResponseDto(
             newAccessToken,
-            newRefreshToken,
+            newRefreshTokenStr,
             jwtOptions.Value.AccessTokenExpirationMinutes * 60,
-            user);
-
-        return Task.FromResult(Result.Success(response));
+            profile));
     }
 }
