@@ -126,6 +126,20 @@ El mapa funcional completo del sistema está en:
 
 ---
 
+## Infraestructura Azure (Staging)
+
+### Convención de imagen Docker (ACR)
+
+- **Nombre del tag:** la imagen del backend debe pushearse a ACR con el nombre **`gop-api:latest`**.
+- **Por qué:** el Bicep en `infra/bicep/modules/appservice.bicep` referencia exactamente ese nombre en el campo `linuxFxVersion`. Si se pushea con otro tag (ej. `gop360-backend:latest`), el App Service falla al hacer pull y no arranca el contenedor.
+- **Si cambia el nombre:** actualizar simultáneamente el Bicep y cualquier pipeline de CI que construya la imagen.
+
+### Convención de secrets en Key Vault
+
+Los secrets en `kv-gop360-staging` usan `--` (doble guion) como separador en lugar de `:` — es la convención estándar de `.NET` para leer Key Vault como configuración jerárquica. Ejemplo: la clave `ConnectionStrings:DefaultConnection` se guarda en KV como `ConnectionStrings--DefaultConnection`. El binding lo hace `DefaultAzureCredential` vía User-Assigned Managed Identity.
+
+---
+
 ## Instrucciones Generales
 
 1. Antes de escribir código, verifica si hay una tarea asignada en `tasks.md`.
