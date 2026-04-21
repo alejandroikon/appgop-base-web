@@ -42,8 +42,8 @@ RUN dotnet publish src/GOP.API/GOP.API.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 # Security: non-root user
-RUN addgroup --system --gid 1001 appgroup && \
-    adduser  --system --uid 1001 --ingroup appgroup appuser
+RUN groupadd --system --gid 1001 appgroup && \
+    useradd --system --uid 1001 --gid 1001 --shell /usr/sbin/nologin appuser
 
 WORKDIR /app
 
