@@ -53,6 +53,8 @@ public static class DependencyInjection
 
         // Repositorios
         services.AddScoped<IWellRepository, WellRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         // Servicios de dominio
         services.AddScoped<IUwiGenerator, UwiGenerator>();
@@ -61,8 +63,11 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IUserSeedStore, UserSeedStoreAdapter>();
-        services.AddSingleton<IRefreshTokenStore, InMemoryRefreshTokenStore>();
+        services.AddScoped<IUserClaimsResolver, SeedUserClaimsResolver>();
+        services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+
+        // Seed de usuarios (007-users-persistence)
+        services.AddScoped<UserSeeder>();
 
         return services;
     }
