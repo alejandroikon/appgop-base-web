@@ -46,3 +46,4 @@ Thumbs.db
 # Environments — solo environment.ts (DEV) se versiona como referencia
 src/environments/environment.qa.ts
 src/environments/environment.prod.ts
+.pr-body.json
