@@ -9,8 +9,9 @@
 **/appsettings.Local.json
 **/*.user
 
-# Tests (not needed in production image)
-tests/
+# Tests excluded from final image via multi-stage build, but .csproj/.cs needed
+# during `dotnet restore GOP.slnx` because the solution references test projects
+# tests/
 
 # Docker files
 **/Dockerfile*
