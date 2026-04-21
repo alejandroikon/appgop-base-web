@@ -4,8 +4,13 @@
 
 # ── Production (main branch) ─────────────────────────────────────────────────
 [build]
-  command = "npm run build"
+  command = "npm run build -- --configuration=staging"
   publish = "dist/myapp/browser"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NG_APP_API_URL = "https://app-gop360-staging-api.azurewebsites.net"
+  ANGULAR_ENV = "staging"
 
 [[redirects]]
   from = "/*"
