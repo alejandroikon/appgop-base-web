@@ -1,3 +1,4 @@
+using GOP.Domain.Common;
 using GOP.Domain.Entities;
 using GOP.Infrastructure.Persistence;
 using GOP.Infrastructure.Persistence.Interceptors;
@@ -55,6 +56,9 @@ public sealed class GopTestWebApplicationFactory : WebApplicationFactory<Program
 
             // Sembrar 4 dev users para que los tests de integración Auth encuentren
             // usuarios válidos sin depender del UserSeeder real (que requiere SQL Server).
+            // IMPORTANTE: Los IDs deben coincidir con los hardcoded en SeedUsers (Infrastructure/Identity)
+            // para que SeedUserClaimsResolver pueda resolver el Role correcto por Id.
+            // Sin esto, el resolver cae al default ADMIN y rompe tests de RBAC (ej. auditor → 403).
             // Los hashes corresponden a: Admin123*, Super123*, Oper123*, Audit123*
             using var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();
@@ -62,19 +66,23 @@ public sealed class GopTestWebApplicationFactory : WebApplicationFactory<Program
             db.Database.EnsureCreated();
 
             db.Users.AddRange(
-                User.Create(
+                SeedUser(
+                    Guid.Parse("550e8400-e29b-41d4-a716-446655440001"),
                     "admin@gop.co",
                     "$2a$10$lbfNGZ8k62bJIAziu3nLZed7ZVIb2Cu7I67RHaEPqzqJorEY/CH7G",
                     "Administrador ANH"),
-                User.Create(
+                SeedUser(
+                    Guid.Parse("550e8400-e29b-41d4-a716-446655440002"),
                     "supervisor@gop.co",
                     "$2a$10$B2cnoTofYSWvjVdA2sWwtenCJZ3PqO9MIJzjfIPrre40YYqoSVGku",
                     "Supervisor Ecopetrol"),
-                User.Create(
+                SeedUser(
+                    Guid.Parse("550e8400-e29b-41d4-a716-446655440003"),
                     "operador@gop.co",
                     "$2a$10$KrWbtKA8w4Lz94lBSit/S.WUBazvTwNIrkBX662lVZ/srCz0Q7M..",
                     "Operador Ecopetrol"),
-                User.Create(
+                SeedUser(
+                    Guid.Parse("550e8400-e29b-41d4-a716-446655440004"),
                     "auditor@gop.co",
                     "$2a$10$tOEjBdrDvvlnDeIueaOLbOxqxgnVAocPqat1jmmIUuls8bXKJND/C",
                     "Auditor ANH"));
@@ -84,5 +92,20 @@ public sealed class GopTestWebApplicationFactory : WebApplicationFactory<Program
             services.RemoveAll<ILoggerFactory>();
             services.AddLogging(logging => logging.AddConsole());
         });
+    }
+
+    /// <summary>
+    /// Crea un User con Id específico mediante reflexión sobre la propiedad
+    /// protected init Entity.Id. Necesario solo en tests para alinear los IDs
+    /// sembrados con los de SeedUsers y permitir que el resolver de claims
+    /// asigne Role/Tenant correctos.
+    /// </summary>
+    private static User SeedUser(Guid id, string email, string passwordHash, string fullName)
+    {
+        var user = User.Create(email, passwordHash, fullName);
+        typeof(Entity)
+            .GetProperty(nameof(Entity.Id))!
+            .SetValue(user, id);
+        return user;
     }
 }
