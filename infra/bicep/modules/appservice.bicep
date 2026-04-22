@@ -28,6 +28,9 @@ param identityClientId string
 @description('Key Vault URI for app configuration')
 param keyVaultUri string
 
+@description('Key Vault name (used to build Key Vault references in appSettings)')
+param keyVaultName string
+
 @description('Application Insights connection string')
 param appInsightsConnectionString string
 
@@ -102,6 +105,27 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
           value: 'https://${acrLoginServer}'
+        }
+        // ── Secrets resueltos desde Key Vault (App Service los materializa
+        //    como env vars a la hora de arrancar el contenedor; .NET mapea
+        //    `__` a `:` en la jerarquía de IConfiguration).
+        //    Los secretos tienen que existir en el KV o el App Service no
+        //    arranca. Convención del secret name: `--` en vez de `:`.
+        {
+          name: 'ConnectionStrings__DefaultConnection'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=ConnectionStrings--DefaultConnection)'
+        }
+        {
+          name: 'JwtSettings__SigningKey'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=JwtSettings--SigningKey)'
+        }
+        {
+          name: 'SeedUsers__ExecAdmin__Password'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=SeedUsers--ExecAdmin--Password)'
+        }
+        {
+          name: 'SeedUsers__OpAdmin__Password'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=SeedUsers--OpAdmin--Password)'
         }
       ]
       cors: {

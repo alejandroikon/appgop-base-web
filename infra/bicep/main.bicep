@@ -109,6 +109,7 @@ module appservice 'modules/appservice.bicep' = {
     identityId: identity.outputs.identityId
     identityClientId: identity.outputs.identityClientId
     keyVaultUri: keyvault.outputs.keyVaultUri
+    keyVaultName: keyvault.outputs.keyVaultName
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
     tags: tags
   }
