@@ -31,8 +31,18 @@ LOGIN_ENDPOINT="/api/v1/auth/login"
 EXEC_EMAIL="alejandro.gutierrez@interkont.co"
 OP_EMAIL="admin@interkont.co"
 IMAGE_TAGS=("gop-api:latest" "gop360-backend:latest")
-MAX_HEALTH_WAIT_SEC=180
+# `az webapp restart` returns ANTES de que el contenedor realmente cicle
+# (proceso async del lado de App Service). Si arrancamos a pollear /health/ready
+# de una, pegamos contra el contenedor VIEJO y devolvemos falso positivo.
+# Esta grace window le da tiempo a App Service para iniciar el tear-down real.
+# B1 Linux container tarda ~30-45s en empezar a fallar healthcheck tras restart.
+RESTART_GRACE_SEC=45
+MAX_HEALTH_WAIT_SEC=240
 POLL_INTERVAL_SEC=5
+# Exigimos 2 respuestas 200 CONSECUTIVAS antes de declarar healthy, para que
+# no pase que una respuesta 200 tardía del contenedor viejo nos haga creer
+# que ya está arriba el nuevo.
+HEALTH_CONSECUTIVE_OK=2
 EXPECTED_BRANCH="gop-base-web"
 # ---------------------------------------------------------------------------
 
@@ -138,24 +148,42 @@ az acr build \
 info "Imagen construida y pusheada como: ${IMAGE_TAGS[*]}"
 
 # 6. Restart App Service + polling /health/ready
-log "6/7 — Reiniciando App Service y esperando a que esté saludable..."
+log "6/7 — Reiniciando App Service y esperando a que el container NUEVO esté saludable..."
 az webapp restart \
   --name "${APP_SERVICE}" \
   --resource-group "${RESOURCE_GROUP}" \
   --output none
 
+# Grace window: `az webapp restart` retorna antes de que el tear-down del
+# contenedor realmente arranque. Sin este sleep, el primer curl pega contra
+# el contenedor VIEJO, vuelve 200, y declaramos falso "DEMO-READY".
+info "Grace window post-restart: ${RESTART_GRACE_SEC}s (el contenedor aún no arrancó a ciclar)..."
+sleep "${RESTART_GRACE_SEC}"
+
 HEALTH_OK=""
-elapsed=0
+elapsed=${RESTART_GRACE_SEC}
+consecutive_ok=0
 while [[ $elapsed -lt $MAX_HEALTH_WAIT_SEC ]]; do
   HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${BACKEND_URL}${HEALTH_ENDPOINT}" || echo "000")
   if [[ "${HTTP_CODE}" == "200" ]]; then
-    info "/health/ready = 200 Healthy (${elapsed}s)"
-    HEALTH_OK=1
-    break
+    consecutive_ok=$((consecutive_ok + 1))
+    info "  /health/ready = 200 (${consecutive_ok}/${HEALTH_CONSECUTIVE_OK} consecutivas, ${elapsed}s)"
+    if [[ $consecutive_ok -ge $HEALTH_CONSECUTIVE_OK ]]; then
+      info "Container nuevo healthy (${elapsed}s totales incluyendo grace window)."
+      HEALTH_OK=1
+      break
+    fi
+  else
+    # Reset del contador — si había una racha de 200s del container viejo
+    # y ahora vemos 503/502/000, estamos en el momento del cycle.
+    if [[ $consecutive_ok -gt 0 ]]; then
+      info "  (reset contador — container ciclando)"
+    fi
+    consecutive_ok=0
+    info "  esperando... HTTP ${HTTP_CODE} (${elapsed}s)"
   fi
   sleep $POLL_INTERVAL_SEC
   elapsed=$((elapsed + POLL_INTERVAL_SEC))
-  info "  esperando... HTTP ${HTTP_CODE} (${elapsed}s)"
 done
 if [[ -z "${HEALTH_OK}" ]]; then
   echo
