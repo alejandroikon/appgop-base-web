@@ -1,3 +1,4 @@
+using GOP.Domain.Entities;
 using GOP.Infrastructure.Persistence;
 using GOP.Infrastructure.Persistence.Interceptors;
 using Microsoft.AspNetCore.Hosting;
@@ -51,6 +52,33 @@ public sealed class GopTestWebApplicationFactory : WebApplicationFactory<Program
                 sp => sp.GetRequiredService<GopDbContext>());
             services.AddScoped<GOP.Domain.Interfaces.IUnitOfWork>(
                 sp => sp.GetRequiredService<GopDbContext>());
+
+            // Sembrar 4 dev users para que los tests de integración Auth encuentren
+            // usuarios válidos sin depender del UserSeeder real (que requiere SQL Server).
+            // Los hashes corresponden a: Admin123*, Super123*, Oper123*, Audit123*
+            using var sp = services.BuildServiceProvider();
+            using var scope = sp.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<GopDbContext>();
+            db.Database.EnsureCreated();
+
+            db.Users.AddRange(
+                User.Create(
+                    "admin@gop.co",
+                    "$2a$10$lbfNGZ8k62bJIAziu3nLZed7ZVIb2Cu7I67RHaEPqzqJorEY/CH7G",
+                    "Administrador ANH"),
+                User.Create(
+                    "supervisor@gop.co",
+                    "$2a$10$B2cnoTofYSWvjVdA2sWwtenCJZ3PqO9MIJzjfIPrre40YYqoSVGku",
+                    "Supervisor Ecopetrol"),
+                User.Create(
+                    "operador@gop.co",
+                    "$2a$10$KrWbtKA8w4Lz94lBSit/S.WUBazvTwNIrkBX662lVZ/srCz0Q7M..",
+                    "Operador Ecopetrol"),
+                User.Create(
+                    "auditor@gop.co",
+                    "$2a$10$tOEjBdrDvvlnDeIueaOLbOxqxgnVAocPqat1jmmIUuls8bXKJND/C",
+                    "Auditor ANH"));
+            db.SaveChanges();
 
             // Suprimir Serilog
             services.RemoveAll<ILoggerFactory>();
