@@ -19,6 +19,8 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
     public DbSet<Municipio> Municipios => Set<Municipio>();
     public DbSet<Cluster> Clusters => Set<Cluster>();
     public DbSet<WellTransitionHistory> WellTransitionHistory => Set<WellTransitionHistory>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

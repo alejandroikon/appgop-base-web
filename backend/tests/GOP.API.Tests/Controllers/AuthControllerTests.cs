@@ -4,6 +4,9 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using GOP.API.Tests.Fixtures;
+using GOP.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GOP.API.Tests.Controllers;
 
@@ -166,5 +169,56 @@ public sealed class AuthControllerTests
             because: "el refresh token es de un solo uso y debe ser reemplazado por uno nuevo");
 
         json.TryGetProperty("expiresIn", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Refresh_UsedToken_Returns401()
+    {
+        // Arrange — login y primer refresh exitoso; el token original queda revocado
+        var client = CreateClient();
+
+        var loginRequest = new { email = "auditor@gop.co", password = "Audit123*" };
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var loginBody = await loginResponse.Content.ReadAsStringAsync();
+        var loginJson = JsonSerializer.Deserialize<JsonElement>(loginBody);
+        var originalRefreshToken = loginJson.GetProperty("refreshToken").GetString()!;
+
+        // Primer refresh — exitoso, revoca el token original
+        var firstRefreshRequest = new { refreshToken = originalRefreshToken };
+        var firstRefreshResponse = await client.PostAsJsonAsync("/api/v1/auth/refresh", firstRefreshRequest);
+        firstRefreshResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Act — intentar usar el token original ya revocado
+        var secondRefreshResponse = await client.PostAsJsonAsync("/api/v1/auth/refresh", firstRefreshRequest);
+
+        // Assert
+        secondRefreshResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized,
+            because: "un refresh token de un solo uso ya revocado debe ser rechazado");
+    }
+
+    [Fact]
+    public async Task Login_PersistsRefreshTokenInDatabase()
+    {
+        // Arrange
+        var client = CreateClient();
+        var loginRequest = new { email = "supervisor@gop.co", password = "Super123*" };
+
+        // Act
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", loginRequest);
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await loginResponse.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(body);
+        var refreshToken = json.GetProperty("refreshToken").GetString()!;
+
+        // Assert — verificar que el token fue persistido en la base de datos InMemory
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<GopDbContext>();
+        var tokenExists = await db.RefreshTokens.AnyAsync(rt => rt.Token == refreshToken);
+
+        tokenExists.Should().BeTrue(
+            because: "el refresh token generado al hacer login debe persistirse en la base de datos");
     }
 }

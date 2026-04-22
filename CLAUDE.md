@@ -71,10 +71,10 @@ El mapa funcional completo del sistema está en:
 
 > **Actualizar esta sección cada vez que se cambie de feature o módulo.**
 
-- **Feature:** Auth API Real — Integración JWT (completada)
-- **Spec:** `specs/features/004-auth-api/spec.md`
-- **Plan:** `specs/features/004-auth-api/plan.fe.md`
-- **Tareas:** `specs/features/004-auth-api/tasks.fe.md`
+- **Feature:** Users Persistence — Migración de auth a Azure SQL (en progreso)
+- **Spec:** `specs/features/007-users-persistence/spec.md`
+- **Plan:** `specs/features/007-users-persistence/plan.md`
+- **Tareas:** `specs/features/007-users-persistence/tasks.md`
 
 ---
 
@@ -137,6 +137,23 @@ El mapa funcional completo del sistema está en:
 ### Convención de secrets en Key Vault
 
 Los secrets en `kv-gop360-staging` usan `--` (doble guion) como separador en lugar de `:` — es la convención estándar de `.NET` para leer Key Vault como configuración jerárquica. Ejemplo: la clave `ConnectionStrings:DefaultConnection` se guarda en KV como `ConnectionStrings--DefaultConnection`. El binding lo hace `DefaultAzureCredential` vía User-Assigned Managed Identity.
+
+### Secrets de seed de usuarios
+
+El `UserSeeder` (en `GOP.Infrastructure.Persistence.UserSeeder`) corre en el arranque del App Service vía `ApplyMigrationsAndSeedAsync`. Requiere dos secrets en `kv-gop360-staging`:
+
+| Secret en Key Vault | Config key leída en .NET | Uso |
+|---|---|---|
+| `SeedUsers--ExecAdmin--Password` | `SeedUsers:ExecAdmin:Password` | Password en claro del usuario `alejandro.gutierrez@interkont.co`; `UserSeeder` lo hashea con BCrypt antes de persistir |
+| `SeedUsers--OpAdmin--Password` | `SeedUsers:OpAdmin:Password` | Password en claro del usuario `admin@interkont.co`; `UserSeeder` lo hashea con BCrypt antes de persistir |
+
+**Notas operacionales:**
+- Cargar manualmente desde Azure Cloud Shell antes del primer redeploy post-merge de esta feature.
+- Usar passwords aleatorios fuertes (16+ caracteres, mezcla alfanumérica + símbolos); guardar en password manager personal.
+- Si el secret falta, `UserSeeder` lanza `InvalidOperationException("SeedUsers:{key}:Password not configured. Seed aborted.")` — el arranque de la API continúa pero `/health/ready` reportará `Unhealthy` hasta que se configure.
+- La User-Assigned Managed Identity del App Service ya tiene rol `Key Vault Secrets User` sobre `kv-gop360-staging` — no requiere role assignment adicional.
+- En `ASPNETCORE_ENVIRONMENT=Development` (local), si la sección `SeedUsers` no existe en config, el seeder inserta automáticamente los 4 dev users (`admin@gop.co`, `supervisor@gop.co`, `operador@gop.co`, `auditor@gop.co`) con sus hashes de `SeedUsers.cs`.
+- Referencia completa del comportamiento: `specs/features/007-users-persistence/spec.md §7`.
 
 ---
 

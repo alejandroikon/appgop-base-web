@@ -17,6 +17,10 @@ public sealed class GopDbContext(DbContextOptions<GopDbContext> options)
     public DbSet<Cluster> Clusters => Set<Cluster>();
     public DbSet<WellTransitionHistory> WellTransitionHistory => Set<WellTransitionHistory>();
 
+    // Users feature (007-users-persistence)
+    public DbSet<User> Users => Set<User>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GopDbContext).Assembly);
