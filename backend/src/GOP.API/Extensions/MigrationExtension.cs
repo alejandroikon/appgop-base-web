@@ -25,6 +25,11 @@ public static class MigrationExtension
             logger.LogInformation("Ejecutando seed DANE...");
             await seeder.SeedAsync();
             logger.LogInformation("Seed completado.");
+
+            var userSeeder = scope.ServiceProvider.GetRequiredService<UserSeeder>();
+            logger.LogInformation("Ejecutando seed de usuarios...");
+            await userSeeder.SeedAsync();
+            logger.LogInformation("Seed de usuarios completado.");
         }
         catch (Exception ex)
         {
