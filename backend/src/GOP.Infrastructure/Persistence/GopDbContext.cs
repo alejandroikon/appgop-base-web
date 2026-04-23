@@ -1,13 +1,23 @@
 using GOP.Application.Common.Interfaces;
 using GOP.Domain.Entities;
 using GOP.Domain.Interfaces;
+using GOP.Domain.Interfaces.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace GOP.Infrastructure.Persistence;
 
-public sealed class GopDbContext(DbContextOptions<GopDbContext> options)
-    : DbContext(options), IApplicationDbContext, IUnitOfWork
+public sealed class GopDbContext : DbContext, IApplicationDbContext, IUnitOfWork
 {
+    private readonly int _currentTenantId;
+
+    public GopDbContext(
+        DbContextOptions<GopDbContext> options,
+        ICurrentUserService currentUserService)
+        : base(options)
+    {
+        _currentTenantId = currentUserService.TenantId;
+    }
+
     // Wells feature
     public DbSet<Well> Wells => Set<Well>();
     public DbSet<Contrato> Contratos => Set<Contrato>();
@@ -24,6 +34,13 @@ public sealed class GopDbContext(DbContextOptions<GopDbContext> options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GopDbContext).Assembly);
+
+        // ED-05: Global query filter — tenant isolation para Wells
+        // Filtra por TenantId del usuario autenticado. Si TenantId=0 (no autenticado,
+        // ej. seed/migrations) no filtra nada — el filtro deja pasar todo.
+        modelBuilder.Entity<Well>().HasQueryFilter(
+            w => !w.IsDeleted && (_currentTenantId == 0 || w.TenantId == _currentTenantId));
+
         base.OnModelCreating(modelBuilder);
     }
 }
