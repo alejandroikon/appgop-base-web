@@ -179,7 +179,7 @@ function generateUwiMock(body: Record<string, unknown>, dpto: DepartamentoItemDT
   const angulo   = String(body['tipoAngulo'] ?? 'V');
   const objetivo = String(body['tipoObjetivo'] ?? 'PH');
   const term     = String(body['tipoTerminacion'] ?? 'CD');
-  const tray     = body['tipoTrayectoria'] === 'O' ? '' : String(body['tipoTrayectoria'] ?? '');
+  const tray     = String(body['tipoTrayectoria'] ?? 'O');
   return `${dptoCode}${mpioCode}${denom}${consec}CX0000${angulo}${tray}${objetivo}-${term}`;
 }
 
@@ -249,7 +249,7 @@ export const wellsMockHandlers: MockHandler[] = [
         clusterCode   = abrev + '0000';
       }
 
-      const trayCode = trayectoria === 'O' ? '' : trayectoria;
+      const trayCode = trayectoria;
       const uwi = `${dpto}${mpioCode}${sigla}${numero}${clusterCode}${tipoAngulo}${trayCode}${objetivo}-${terminacion}`;
 
       const isUnique = !mockWellsDb.some(
