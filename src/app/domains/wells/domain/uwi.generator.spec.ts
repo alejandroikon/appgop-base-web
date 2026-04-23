@@ -84,13 +84,13 @@ describe('generateUwiPreview', () => {
       tipoTerminacion: 'OH',
       isAnh:           false,
     });
-    expect(result.uwi).toBe('50568CURE0001LA0000VPH-OH');
+    expect(result.uwi).toBe('50568CURE0001LA0000VOPH-OH');
     expect(result.components.sigla).toBe('CURE');
     expect(result.components.dptoCode).toBe('50');
     expect(result.components.mpioCode).toBe('568');
     expect(result.components.numero).toBe('0001');
     expect(result.components.clusterCode).toBe('LA0000');
-    expect(result.components.trayectoriaCode).toBe('');
+    expect(result.components.trayectoriaCode).toBe('O');
   });
 
   // Ejemplo 2 — Side Track Horizontal (uwi-algorithm.md §3)
@@ -127,10 +127,10 @@ describe('generateUwiPreview', () => {
       tipoTerminacion: 'O',
       isAnh:           true,
     });
-    expect(result.uwi).toBe('86320ANHE0001CX0000VGT-O');
+    expect(result.uwi).toBe('86320ANHE0001CX0000VOGT-O');
     expect(result.components.sigla).toBe('ANHE');
     expect(result.components.clusterCode).toBe('CX0000');
-    expect(result.components.trayectoriaCode).toBe('');
+    expect(result.components.trayectoriaCode).toBe('O');
   });
 
   it('trayectoria no-original incluye el código', () => {
