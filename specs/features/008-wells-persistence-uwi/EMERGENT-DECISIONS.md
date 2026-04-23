@@ -51,14 +51,14 @@ components.trajectoryCode: "O"     ← código explícito
 fiscalizedUwi: "50568RUBI0157RU0000VOOPH–CC"
 ```
 
-**Decisión pendiente para humano:** ¿El UWI para trayectoria Original lleva "O" explícito o es vacío? El código actual dice vacío; el contrato V2 dice "O". Si se decide "O", hay que modificar `Uwi.GenerateTrayectoriaCode()`:
+**Decisión (resuelta 2026-04-23):** "O" explícito. Se modificó `Uwi.GenerateTrayectoriaCode()`:
 ```csharp
-TipoTrayectoria.O => "O",  // en vez de string.Empty
+TipoTrayectoria.O => "O",  // antes: string.Empty
 ```
 
-**Impacto:** Cambia el UWI de todos los pozos Original. Si ya hay pozos en staging, requiere migración de datos. En Iter 8 staging no tiene pozos reales → safe to change.
+**Commit:** `fix(domain): ED-03 — trayectoria Original emite 'O' explícito en UWI`
 
-**Acción:** **Esperando decisión del humano antes de continuar.**
+**Impacto:** Staging no tiene pozos reales → sin migración de datos necesaria.
 
 ---
 
@@ -69,9 +69,9 @@ TipoTrayectoria.O => "O",  // en vez de string.Empty
 Ejemplo código: `50568RUBI0157CN0000VPH-CC`
 Ejemplo contrato: `50568RUBI0157RU0000VOOPH–CC`
 
-**Decisión pendiente:** ¿Usar ASCII `-` o en-dash `–`? ASCII es más seguro para URLs, logs y BD. En-dash es más fiel al instructivo PPDM original de la ANH.
+**Decisión (resuelta 2026-04-23):** ASCII `-`. Mantener el código actual. Es más seguro para BD, URLs, logs y comparaciones string.
 
-**Acción:** **Esperando decisión del humano.**
+**Impacto:** Ninguno. El código ya usa ASCII `-`.
 
 ---
 
@@ -89,7 +89,16 @@ Ejemplo contrato: `50568RUBI0157RU0000VOOPH–CC`
 
 **Impacto:** Cambio de infraestructura que afecta todas las queries de Wells. Prioridad alta por ser gap de seguridad (A01 OWASP).
 
-**Acción:** Documentado como hallazgo. Implementar en esta iteración si hay bandwidth, si no, es blocker para Iter 9.
+**Decisión (resuelta 2026-04-23):** Implementado en esta iteración.
+
+**Commit:** `feat(infra): ED-05 — global query filter por TenantId en Wells`
+
+**Implementación:**
+- `GopDbContext` inyecta `ICurrentUserService`, captura `_currentTenantId` en constructor
+- `HasQueryFilter`: `!IsDeleted && (_currentTenantId == 0 || w.TenantId == _currentTenantId)`
+- `TenantId == 0` = bypass (seed, migrations, sin HTTP context)
+- `WellRepository.ExistsByUwiAsync/ExistsByNameAsync` usan `IgnoreQueryFilters()` + `!IsDeleted` manual
+- `GetWellByIdQueryHandler` y `GetWellsListQueryHandler` ya tenían bypass para ADMIN/AUDITOR
 
 ---
 
