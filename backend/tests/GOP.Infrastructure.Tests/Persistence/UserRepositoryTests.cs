@@ -23,7 +23,7 @@ public sealed class UserRepositoryTests : IAsyncLifetime
             .UseSqlite(_connection)
             .Options;
 
-        _context = new GopDbContext(_options);
+        _context = new GopDbContext(_options, new FakeCurrentUserService());
         await _context.Database.EnsureCreatedAsync();
         _repo = new UserRepository(_context);
     }
@@ -120,7 +120,7 @@ public sealed class UserRepositoryTests : IAsyncLifetime
         await _context.SaveChangesAsync();
 
         // Verificar en contexto nuevo para evitar cache del change tracker
-        await using var verifyContext = new GopDbContext(_options);
+        await using var verifyContext = new GopDbContext(_options, new FakeCurrentUserService());
         var persisted = await verifyContext.Users.FindAsync(user.Id);
 
         // Assert

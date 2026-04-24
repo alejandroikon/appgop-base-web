@@ -24,7 +24,7 @@ public sealed class UserSeederTests : IAsyncLifetime
             .UseSqlite(_connection)
             .Options;
 
-        _context = new GopDbContext(options);
+        _context = new GopDbContext(options, new FakeCurrentUserService());
         await _context.Database.EnsureCreatedAsync();
     }
 
