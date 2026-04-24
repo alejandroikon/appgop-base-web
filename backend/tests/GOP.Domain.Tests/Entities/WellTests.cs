@@ -96,10 +96,10 @@ public sealed class WellTests
             codigoDaneMpio: "568",
             clusterId: null,
             cluster: null,
-            uwi: "50568CURE0001CX0000VPH-OH");
+            uwi: "50568CURE0001CX0000VOPH-OH");
 
         well.Estado.Should().Be(WellStatus.Creado);
-        well.Uwi.Should().Be("50568CURE0001CX0000VPH-OH");
+        well.Uwi.Should().Be("50568CURE0001CX0000VOPH-OH");
     }
 
     // ─── IsEditable / IsDeletable ─────────────────────────────────────────────
@@ -123,7 +123,7 @@ public sealed class WellTests
             tipoObjetivo: TipoObjetivo.PH, tipoTerminacion: TipoTerminacion.OH,
             departamentoId: 1, departamento: "Meta", codigoDaneDpto: "50",
             municipioId: 1, municipio: "PG", codigoDaneMpio: "568",
-            clusterId: null, cluster: null, uwi: "50568TEST0001CX0000VPH-OH");
+            clusterId: null, cluster: null, uwi: "50568TEST0001CX0000VOPH-OH");
         well.MarkForma101Radicada();
 
         well.IsEditable().Should().BeFalse();
@@ -148,7 +148,7 @@ public sealed class WellTests
             tipoObjetivo: TipoObjetivo.PH, tipoTerminacion: TipoTerminacion.OH,
             departamentoId: 1, departamento: "Meta", codigoDaneDpto: "50",
             municipioId: 1, municipio: "PG", codigoDaneMpio: "568",
-            clusterId: null, cluster: null, uwi: "50568TEST0001CX0000VPH-OH");
+            clusterId: null, cluster: null, uwi: "50568TEST0001CX0000VOPH-OH");
         well.MarkForma101Radicada();
 
         well.IsDeletable().Should().BeFalse();
@@ -160,20 +160,20 @@ public sealed class WellTests
     public void Finalize_DesdeBorrador_CambiaACreado()
     {
         var well = BuildDraft();
-        var result = well.Finalize("50568CURE0001CX0000VPH-OH");
+        var result = well.Finalize("50568CURE0001CX0000VOPH-OH");
 
         result.IsSuccess.Should().BeTrue();
         well.Estado.Should().Be(WellStatus.Creado);
-        well.Uwi.Should().Be("50568CURE0001CX0000VPH-OH");
+        well.Uwi.Should().Be("50568CURE0001CX0000VOPH-OH");
     }
 
     [Fact]
     public void Finalize_YaFinalizado_Falla()
     {
         var well = BuildDraft();
-        well.Finalize("50568CURE0001CX0000VPH-OH");
+        well.Finalize("50568CURE0001CX0000VOPH-OH");
 
-        var result2 = well.Finalize("50568CURE0001CX0000VPH-OH");
+        var result2 = well.Finalize("50568CURE0001CX0000VOPH-OH");
         result2.IsFailure.Should().BeTrue();
     }
 
@@ -203,7 +203,7 @@ public sealed class WellTests
             tipoObjetivo: TipoObjetivo.PH, tipoTerminacion: TipoTerminacion.OH,
             departamentoId: 1, departamento: "Meta", codigoDaneDpto: "50",
             municipioId: 1, municipio: "PG", codigoDaneMpio: "568",
-            clusterId: null, cluster: null, uwi: "50568TEST0001CX0000VPH-OH");
+            clusterId: null, cluster: null, uwi: "50568TEST0001CX0000VOPH-OH");
         well.MarkForma101Radicada();
 
         var result = well.SoftDelete();
