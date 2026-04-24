@@ -49,7 +49,7 @@ public sealed class WellsTenantIsolationTests : IAsyncLifetime
         Well.CreateDraft(
             operadora: $"Operadora-{discriminator}",
             tenantId: tenantId,
-            contratoId: tenantId * 100,
+            contratoId: 1,
             contrato: $"CT-{discriminator}",
             tipoContrato: "E&P",
             cuenca: "LLA",
