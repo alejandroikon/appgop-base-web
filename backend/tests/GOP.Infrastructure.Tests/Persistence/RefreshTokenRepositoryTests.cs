@@ -24,7 +24,7 @@ public sealed class RefreshTokenRepositoryTests : IAsyncLifetime
             .UseSqlite(_connection)
             .Options;
 
-        _context = new GopDbContext(_options);
+        _context = new GopDbContext(_options, new FakeCurrentUserService());
         await _context.Database.EnsureCreatedAsync();
         _repo = new RefreshTokenRepository(_context);
 

@@ -17,7 +17,7 @@ public sealed class GopDbContextTests
         // Act
         var act = () =>
         {
-            using var context = new GopDbContext(options);
+            using var context = new GopDbContext(options, new FakeCurrentUserService());
             return context;
         };
 

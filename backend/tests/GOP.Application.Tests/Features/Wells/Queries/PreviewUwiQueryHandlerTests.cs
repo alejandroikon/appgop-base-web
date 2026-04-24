@@ -34,7 +34,7 @@ public sealed class PreviewUwiQueryHandlerTests
         var result = await sut.Handle(query, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Uwi.Should().Be("50568CURE0001LA0000VPH-OH");
+        result.Value.Uwi.Should().Be("50568CURE0001LA0000VOPH-OH");
         result.Value.IsUnique.Should().BeTrue();
         result.Value.Components.Sigla.Should().Be("CURE");
     }

@@ -204,7 +204,7 @@ public sealed class Uwi : ValueObject
 
     /// <summary>
     /// Genera el código de trayectoria:
-    /// Original → vacío
+    /// Original → "O" (ED-03 Iter 8: explícito, alineado con contrato V2)
     /// ST → "ST" (primero) o "ST2", "ST3"... (segundo en adelante)
     /// G → "G" (primero) o "G2", "G3"...
     /// P → "P", PR → "PR", ML → "ML"
@@ -213,7 +213,7 @@ public sealed class Uwi : ValueObject
     {
         return trayectoria switch
         {
-            TipoTrayectoria.O => string.Empty,
+            TipoTrayectoria.O => "O",
             TipoTrayectoria.ST => consecutivoTrayectoria <= 1 ? "ST" : $"ST{consecutivoTrayectoria}",
             TipoTrayectoria.G => consecutivoTrayectoria <= 1 ? "G" : $"G{consecutivoTrayectoria}",
             TipoTrayectoria.P => "P",

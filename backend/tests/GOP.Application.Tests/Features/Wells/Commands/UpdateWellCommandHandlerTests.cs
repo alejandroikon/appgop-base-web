@@ -103,7 +103,7 @@ public sealed class UpdateWellCommandHandlerTests
             tipoObjetivo: TipoObjetivo.PH, tipoTerminacion: TipoTerminacion.OH,
             departamentoId: 1, departamento: "Meta", codigoDaneDpto: "50",
             municipioId: 1, municipio: "Puerto Gaitán", codigoDaneMpio: "568",
-            clusterId: null, cluster: null, uwi: "50568ALPH0001CX0000VPH-OH");
+            clusterId: null, cluster: null, uwi: "50568ALPH0001CX0000VOPH-OH");
         well.MarkForma101Radicada();
         var (db, repo) = await CreateContextWithWell(well);
         var sut = new UpdateWellCommandHandler(db, repo, _unitOfWork, _currentUser);

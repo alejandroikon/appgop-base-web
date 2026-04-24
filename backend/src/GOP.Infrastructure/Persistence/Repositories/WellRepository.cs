@@ -16,7 +16,9 @@ internal sealed class WellRepository(GOP.Infrastructure.Persistence.GopDbContext
     public async Task<bool> ExistsByUwiAsync(
         string uwi, Guid? excludeWellId, CancellationToken cancellationToken = default)
     {
-        var query = context.Wells.Where(w => w.Uwi == uwi);
+        // IgnoreQueryFilters: UWI debe ser único globalmente, no por tenant (ED-05)
+        var query = context.Wells.IgnoreQueryFilters()
+            .Where(w => !w.IsDeleted && w.Uwi == uwi);
         if (excludeWellId.HasValue)
             query = query.Where(w => w.Id != excludeWellId.Value);
         return await query.AnyAsync(cancellationToken);
@@ -25,8 +27,10 @@ internal sealed class WellRepository(GOP.Infrastructure.Persistence.GopDbContext
     public async Task<bool> ExistsByNameAsync(
         string nombrePozo, int tenantId, Guid? excludeWellId, CancellationToken cancellationToken = default)
     {
-        var query = context.Wells
-            .Where(w => w.NombrePozo == nombrePozo && w.TenantId == tenantId);
+        // IgnoreQueryFilters: nombre debe ser único por tenant, pero necesitamos
+        // bypass del filter global para que el check funcione desde cualquier contexto
+        var query = context.Wells.IgnoreQueryFilters()
+            .Where(w => !w.IsDeleted && w.NombrePozo == nombrePozo && w.TenantId == tenantId);
         if (excludeWellId.HasValue)
             query = query.Where(w => w.Id != excludeWellId.Value);
         return await query.AnyAsync(cancellationToken);

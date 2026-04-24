@@ -122,8 +122,9 @@ internal sealed class WellConfiguration : IEntityTypeConfiguration<Well>
         builder.HasIndex(w => new { w.TenantId, w.Estado })
             .HasDatabaseName("IX_Wells_TenantId_Estado");
 
-        // ─── Soft delete ──────────────────────────────────────────────────────
-        builder.HasQueryFilter(w => !w.IsDeleted);
+        // ─── Soft delete + Tenant isolation ───────────────────────────────────
+        // Global query filter ahora vive en GopDbContext.OnModelCreating (ED-05)
+        // para poder inyectar _currentTenantId desde ICurrentUserService.
 
         // ─── FKs (restrict para no cascade en datos master) ───────────────────
         builder.HasOne<Contrato>()

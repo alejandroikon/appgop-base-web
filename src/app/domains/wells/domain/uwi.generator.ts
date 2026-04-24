@@ -143,10 +143,11 @@ function buildAnguloCode(tipoAngulo: string): string {
 
 /**
  * Construye el segmento de trayectoria.
- * Original (O) → vacío. Resto → código directo (ST, P, PR, ML, G).
+ * Original (O) → "O" explícito (ED-03 Iter 8, alineado con contrato V2).
+ * Resto → código directo (ST, P, PR, ML, G).
  */
 function buildTrayectoriaCode(tipoTrayectoria: string): string {
-  return tipoTrayectoria === 'O' ? '' : tipoTrayectoria;
+  return tipoTrayectoria;
 }
 
 // ─── Segmento 8: Objetivo — variable (RN-35) ──────────────────────────────────

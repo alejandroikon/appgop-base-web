@@ -21,7 +21,7 @@ public sealed class UwiTests
             "LA", 0, TipoAngulo.V, TipoTrayectoria.O, 1, TipoObjetivo.PH, TipoTerminacion.OH, false);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Value.Should().Be("50568CURE0001LA0000VPH-OH");
+        result.Value.Value.Should().Be("50568CURE0001LA0000VOPH-OH");
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public sealed class UwiTests
             null, 0, TipoAngulo.V, TipoTrayectoria.O, 1, TipoObjetivo.GT, TipoTerminacion.O, true);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Value.Should().Be("86320ANHE0001CX0000VGT-O");
+        result.Value.Value.Should().Be("86320ANHE0001CX0000VOGT-O");
     }
 
     // ─── Algoritmo de Sigla ────────────────────────────────────────────────────
@@ -98,7 +98,7 @@ public sealed class UwiTests
     // ─── Algoritmo de Trayectoria ─────────────────────────────────────────────
 
     [Theory]
-    [InlineData(TipoTrayectoria.O, 1, "")]
+    [InlineData(TipoTrayectoria.O, 1, "O")]
     [InlineData(TipoTrayectoria.ST, 1, "ST")]
     [InlineData(TipoTrayectoria.ST, 2, "ST2")]
     [InlineData(TipoTrayectoria.ST, 3, "ST3")]
@@ -188,7 +188,7 @@ public sealed class UwiTests
         uwi.Numero.Should().Be("0001");
         uwi.ClusterCode.Should().Be("LA0000");
         uwi.AnguloCode.Should().Be("V");
-        uwi.TrayectoriaCode.Should().Be("");
+        uwi.TrayectoriaCode.Should().Be("O");
         uwi.ObjetivoCode.Should().Be("PH");
         uwi.TerminacionCode.Should().Be("OH");
     }
