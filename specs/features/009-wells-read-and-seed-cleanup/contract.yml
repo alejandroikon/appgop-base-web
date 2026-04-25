@@ -1,0 +1,356 @@
+openapi: 3.1.0
+
+info:
+  title: "GOP 360° — 009 Wells Read API + Seed Cleanup"
+  version: "1.0.0"
+  description: |
+    Contrato OpenAPI para la feature 009-wells-read-and-seed-cleanup.
+    Cubre: GET /wells (listado paginado con filtros) y GET /wells/{id} (detalle).
+    Los endpoints POST /wells, POST /wells/preview-uwi, GET /wells/preview-name
+    ya están definidos en Iter 8 y no se modifican aquí.
+    Referencia: specs/features/009-wells-read-and-seed-cleanup/spec.md
+
+servers:
+  - url: /api/v1
+    description: Base path versionado
+
+security:
+  - bearerAuth: []
+
+paths:
+  /wells:
+    get:
+      operationId: listWells
+      summary: Listar pozos con paginación y filtros
+      description: |
+        Retorna pozos del tenant del JWT con paginación offset-based.
+        ADMIN y AUDITOR ven pozos de todos los tenants.
+        Orden por defecto: createdAt desc.
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortDirParam'
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 200
+          description: |
+            Búsqueda de texto libre. Busca en: nombrePozo, denominacion,
+            uwi, operadora. Case-insensitive, parcial (LIKE %search%).
+        - name: contratoId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filtro exacto por ID de contrato
+        - name: campoId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filtro exacto por ID de campo
+        - name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [BORRADOR, CREADO]
+          description: Filtro exacto por estado del pozo (case-insensitive parse)
+        - name: denominacion
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 50
+          description: |
+            Búsqueda parcial case-insensitive sobre el campo Denominacion.
+            Distinto de 'search': filtra SOLO por denominación.
+      responses:
+        '200':
+          description: Lista paginada de pozos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total, page, pageSize]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WellListItem'
+                  total:
+                    type: integer
+                    minimum: 0
+                    example: 25
+                  page:
+                    type: integer
+                    minimum: 1
+                    example: 1
+                  pageSize:
+                    type: integer
+                    minimum: 1
+                    maximum: 100
+                    example: 20
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /wells/{wellId}:
+    get:
+      operationId: getWell
+      summary: Obtener detalle de un pozo por ID
+      description: |
+        Retorna todos los campos del pozo. El shape es idéntico al response
+        del POST /wells (WellDetailDto). Si el pozo no existe o pertenece
+        a otro tenant, retorna 404 (no 403 — no revelar existencia).
+      x-roles: [ADMIN, SUPERVISOR, OPERADOR, AUDITOR]
+      parameters:
+        - name: wellId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID del pozo (Guid)
+      responses:
+        '200':
+          description: Detalle completo del pozo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Token JWT obtenido en /api/v1/auth/login"
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: "Número de página (1-indexed)"
+
+    PageSizeParam:
+      name: pageSize
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: "Elementos por página (máximo 100)"
+
+    SortByParam:
+      name: sortBy
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [nombrePozo, operadora, contrato, estado, createdAt, uwi]
+      description: "Campo de ordenamiento"
+
+    SortDirParam:
+      name: sortDir
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+      description: "Dirección de ordenamiento"
+
+  schemas:
+    WellListItem:
+      type: object
+      required: [id, nombrePozo, operadora, contrato, clasificacion, estado, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombrePozo:
+          type: string
+          example: "LLANOS ORIENTALES-RUBIALES-157"
+        operadora:
+          type: string
+          example: "Ecopetrol S.A."
+        contrato:
+          type: string
+          example: "Contrato E&P Llanos"
+        campo:
+          type: string
+          nullable: true
+          example: "Campo Rubiales"
+        clasificacion:
+          type: string
+          example: "EXPLORATORIO"
+        subClasificacion:
+          type: string
+          nullable: true
+        estado:
+          type: string
+          enum: [BORRADOR, CREADO]
+          example: "CREADO"
+        uwi:
+          type: string
+          nullable: true
+          example: "50568RUBI0157CN0000VOPH-OH"
+        createdAt:
+          type: string
+          format: date-time
+
+    WellDetail:
+      type: object
+      description: |
+        Shape idéntica al response de POST /wells (WellDetailDto).
+        Los campos nullables reflejan que en DRAFT algunos pueden estar vacíos.
+      required: [id, operadora, estado, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        operadora:
+          type: string
+        contratoId:
+          type: integer
+          nullable: true
+        contrato:
+          type: string
+          nullable: true
+        tipoContrato:
+          type: string
+          nullable: true
+        cuenca:
+          type: string
+          nullable: true
+        campoId:
+          type: integer
+          nullable: true
+        campo:
+          type: string
+          nullable: true
+        denominacion:
+          type: string
+          nullable: true
+        consecutivo:
+          type: integer
+          nullable: true
+        nombrePozo:
+          type: string
+          nullable: true
+        tipoTrayectoria:
+          type: string
+          nullable: true
+        clasificacion:
+          type: string
+          nullable: true
+        subClasificacion:
+          type: string
+          nullable: true
+        tipoUbicacion:
+          type: string
+          nullable: true
+        tipoAngulo:
+          type: string
+          nullable: true
+        tipoObjetivo:
+          type: string
+          nullable: true
+        tipoTerminacion:
+          type: string
+          nullable: true
+        estado:
+          type: string
+          enum: [BORRADOR, CREADO]
+        uwi:
+          type: string
+          nullable: true
+        forma101Radicada:
+          type: boolean
+        departamentoId:
+          type: integer
+          nullable: true
+        departamento:
+          type: string
+          nullable: true
+        codigoDaneDpto:
+          type: string
+          nullable: true
+        municipioId:
+          type: integer
+          nullable: true
+        municipio:
+          type: string
+          nullable: true
+        codigoDaneMpio:
+          type: string
+          nullable: true
+        clusterId:
+          type: integer
+          nullable: true
+        cluster:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        lastModifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "https://tools.ietf.org/html/rfc7807"
+        title:
+          type: string
+          example: "Resource Not Found"
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: "No se encontró un pozo con Id '88531e37-...'"
+
+  responses:
+    Unauthorized:
+      description: No autenticado (JWT ausente o expirado)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    Forbidden:
+      description: No autorizado para esta operación
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    NotFound:
+      description: Recurso no encontrado (o no pertenece al tenant)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
