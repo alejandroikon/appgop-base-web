@@ -86,6 +86,36 @@ Esto corrige el dato en staging si fue insertado manualmente con el código err�
 
 ---
 
+## ED-12: `dotnet` no en PATH — instalación vía script oficial
+
+**Contexto:** El entorno de CI/agente no tenía `dotnet` en PATH al arrancar Iter 9.
+
+**Hallazgo:** El script oficial de Microsoft (`dot.net/v1/dotnet-install.sh --channel 10.0`) instaló correctamente el SDK 10.0.203 en `$HOME/.dotnet`. Funciona idénticamente a iteraciones previas.
+
+**Decisión:** ✅ No requiere acción post-Iter 9. El script es idempotente en futuros arranques.
+
+---
+
+## ED-13: Denominacion filter en InMemory es case-sensitive
+
+**Contexto:** El spec AC-06 dice "filtro denominacion case-insensitive". El handler usa `.Contains(denom)` que en SQL Server con collation `CI_AS` es case-insensitive. En InMemory EF Core es case-SENSITIVE.
+
+**Hallazgo en tests:** Para que los tests de Application y API pasen en InMemory, se usa el mismo case en el filtro. El test `Handle_WithDenominacionFilter_MatchesPartialString` filtra "RUBI" para encontrar "RUBIALES" (same-case).
+
+**Decisión:** ✅ Aceptado. La case-insensitivity REAL está garantizada en producción (SQL Server CI_AS). Los tests de Application/API con InMemory usan same-case y verifican el MECANISMO de filtro (not the collation). Comentario en el test documenta esta limitación. Para cobertura real de CI, se necesitaría Testcontainers SQL Server (pendiente Iter 13).
+
+---
+
+## ED-14: Tenant isolation test — ADMIN (TenantId=1) crea, SUPERVISOR (TenantId=2) lee → 404
+
+**Contexto:** El test `GetWell_WellFromOtherTenant_Returns404NotForbidden` requiere dos tenants distintos.
+
+**Implementación:** Con los seed users actuales, ADMIN tiene TenantId=1 y SUPERVISOR tiene TenantId=2. El query filter de `GopDbContext` se aplica en la construcción del DbContext scoped (`_currentTenantId = currentUserService.TenantId`). Cuando ADMIN crea un well, queda con TenantId=1. Cuando SUPERVISOR intenta leerlo, el DbContext del request tiene `_currentTenantId=2`, y el query filter `w.TenantId == _currentTenantId` esconde el well → 404. ✅
+
+**Decisión:** ✅ No se agregaron usuarios nuevos. Los seed users existentes cubren el escenario.
+
+---
+
 ## Resumen de decisiones
 
 | # | Tema | Propuesta spec-agent | Decisión final | Estado |
@@ -94,3 +124,6 @@ Esto corrige el dato en staging si fue insertado manualmente con el código err�
 | ED-09 | IDs DANE como PKs | Usar IDs DANE (50, 85, 68) | **IDs secuenciales (1, 2, 3)** | ❌ Revertida |
 | ED-10 | HasData vs migración manual | Migración manual SQL | Migración manual SQL | ✅ Aceptada |
 | ED-11 | Aguazul DANE 85015 | Corregir a 85010 | Corregir a 85010 + UPDATE staging | ✅ Aceptada |
+| ED-12 | dotnet no en PATH | Script oficial dot.net | Script oficial → SDK 10.0.203 | ✅ Resuelta |
+| ED-13 | Denominacion CI en InMemory | Same-case en tests | Same-case + comentario | ✅ Aceptada |
+| ED-14 | Tenant isolation test | Dos tokens distintos | ADMIN(t1) crea, SUPERVISOR(t2) lee | ✅ Resuelta |

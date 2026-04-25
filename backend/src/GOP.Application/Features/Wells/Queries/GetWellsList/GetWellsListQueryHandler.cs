@@ -47,6 +47,15 @@ internal sealed class GetWellsListQueryHandler(
                 w.Operadora.Contains(search));
         }
 
+        if (request.CampoId.HasValue)
+            query = query.Where(w => w.CampoId == request.CampoId.Value);
+
+        if (!string.IsNullOrWhiteSpace(request.Denominacion))
+        {
+            var denom = request.Denominacion.Trim();
+            query = query.Where(w => w.Denominacion.Contains(denom));
+        }
+
         var totalCount = await query.CountAsync(cancellationToken);
 
         var sortDir = request.SortDir?.ToLowerInvariant() == "desc" ? "desc" : "asc";

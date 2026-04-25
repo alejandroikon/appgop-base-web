@@ -21,11 +21,11 @@ Cada fase tiene **precondiciones** y **definición de hecho**. Las tareas son at
 
 ### T0.1 — Validar estado del código base
 
-- [ ] Verificar que `dotnet build` pasa en `backend/`.
-- [ ] Verificar que `dotnet test` pasa (todos los tests existentes verdes).
-- [ ] Confirmar que `WellsController.ListWells` acepta los params actuales (`page`, `pageSize`, `search`, `sortBy`, `sortDir`, `contratoId`, `estado`).
-- [ ] Confirmar que `GetWellsListQuery` tiene 7 parámetros.
-- [ ] Confirmar que `GetWellByIdQueryHandler` retorna `WellDetailDto` (misma shape que POST).
+- [x] Verificar que `dotnet build` pasa en `backend/`.
+- [x] Verificar que `dotnet test` pasa (todos los tests existentes verdes).
+- [x] Confirmar que `WellsController.ListWells` acepta los params actuales (`page`, `pageSize`, `search`, `sortBy`, `sortDir`, `contratoId`, `estado`).
+- [x] Confirmar que `GetWellsListQuery` tiene 7 parámetros.
+- [x] Confirmar que `GetWellByIdQueryHandler` retorna `WellDetailDto` (misma shape que POST).
 
 **Definición de hecho:** Estado baseline confirmado. Sin sorpresas.
 
@@ -37,7 +37,7 @@ Cada fase tiene **precondiciones** y **definición de hecho**. Las tareas son at
 **Precondiciones:** Fase 0 completada.
 **Bloque compilable:** B1 (las 3 tareas juntas + `dotnet build`).
 
-### T1.1 — Agregar params a GetWellsListQuery `[P]`
+### T1.1 ✅ — Agregar params a GetWellsListQuery `[P]`
 
 **Archivo:** `backend/src/GOP.Application/Features/Wells/Queries/GetWellsList/GetWellsListQuery.cs`
 **Acción:** MODIFICAR
@@ -57,7 +57,7 @@ public sealed record GetWellsListQuery(
 ) : IRequest<Result<PagedList<WellListItemDto>>>;
 ```
 
-### T1.2 — Agregar lógica de filtros al handler `[P]`
+### T1.2 ✅ — Agregar lógica de filtros al handler `[P]`
 
 **Archivo:** `backend/src/GOP.Application/Features/Wells/Queries/GetWellsList/GetWellsListQueryHandler.cs`
 **Acción:** MODIFICAR
@@ -74,7 +74,7 @@ if (!string.IsNullOrWhiteSpace(request.Denominacion))
 }
 ```
 
-### T1.3 — Agregar query params al controller
+### T1.3 ✅ — Agregar query params al controller
 
 **Archivo:** `backend/src/GOP.API/Controllers/WellsController.cs`
 **Acción:** MODIFICAR
@@ -111,7 +111,7 @@ public async Task<IActionResult> ListWells(
 **Precondiciones:** Fase 1 compilando.
 **Bloque compilable:** B2 (2 tareas + `dotnet build`).
 
-### T2.1 — Crear migración SeedCatalogosGeo
+### T2.1 ✅ — Crear migración SeedCatalogosGeo
 
 **Archivo:** `backend/src/GOP.Infrastructure/Migrations/{timestamp}_SeedCatalogosGeo.cs`
 **Acción:** CREAR (manual, no autogenerada)
@@ -138,7 +138,7 @@ UPDATE [Municipios] SET [CodigoDane] = N'85010' WHERE [Id] = 4 AND [CodigoDane] 
 ```
 Esto corrige el DANE erróneo de Aguazul si fue insertado manualmente con 85015 en staging.
 
-### T2.2 — Crear Designer file para la migración
+### T2.2 ✅ — Crear Designer file para la migración
 
 **Archivo:** `backend/src/GOP.Infrastructure/Migrations/{timestamp}_SeedCatalogosGeo.Designer.cs`
 **Acción:** CREAR
@@ -154,7 +154,7 @@ Esto corrige el DANE erróneo de Aguazul si fue insertado manualmente con 85015 
 **Precondiciones:** Fases 1 y 2 compilando.
 **Bloque compilable:** B3 (1 tarea + `dotnet build`).
 
-### T3.1 — Sembrar catálogos en GopTestWebApplicationFactory
+### T3.1 ✅ — Sembrar catálogos en GopTestWebApplicationFactory
 
 **Archivo:** `backend/tests/GOP.API.Tests/Fixtures/GopTestWebApplicationFactory.cs`
 **Acción:** MODIFICAR
@@ -207,7 +207,7 @@ if (!db.Contratos.Any())
 **Precondiciones:** Fase 3 compilando.
 **Bloque compilable:** B4 (3 tareas + `dotnet test`).
 
-### T4.1 — Tests de ListWells con filtros nuevos
+### T4.1 ✅ — Tests de ListWells con filtros nuevos
 
 **Archivo:** `backend/tests/GOP.API.Tests/Controllers/WellsControllerTests.cs`
 **Acción:** MODIFICAR (agregar tests)
@@ -225,7 +225,7 @@ if (!db.Contratos.Any())
    - Crear pozos variados.
    - GET /wells?contratoId=1&estado=BORRADOR → verifica intersección.
 
-### T4.2 — Tests de GetWellById robustos
+### T4.2 ✅ — Tests de GetWellById robustos
 
 **Archivo:** `backend/tests/GOP.API.Tests/Controllers/WellsControllerTests.cs`
 **Acción:** MODIFICAR (agregar tests)
@@ -238,7 +238,7 @@ if (!db.Contratos.Any())
    - Crear pozo con un token (tenant A) → GET con otro token (tenant B) → 404.
    - **Nota:** Este test requiere poder crear tokens para tenants distintos. Si el factory actual solo tiene un tenant, documentar la limitación y probar con ADMIN (que bypasea el filter).
 
-### T4.3 — Tests de application layer (filtros nuevos)
+### T4.3 ✅ — Tests de application layer (filtros nuevos)
 
 **Archivo:** `backend/tests/GOP.Application.Tests/Features/Wells/GetWellsListQueryHandlerTests.cs`
 **Acción:** MODIFICAR (agregar tests)
@@ -257,7 +257,7 @@ if (!db.Contratos.Any())
 **Precondiciones:** Fase 4 verdes.
 **Bloque compilable:** B5 (1 tarea + `dotnet test`).
 
-### T5.1 — Test de idempotencia del DbSeeder
+### T5.1 ✅ — Test de idempotencia del DbSeeder
 
 **Archivo:** `backend/tests/GOP.Infrastructure.Tests/Persistence/DbSeederIdempotencyTests.cs`
 **Acción:** CREAR
@@ -280,12 +280,12 @@ Test que:
 **Owner:** implement-agent
 **Precondiciones:** Todas las fases anteriores verdes.
 
-### T6.1 — Actualizar EMERGENT-DECISIONS.md
+### T6.1 ✅ — Actualizar EMERGENT-DECISIONS.md
 
 **Archivo:** `specs/features/009-wells-read-and-seed-cleanup/EMERGENT-DECISIONS.md`
 **Acción:** MODIFICAR (agregar decisiones que surjan durante implementación)
 
-### T6.2 — Commit y push
+### T6.2 ✅ — Commit y push
 
 **Acción:** Commit con mensaje:
 ```

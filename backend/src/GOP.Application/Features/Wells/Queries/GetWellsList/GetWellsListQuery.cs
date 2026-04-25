@@ -12,5 +12,7 @@ public sealed record GetWellsListQuery(
     string? SortBy = null,
     string? SortDir = null,
     int? ContratoId = null,
-    string? Estado = null
+    string? Estado = null,
+    int? CampoId = null,
+    string? Denominacion = null
 ) : IRequest<Result<PagedList<WellListItemDto>>>;

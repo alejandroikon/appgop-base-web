@@ -88,6 +88,41 @@ public sealed class GopTestWebApplicationFactory : WebApplicationFactory<Program
                     "Auditor ANH"));
             db.SaveChanges();
 
+            // Seed catálogos para tests de integración Wells (Iter 9)
+            // Idempotente: solo inserta si la tabla está vacía.
+            // IDs coinciden con HasData de las Configuration classes y con staging (ED-09).
+            if (!db.Contratos.Any())
+            {
+                db.Contratos.AddRange(
+                    new Contrato { Id = 1, Nombre = "Contrato E&P Llanos", Tipo = "E&P", Cuenca = "Llanos Orientales" },
+                    new Contrato { Id = 2, Nombre = "Contrato E&P Piedemonte", Tipo = "E&P", Cuenca = "Piedemonte Llanero" },
+                    new Contrato { Id = 3, Nombre = "Contrato E&P Magdalena", Tipo = "E&P", Cuenca = "Valle Medio del Magdalena" });
+
+                db.Campos.AddRange(
+                    new Campo { Id = 1, Nombre = "Campo Rubiales", ContratoId = 1 },
+                    new Campo { Id = 2, Nombre = "Campo Quifa", ContratoId = 1 },
+                    new Campo { Id = 3, Nombre = "Campo Cusiana", ContratoId = 2 });
+
+                db.Clusters.AddRange(
+                    new Cluster { Id = 1, Nombre = "Cluster Norte", Abreviatura = "CN", CampoId = 1 },
+                    new Cluster { Id = 2, Nombre = "Cluster Sur", Abreviatura = "CS", CampoId = 1 });
+
+                // IDs secuenciales alineados con staging (ED-09)
+                db.Departamentos.AddRange(
+                    new Departamento { Id = 1, Nombre = "Meta", CodigoDane = "50" },
+                    new Departamento { Id = 2, Nombre = "Casanare", CodigoDane = "85" },
+                    new Departamento { Id = 3, Nombre = "Santander", CodigoDane = "68" });
+
+                db.Municipios.AddRange(
+                    new Municipio { Id = 1, Nombre = "Puerto Gaitán", DepartamentoId = 1, CodigoDane = "50568" },
+                    new Municipio { Id = 2, Nombre = "Puerto López", DepartamentoId = 1, CodigoDane = "50573" },
+                    new Municipio { Id = 3, Nombre = "Tauramena", DepartamentoId = 2, CodigoDane = "85410" },
+                    new Municipio { Id = 4, Nombre = "Aguazul", DepartamentoId = 2, CodigoDane = "85010" },
+                    new Municipio { Id = 5, Nombre = "Barrancabermeja", DepartamentoId = 3, CodigoDane = "68081" });
+
+                db.SaveChanges();
+            }
+
             // Suprimir Serilog
             services.RemoveAll<ILoggerFactory>();
             services.AddLogging(logging => logging.AddConsole());
