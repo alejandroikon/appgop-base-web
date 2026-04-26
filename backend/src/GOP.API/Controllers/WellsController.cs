@@ -35,9 +35,11 @@ public sealed class WellsController(ISender sender) : ControllerBase
         [FromQuery] string? sortDir = null,
         [FromQuery] int? contratoId = null,
         [FromQuery] string? estado = null,
+        [FromQuery] int? campoId = null,
+        [FromQuery] string? denominacion = null,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetWellsListQuery(page, pageSize, search, sortBy, sortDir, contratoId, estado);
+        var query = new GetWellsListQuery(page, pageSize, search, sortBy, sortDir, contratoId, estado, campoId, denominacion);
         return (await sender.Send(query, cancellationToken)).ToActionResult();
     }
 
